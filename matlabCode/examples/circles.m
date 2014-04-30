@@ -9,11 +9,12 @@ prams.Ninner = 128;
 %prams.Ninner = prams.Nouter;
 % number of points per circle exlcusions
 %prams.nv = numel(radii);
-prams.nv = 1;
+prams.nv = 2;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = 2*(prams.Nouter + prams.nv*prams.Ninner);
+%prams.maxIter = 2;
 % maximum number of gmres iterations
 prams.atol = 1e-6;
 prams.rtol = 1e-3;
@@ -24,11 +25,12 @@ prams.ntime = 101;
 % number of time steps that ode45 will output
 
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.verbose = true;
 options.dataFile = 'output/circlesData.bin';
 options.logFile = 'output/circles.log';
-options.usePlot = true;
+options.usePlot = false;
+options.profile = false;
 
 oc = curve;
 Xouter = oc.initConfig(prams.Nouter,'square');
@@ -46,7 +48,18 @@ X0 = [xtar(:);ytar(:)];
 % initial conditions
 prams.Ntracers = numel(xtar);
 
+if options.profile
+  profile off; profile on;
+end
+
 [time,tracers] = stokesSolver(X0,Xouter,Xinner,prams,options);
+
+if options.profile
+  profile off;
+  filename = [options.logFile(1:end-4) 'Profile'];
+  profsave(profile('info'),filename);
+end
+
 om = monitor(options,prams);
 om.writeTracers(tracers);
 

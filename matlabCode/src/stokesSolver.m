@@ -36,10 +36,10 @@ tic
 [eta,flag,relres,iter,relresvec] = gmres(...
     @(X) op.matVecMultiply(X,innerGeom,outerGeom),...
     rhs,[],prams.gmresTol,prams.maxIter,...
-    @(X) op.matVecPreco(X,innerGeom,outerGeom));
+    @(X) op.matVecPreco(X,innerGeom));
 % do preconditioned GMRES to find density function
 om.writeStars
-message = ['GMRES took ' num2str(toc,'%4.2e') ' iterations'];
+message = ['GMRES took ' num2str(toc,'%4.2e') ' seconds'];
 om.writeMessage(message,'%s\n');
 if (flag ~= 0)
   message = 'GMRES HAD A PROBLEM';
@@ -64,23 +64,30 @@ iend = istart + 2*prams.Nouter - 1;
 sigmaOuter = eta(istart:iend);
 % unstack the density function at the outer boundary
 
+om.writeOutput(sigmaInner,sigmaOuter);
+% write the density function to the data file for post processing
 
-odeFun = @(t,z) ...
-    op.velEval(t,z,innerGeom,outerGeom,sigmaInner,sigmaOuter);
 
-%vel = odeFun(0,X0);
-% compute the velocity at the intial points for forming a quiver plot
+timeIntegrator = false;
+if timeIntegrator
+  odeFun = @(t,z) ...
+      op.layerEval(t,z,innerGeom,outerGeom,sigmaInner,sigmaOuter);
+  %vel = odeFun(0,X0);
+  % compute the velocity at the intial points for forming a quiver plot
+  opts.AbsTol = prams.rtol;
+  opts.RelTol = prams.atol;
+  % tolerances for ODE solver
+  T = prams.T; 
+  ntime = prams.ntime;
+  % time horizon
 
-opts.AbsTol = prams.rtol;
-opts.RelTol = prams.atol;
-% tolerances for ODE solver
-T = prams.T; 
-ntime = prams.ntime;
-% time horizon
-
-tic
-[time,tracers] = ode45(odeFun,linspace(0,T,ntime),X0,opts);
-om.writeStars
-message = ['ode45 took ' num2str(toc,'%4.2e') ' iterations'];
-om.writeMessage(message,'%s\n');
+  tic
+  [time,tracers] = ode45(odeFun,linspace(0,T,ntime),X0,opts);
+  om.writeStars
+  message = ['ode45 took ' num2str(toc,'%4.2e') ' iterations'];
+  om.writeMessage(message,'%s\n');
+else
+  time = [];
+  tracers = [];
+end
 % find tracer positions

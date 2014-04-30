@@ -63,6 +63,7 @@ message = ['Num of points on the outer boundary ',...
 o.writeMessage(message);
 message = ['Num of exclusions                   ',...
     num2str(o.nv)];
+o.writeMessage(message);
 message = ['Num of tracers                      ',...
     num2str(o.Ntracers)];
 o.writeMessage(message);
@@ -123,12 +124,27 @@ end
 if o.verbose
   disp(message)
 end
-% write to console
+% write to console if verbose==true
 
 
 end % writeMessage
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function writeOutput(o,sigmaInner,sigmaOuter)
+
+fid = fopen('o.dataFile','w');
+fprintf(fid,o.Ninner,'double');
+fprintf(fid,o.Nouter,'double');
+fprintf(fid,o.nv,'double');
+fprintf(fid,sigmaInner(:),'double');
+fprintf(fid,sigmaOuter(:),'double');
+fclose(fid);
+
+
+
+
+end % writeOutput
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function plotData(o)
@@ -161,13 +177,6 @@ fclose(fid2);
 
 end % writeTracers
  
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function summary(o)
-% summary(matvecs,derivs,fmms,naccept,nreject,totTime) writes 
-% a final summary if the simulation was successful
-
-end % summary
 
 
 end % methods

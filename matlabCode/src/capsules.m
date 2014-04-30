@@ -84,9 +84,9 @@ elseif strcmp(side,'outer')
   vy = sign(vy).*abs(vy).^(1/order);
   % smooth out boundary
 
-  clf; hold on
-  plot(vy,'b-o')
-  pause
+%  clf; hold on
+%  plot(vy,'b-o')
+%  pause
   u = [vx;vy];
 %  rx = x - 3.9;
 %  ry = y - 24.1;
