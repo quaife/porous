@@ -460,6 +460,29 @@ end
 end % exactStokesN0diag
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function vel = interpolateLayerPot(o,t,Xtra,...
+    eulerX,eulerY,u,v);
+fprintf('current time is %4.2e\n',t);
+
+x = Xtra(1:end/2);
+y = Xtra(end/2+1:end);
+
+velx = interp2(eulerX,eulerY,u,x,y,'spline');
+vely = interp2(eulerX,eulerY,v,x,y,'spline');
+
+s = find(y<0);
+if numel(s) > 0
+  velx(s) = 0;
+  vely(s) = 0;
+end
+
+vel = [velx;vely];
+
+
+end % interpolateLayerPot
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vel = layerEval(o,t,Xtar,...
@@ -469,6 +492,7 @@ targetPnts = capsules(Xtar,'targets');
 
 [~,NearInner] = innerGeom.getZone(targetPnts,2);
 [~,NearOuter] = outerGeom.getZone(targetPnts,2);
+
 
 if ~o.fmm
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
@@ -482,17 +506,43 @@ else
       NearOuter,@o.exactStokesDL,targetPnts,0,'outer');
 end
 
-
 vel = vel1 + vel2;
 
-%min(min(Xtar(end/2:end,:)))
-s = find(Xtar(end/2+1:end,:) < -5);
-%fprintf('Current time is %4.2e\n',t);
-%[t numel(s)]
-vel(s) = 0;
-vel(s+size(Xtar,1)/2) = 0;
-% If points are below the obstacles, set the velocity to zero
 
+load ../examples/radii.dat
+load ../examples/centers.dat
+nv = size(sigmaInner,2);
+for k = 1:targetPnts.N
+  if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
+      (targetPnts.X(k+targetPnts.N) - centers(1:nv,2)).^2 < ...
+          radii(1:nv).^2))
+    vel(k) = 0;
+    vel(k+targetPnts.N) = 0;
+  end
+
+  if targetPnts.X(k+targetPnts.N) < 0
+    vel(k) = 0;
+    vel(k+targetPnts.N) = 0;
+  end
+  if targetPnts.X(k+targetPnts.N) > 32 
+    vel(k) = 0;
+    vel(k+targetPnts.N) = 0;
+  end
+
+
+end
+% set velocity inside exclusions to 0
+
+
+
+%%min(min(Xtar(end/2:end,:)))
+%s = find(Xtar(end/2+1:end,:) < -5);
+%%fprintf('Current time is %4.2e\n',t);
+%%[t numel(s)]
+%vel(s) = 0;
+%vel(s+size(Xtar,1)/2) = 0;
+%% If points are below the obstacles, set the velocity to zero
+%
 
 end % layerEval
 
