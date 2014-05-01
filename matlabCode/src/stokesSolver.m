@@ -64,7 +64,7 @@ iend = istart + 2*prams.Nouter - 1;
 sigmaOuter = eta(istart:iend);
 % unstack the density function at the outer boundary
 
-om.writeOutput(sigmaInner,sigmaOuter);
+om.writeOutput(Xinner,Xouter,sigmaInner,sigmaOuter);
 % write the density function to the data file for post processing
 
 

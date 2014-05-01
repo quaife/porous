@@ -9,12 +9,12 @@ prams.Ninner = 128;
 %prams.Ninner = prams.Nouter;
 % number of points per circle exlcusions
 %prams.nv = numel(radii);
-prams.nv = 2;
+prams.nv = 150;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = 2*(prams.Nouter + prams.nv*prams.Ninner);
-%prams.maxIter = 2;
+%prams.maxIter = 1;
 % maximum number of gmres iterations
 prams.atol = 1e-6;
 prams.rtol = 1e-3;
@@ -60,20 +60,18 @@ if options.profile
   profsave(profile('info'),filename);
 end
 
-om = monitor(options,prams);
-om.writeTracers(tracers);
 
-if options.usePlot
-  figure(1); clf;
-  hold on
-  plot(Xouter(1:end/2,:),Xouter(end/2+1:end,:),'k')
-  axis equal
-
-  oc = curve;
-  [tracerx,tracery] = oc.getXY(tracers');
-  plot(tracerx',tracery','b-')
-
-  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
-end
+%if options.usePlot
+%  figure(1); clf;
+%  hold on
+%  plot(Xouter(1:end/2,:),Xouter(end/2+1:end,:),'k')
+%  axis equal
+%
+%  oc = curve;
+%  [tracerx,tracery] = oc.getXY(tracers');
+%  plot(tracerx',tracery','b-')
+%
+%  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
+%end
 
 

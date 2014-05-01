@@ -493,7 +493,6 @@ targetPnts = capsules(Xtar,'targets');
 [~,NearInner] = innerGeom.getZone(targetPnts,2);
 [~,NearOuter] = outerGeom.getZone(targetPnts,2);
 
-
 if ~o.fmm
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
       NearInner,@o.exactStokesSL,targetPnts,0,'inner');

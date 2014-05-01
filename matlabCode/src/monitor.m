@@ -131,14 +131,24 @@ end % writeMessage
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function writeOutput(o,sigmaInner,sigmaOuter)
+function writeOutput(o,Xinner,Xouter,sigmaInner,sigmaOuter)
 
-fid = fopen('o.dataFile','w');
-fprintf(fid,o.Ninner,'double');
-fprintf(fid,o.Nouter,'double');
-fprintf(fid,o.nv,'double');
-fprintf(fid,sigmaInner(:),'double');
-fprintf(fid,sigmaOuter(:),'double');
+fid = fopen(o.dataFile,'w');
+fwrite(fid,[o.Ninner;o.Nouter;o.nv],'double');
+for k = 1:o.nv
+  fwrite(fid,Xinner(1:o.Ninner,k),'double');
+end
+for k = 1:o.nv
+  fwrite(fid,Xinner(o.Ninner+1:end,k),'double');
+end
+fwrite(fid,Xouter,'double');
+for k = 1:o.nv
+  fwrite(fid,sigmaInner(1:o.Ninner,k),'double');
+end
+for k = 1:o.nv
+  fwrite(fid,sigmaInner(o.Ninner+1:end,k),'double');
+end
+fwrite(fid,sigmaOuter,'double');
 fclose(fid);
 
 

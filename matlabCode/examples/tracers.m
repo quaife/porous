@@ -7,15 +7,13 @@ innerGeom = capsules(Xinner,'inner');
 outerGeom = capsules(Xouter,'inner');
 % build objects for the inner and outer boundaries
 
-
-fmm = false;
+fmm = true;
 op = poten(Ninner,fmm);
 
 %[eulerX,eulerY] = meshgrid(0.1:0.4:4.9,0:0.4:32);
 [eulerX,eulerY] = meshgrid(linspace(0.1,4.9,100),linspace(-10,40,1000));
 
 % choose an Eulerian grid
-
 
 vel = op.layerEval(0,[eulerX(:);eulerY(:)],...
     innerGeom,outerGeom,sigmaInner,sigmaOuter);
