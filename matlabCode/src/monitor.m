@@ -30,26 +30,26 @@ function o = monitor(options,prams)
 
 
 o.verbose = options.verbose;        % write data to console
-o.saveData = true;      % save the data
-o.axis = [0 5 -10 50];
+o.saveData = options.saveData;      % save the data
 o.dataFile = options.dataFile;
 o.logFile = options.logFile;
 o.Ninner = prams.Ninner;
 o.Nouter = prams.Nouter;
-o.Ntracers = prams.Ntracers;
 o.nv = prams.nv;
-
-if o.verbose
-  fid = fopen(o.logFile,'w');
-  fclose(fid);
-  fid = fopen(o.dataFile,'w');
-  fclose(fid);
-end
-% delete the previous log and data files
-
 
 
 end % constructor: monitor
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function clearFiles(o)
+
+fid = fopen(o.logFile,'w');
+fclose(fid);
+fid = fopen(o.dataFile,'w');
+fclose(fid);
+% delete the previous log and data files
+
+end % clearFiles
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function welcomeMessage(o,options,prams)
@@ -64,23 +64,8 @@ o.writeMessage(message);
 message = ['Num of exclusions                   ',...
     num2str(o.nv)];
 o.writeMessage(message);
-message = ['Num of tracers                      ',...
-    num2str(o.Ntracers)];
-o.writeMessage(message);
 message = ['GMRES tolerance                     ',...
     num2str(prams.gmresTol,'%.0e')];
-o.writeMessage(message);
-message = ['ode45 relative tolerance            ',...
-    num2str(prams.rtol,'%.0e')];
-o.writeMessage(message);
-message = ['ode45 absolute tolerance            ',...
-    num2str(prams.atol,'%.0e')];
-o.writeMessage(message);
-message = ['ode45 time horizon                  ',...
-    num2str(prams.T,'%2.1e')];
-o.writeMessage(message);
-message = ['no of time steps that ode45 returns ',...
-    num2str(prams.ntime)];
 o.writeMessage(message);
 if options.fmm
   message = 'FMM is being used';
@@ -88,8 +73,6 @@ else
   message = 'FMM is not being used';
 end
 o.writeMessage(message);
-
-
 
 o.writeStars
 o.writeMessage(' ');

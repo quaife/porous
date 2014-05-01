@@ -6,10 +6,8 @@ load centers.dat;
 prams.Nouter = 512;
 % number of points on outer solid wall
 prams.Ninner = 128;
-%prams.Ninner = prams.Nouter;
-% number of points per circle exlcusions
-%prams.nv = numel(radii);
-prams.nv = 150;
+% number of points per circle exclusion
+prams.nv = 1;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -24,13 +22,17 @@ prams.T = 50;
 prams.ntime = 101;
 % number of time steps that ode45 will output
 
-options.farField = 'circles';
-options.fmm = true;
-options.verbose = true;
+% Different options
+options.bieSolve = false;
 options.dataFile = 'output/circlesData.bin';
+options.farField = 'circles';
+options.fmm = false;
 options.logFile = 'output/circles.log';
-options.usePlot = false;
 options.profile = false;
+options.saveData = true;
+options.tracersSimulation = true;
+options.usePlot = false;
+options.verbose = true;
 
 oc = curve;
 Xouter = oc.initConfig(prams.Nouter,'square');
@@ -41,24 +43,52 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'radii',radii);
 % circular exclusions
 
-%[xtar,ytar] = meshgrid(linspace(0.1,4.9,40),linspace(-6,35,80));
-%[xtar,ytar] = meshgrid(linspace(3.5,4.5,50),linspace(23.5,24.5,50));
-[xtar,ytar] = meshgrid(linspace(0.5,4.5,10),linspace(35,35,1));
-X0 = [xtar(:);ytar(:)];
-% initial conditions
-prams.Ntracers = numel(xtar);
-
 if options.profile
   profile off; profile on;
 end
 
-[time,tracers] = stokesSolver(X0,Xouter,Xinner,prams,options);
+if options.bieSolve
+  stokesSolver(Xinner,Xouter,options,prams);
+end
+% solve density function and write to .bin files.  It this calculation
+% has already ben done, everything can be loaded in tracers to do the
+% Lagrange tracker simulation.
+
+
+
+
+if options.tracersSimulation
+%  [xtar,ytar] = meshgrid(linspace(0.5,4.5,100),linspace(30,35,2));
+  [xtar,ytar] = meshgrid(linspace(3.7,4.1,100),linspace(24.3,24.3,1));
+  X0 = [xtar(:);ytar(:)];
+  % initial tracer locations
+  fileName = 'output/circlesData.bin';
+  % file that has all the necessary density function and geometry stored
+  options.xmin = 3.6; %0.1;
+  options.xmax = 4.2;
+  options.nx = 200;
+  % min, max, and number of Euler locations in x direction
+  options.ymin = 23.8; %-10;
+  options.ymax = 24.4; %35;
+  options.ny = 200; %1000;
+  % min, max, and number of Euler locations in y direction
+  options.ymThresh = 0;
+  options.ypThresh = 40;
+  % thresholds where velocity will be set to zero
+
+  [time,xtra,ytra] = tracers(X0,options,prams,fileName);
+  % simulate tracers. Each column represents a tracer and each row
+  % represents the time variable
+end
+
+
 
 if options.profile
   profile off;
   filename = [options.logFile(1:end-4) 'Profile'];
   profsave(profile('info'),filename);
 end
+% save the profile
 
 
 %if options.usePlot

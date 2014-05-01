@@ -463,7 +463,7 @@ end % exactStokesN0diag
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vel = interpolateLayerPot(o,t,Xtra,...
     eulerX,eulerY,u,v);
-fprintf('current time is %4.2e\n',t);
+%fprintf('current time is %4.2e\n',t);
 
 x = Xtra(1:end/2);
 y = Xtra(end/2+1:end);
@@ -483,9 +483,8 @@ vel = [velx;vely];
 end % interpolateLayerPot
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function vel = layerEval(o,t,Xtar,...
+function vel = layerEval(o,t,Xtar,ymThresh,ypThresh,...
     innerGeom,outerGeom,sigmaInner,sigmaOuter)
 
 targetPnts = capsules(Xtar,'targets');
@@ -507,7 +506,6 @@ end
 
 vel = vel1 + vel2;
 
-
 load ../examples/radii.dat
 load ../examples/centers.dat
 nv = size(sigmaInner,2);
@@ -519,11 +517,11 @@ for k = 1:targetPnts.N
     vel(k+targetPnts.N) = 0;
   end
 
-  if targetPnts.X(k+targetPnts.N) < 0
+  if targetPnts.X(k+targetPnts.N) < ymThresh
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
-  if targetPnts.X(k+targetPnts.N) > 32 
+  if targetPnts.X(k+targetPnts.N) > ypThresh 
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
@@ -532,16 +530,6 @@ for k = 1:targetPnts.N
 end
 % set velocity inside exclusions to 0
 
-
-
-%%min(min(Xtar(end/2:end,:)))
-%s = find(Xtar(end/2+1:end,:) < -5);
-%%fprintf('Current time is %4.2e\n',t);
-%%[t numel(s)]
-%vel(s) = 0;
-%vel(s+size(Xtar,1)/2) = 0;
-%% If points are below the obstacles, set the velocity to zero
-%
 
 end % layerEval
 
@@ -1138,7 +1126,6 @@ end
 
 
 end % exactStokesDLfmm
-
 
 
 
