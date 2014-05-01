@@ -139,37 +139,178 @@ fclose(fid);
 
 end % writeOutput
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plotData(o)
+function writeTracers(o,eulerX,eulerY,u,v)
+
+[nx,ny] = size(eulerX);
+% size of the output
+fileName = [o.dataFile(1:end-8) 'Tracers.bin'];
+
+fid = fopen(fileName,'w');
+fwrite(fid,[nx;ny],'double');
+for k = 1:ny
+  fwrite(fid,eulerX(1:nx,k),'double');
+end
+for k = 1:ny
+  fwrite(fid,eulerY(1:nx,k),'double');
+end
+for k = 1:ny
+  fwrite(fid,u(1:nx,k),'double');
+end
+for k = 1:ny
+  fwrite(fid,v(1:nx,k),'double');
+end
+fclose(fid);
+
+
+
+end % writeTracers
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
+    loadGeometry(o,fileName)
+
+fid = fopen(fileName,'r');
+val = fread(fid,'double');
+fclose(fid);
+
+Ninner = val(1);
+Nouter = val(2);
+nv = val(3);
+val = val(4:end);
+
+Xinner = zeros(2*Ninner,nv);
+Xouter = zeros(2*Nouter,1);
+sigmaInner = zeros(2*Ninner,nv);
+sigmaOuter = zeros(2*Nouter,1);
+
+istart = 1;
+% start of a pointer to where everything is stored in val
+
+for k = 1:nv
+  iend = istart + Ninner - 1;
+  Xinner(1:Ninner,k) = val(istart:iend);
+  istart = iend + 1;
+end
+% x-coordinates of the inner boundaries
+
+for k = 1:nv
+  iend = istart + Ninner - 1;
+  Xinner(Ninner+1:2*Ninner,k) = val(istart:iend);
+  istart = iend + 1;
+end
+% y-coordinates of the inner boundaries
+
+iend = istart + Nouter - 1;
+Xouter(1:Nouter,1) = val(istart:iend);
+istart = iend + 1;
+% x-coordinates of the outer boundary
+
+iend = istart + Nouter - 1;
+Xouter(Nouter+1:2*Nouter,1) = val(istart:iend);
+istart = iend + 1;
+% y-coordinates of the outer boundary
+
+
+for k = 1:nv
+  iend = istart + Ninner - 1;
+  sigmaInner(1:Ninner,k) = val(istart:iend);
+  istart = iend + 1;
+end
+% x-coordinates of the inner densities
+
+for k = 1:nv
+  iend = istart + Ninner - 1;
+  sigmaInner(Ninner+1:2*Ninner,k) = val(istart:iend);
+  istart = iend + 1;
+end
+% y-coordinates of the inner densities 
+
+iend = istart + Nouter - 1;
+sigmaOuter(1:Nouter,1) = val(istart:iend);
+istart = iend + 1;
+% x-coordinates of the outer density
+
+iend = istart + Nouter - 1;
+sigmaOuter(Nouter+1:2*Nouter,1) = val(istart:iend);
+istart = iend + 1;
+% y-coordinates of the outer desnity
+
+
+end % loadGeometry
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [nx,ny,eulerX,eulerY,u,v] = loadEuler(o,fileName)
+
+fid = fopen(fileName,'r');
+val = fread(fid,'double');
+fclose(fid);
+
+nx = val(1);
+ny = val(2);
+val = val(3:end);
+
+eulerX = zeros(nx,ny);
+eulerY = zeros(nx,ny);
+u = zeros(nx,ny);
+v = zeros(nx,ny);
+
+istart = 1;
+% start of a pointer to where everything is stored in val
+
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  eulerX(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  eulerY(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  u(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  v(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+
+end % loadEuler
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function plotData(o,Xinner,Xouter,eulerX,eulerY,u,v,xtra,ytra)
+
+figure(1); clf; hold on;
+
+quiver(eulerX,eulerY,u,v,'g')
+plot(xtra,ytra,'r')
+vec1 = [Xouter(1:end/2);Xouter(1)];
+vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
+plot(vec1,vec2,'k')
+fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
+
+
+axis equal
+
 
 
 end % plotData
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function writeTracers(o,z)
-% writeData(X,sigma,ea,el,time,res) writes the position,
-% tension, errors, and time to a binary file.  Matlab can later
-% read this file to postprocess the data
-
-oc = curve;
-[x,y] = oc.getXY(z');
-
-fid1 = fopen('tracersx.dat','w');
-fid2 = fopen('tracersy.dat','w');
-fprintf(fid1,'%4d\n',o.Ntracers);
-fprintf(fid2,'%4d\n',o.Ntracers);
-% write the number of points
-for k = 1:size(x,1)
-  fprintf(fid1,'%8.4e\n',x(k,:));
-  fprintf(fid2,'%8.4e\n',y(k,:));
-end
-fclose(fid1);
-fclose(fid2);
-
-
-end % writeTracers
- 
 
 
 end % methods

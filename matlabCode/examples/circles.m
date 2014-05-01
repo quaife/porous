@@ -30,8 +30,9 @@ options.fmm = false;
 options.logFile = 'output/circles.log';
 options.profile = false;
 options.saveData = true;
+options.savedEuler = true;
 options.tracersSimulation = true;
-options.usePlot = false;
+options.usePlot = true;
 options.verbose = true;
 
 oc = curve;
@@ -58,22 +59,22 @@ end
 
 
 if options.tracersSimulation
-%  [xtar,ytar] = meshgrid(linspace(0.5,4.5,100),linspace(30,35,2));
-  [xtar,ytar] = meshgrid(linspace(3.7,4.1,100),linspace(24.3,24.3,1));
+  [xtar,ytar] = meshgrid(linspace(0.5,4.5,1000),linspace(30,30,1));
+%  [xtar,ytar] = meshgrid(linspace(3.7,4.1,20),linspace(24.3,24.3,1));
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
   % file that has all the necessary density function and geometry stored
-  options.xmin = 3.6; %0.1;
-  options.xmax = 4.2;
-  options.nx = 200;
+  options.xmin = 0.1;
+  options.xmax = 4.9;
+  options.nx = 100;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 23.8; %-10;
-  options.ymax = 24.4; %35;
-  options.ny = 200; %1000;
+  options.ymin = 0;
+  options.ymax = 35;
+  options.ny = 700;
   % min, max, and number of Euler locations in y direction
-  options.ymThresh = 0;
-  options.ypThresh = 40;
+  options.ymThresh = options.ymin + 2;
+  options.ypThresh = options.ymax - 2;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra] = tracers(X0,options,prams,fileName);
@@ -89,19 +90,5 @@ if options.profile
   profsave(profile('info'),filename);
 end
 % save the profile
-
-
-%if options.usePlot
-%  figure(1); clf;
-%  hold on
-%  plot(Xouter(1:end/2,:),Xouter(end/2+1:end,:),'k')
-%  axis equal
-%
-%  oc = curve;
-%  [tracerx,tracery] = oc.getXY(tracers');
-%  plot(tracerx',tracery','b-')
-%
-%  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
-%end
 
 
