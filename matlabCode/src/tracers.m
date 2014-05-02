@@ -60,12 +60,13 @@ else
 end
 
 
-odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v);
+odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
 % function handle that evalutes the right-hand side 
 tic
-opts.RelTol = 1e-5;
-opts.AbsTol = 1e-8;
-[t,Xtra] = ode45(odeFun,linspace(0,20,200),X0);
+opts.RelTol = prams.rtol;
+opts.AbsTol = prams.atol;
+[t,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0);
+om.writeMessage(' ');
 
 om.writeStars
 message = '****       Tracer locations found        ****';
@@ -82,5 +83,6 @@ ytra = Xtra(:,end/2+1:end);
 
 if options.usePlot
   om.plotData(Xinner,Xouter,eulerX,eulerY,u,v,xtra,ytra);
+  om.runMovie(Xinner,Xouter,xtra,ytra);
 end
 

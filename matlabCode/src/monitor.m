@@ -29,19 +29,31 @@ function o = monitor(options,prams)
 % This is the constructor
 
 
-o.verbose = options.verbose;        % write data to console
-o.saveData = options.saveData;      % save the data
+o.verbose = options.verbose;
+% write data to console
+o.saveData = options.saveData;
+% save messages to a log file
 o.dataFile = options.dataFile;
+% name of bin file for geometry
+% Uses this file name to choose the file name for the tracers
 o.logFile = options.logFile;
+% name of log file
+o.axis = options.axis;
+% axis for the plotting
 o.Ninner = prams.Ninner;
+% number of points per inner boundary
 o.Nouter = prams.Nouter;
+% number of points per outer boundary
 o.nv = prams.nv;
+% number of inner boundaries
 
 
 end % constructor: monitor
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function clearFiles(o)
+% clearFiles() clears the log and bin file so that there is nothing from
+% previous runs
 
 fid = fopen(o.logFile,'w');
 fclose(fid);
@@ -53,6 +65,8 @@ end % clearFiles
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function welcomeMessage(o,options,prams)
+% welcomeMessage(options,prams) writes specs from the simulation to the
+% log file and console
 
 o.writeStars
 message = ['Num of points per inner boundary    ',...
@@ -97,6 +111,8 @@ function writeMessage(o,message,format)
 if nargin == 2
   format = '%s\n';
 end
+% if user doesn't give format, take it to be string followed by a new
+% line
 
 if o.saveData
   fid = fopen(o.logFile,'a');
@@ -115,26 +131,38 @@ end % writeMessage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function writeOutput(o,Xinner,Xouter,sigmaInner,sigmaOuter)
+% writeOutput(Xinner,Xouter,sigmaInner,sigmaOuter) writes the geometry
+% and the density function to .bin file.  This can be loaded later to do
+% the tracer simulations without having to regenerate the density
+% function
 
 fid = fopen(o.dataFile,'w');
 fwrite(fid,[o.Ninner;o.Nouter;o.nv],'double');
+% write the number of points and boundaries
 for k = 1:o.nv
   fwrite(fid,Xinner(1:o.Ninner,k),'double');
 end
+% write the x coordinate of the inner boundaries
 for k = 1:o.nv
   fwrite(fid,Xinner(o.Ninner+1:end,k),'double');
 end
+% write the y coordinate of the inner boundaries
 fwrite(fid,Xouter,'double');
+% write the x and y coordinates of the outer boundary
+
 for k = 1:o.nv
   fwrite(fid,sigmaInner(1:o.Ninner,k),'double');
 end
+% write the x coordinate of the inner densities
 for k = 1:o.nv
   fwrite(fid,sigmaInner(o.Ninner+1:end,k),'double');
 end
+% write the y coordinate of the inner densities
 fwrite(fid,sigmaOuter,'double');
+% write the x and y coordinates of the outer density 
+
 fclose(fid);
-
-
+% close the bin file
 
 
 end % writeOutput
@@ -142,16 +170,23 @@ end % writeOutput
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function writeTracers(o,eulerX,eulerY,u,v)
+% writeTracers(eulerX,eulerY,u,v) writes the x and y coordinates of the
+% Eulerian grid that is fixed and the x and y coordinates of the
+% velocity at these points
 
 [nx,ny] = size(eulerX);
 % size of the output
 fileName = [o.dataFile(1:end-8) 'Tracers.bin'];
+% take the name of the Data file, strip the word Data, and add on the
+% word Tracers
 
 fid = fopen(fileName,'w');
 fwrite(fid,[nx;ny],'double');
+% write the sizes
 for k = 1:ny
   fwrite(fid,eulerX(1:nx,k),'double');
 end
+% write the x coordinate at the fixed grid
 for k = 1:ny
   fwrite(fid,eulerY(1:nx,k),'double');
 end
@@ -302,15 +337,61 @@ vec1 = [Xouter(1:end/2);Xouter(1)];
 vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
 plot(vec1,vec2,'k')
 fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
-
-
 axis equal
+axis(o.axis)
 
 
 
 end % plotData
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function runMovie(o,Xinner,Xouter,xtra,ytra)
+
+ntime = size(xtra,1);
+
+figure(2);
+for k = 1:ntime
+  clf
+  subplot(1,2,1)
+  hold on
+  vec1 = [Xouter(1:end/2);Xouter(1)];
+  vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
+  plot(vec1,vec2,'k')
+  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
+
+  plot(xtra(k,:),ytra(k,:),'r.')
+  ax = o.axis;
+  ax(4) = max(ytra(k,:))+2;
+  ax(3) = ax(4) - 10;
+  axis equal
+  axis(ax)
+  set(gca,'visible','off')
+
+  subplot(1,2,2)
+  hold on
+  vec1 = [Xouter(1:end/2);Xouter(1)];
+  vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
+  plot(vec1,vec2,'k')
+  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
+
+  plot(xtra(k,:),ytra(k,:),'r.')
+  ax = o.axis;
+  ax(3) = min(ytra(k,:))-2;
+  ax(4) = ax(3) + 10;
+  axis equal
+  axis(ax)
+  set(gca,'visible','off')
+
+
+  pause(0.01)
+end
+
+
+
+
+
+end % runMovie
 
 
 end % methods

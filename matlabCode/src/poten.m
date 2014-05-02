@@ -462,8 +462,12 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vel = interpolateLayerPot(o,t,Xtra,...
-    eulerX,eulerY,u,v);
-%fprintf('current time is %4.2e\n',t);
+    eulerX,eulerY,u,v,T);
+
+message = ['ode45 ' num2str(t/T*100,'%04.1f') ' %% completed '];
+nmess = numel(message);
+fprintf(repmat('\b',1,nmess));
+fprintf(message);
 
 x = Xtra(1:end/2);
 y = Xtra(end/2+1:end);
