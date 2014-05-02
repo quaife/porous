@@ -23,9 +23,9 @@ prams.ntime = 101;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = false;
+options.bieSolve = true;
+options.computeEuler = true;
 options.tracersSimulation = true;
-options.savedEuler = false;
 options.axis = [-0.1 5.1 20 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
@@ -60,7 +60,7 @@ end
 
 
 if options.tracersSimulation
-  [xtar,ytar] = meshgrid(linspace(0.5,4.5,500),linspace(29,32,4));
+  [xtar,ytar] = meshgrid(linspace(0.5,4.5,1000),linspace(29,32,10));
 %  [xtar,ytar] = meshgrid(linspace(3.7,4.1,20),linspace(24.3,24.3,1));
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations

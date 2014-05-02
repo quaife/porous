@@ -129,9 +129,12 @@ end
 end % writeMessage
 
 
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function writeOutput(o,Xinner,Xouter,sigmaInner,sigmaOuter)
-% writeOutput(Xinner,Xouter,sigmaInner,sigmaOuter) writes the geometry
+function writeGeometry(o,Xinner,Xouter,sigmaInner,sigmaOuter)
+% writeGeometry(Xinner,Xouter,sigmaInner,sigmaOuter) writes the geometry
 % and the density function to .bin file.  This can be loaded later to do
 % the tracer simulations without having to regenerate the density
 % function
@@ -165,18 +168,17 @@ fclose(fid);
 % close the bin file
 
 
-end % writeOutput
-
+end % writeGeometry
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function writeTracers(o,eulerX,eulerY,u,v)
+function writeEulerVelocities(o,eulerX,eulerY,u,v)
 % writeTracers(eulerX,eulerY,u,v) writes the x and y coordinates of the
 % Eulerian grid that is fixed and the x and y coordinates of the
 % velocity at these points
 
 [nx,ny] = size(eulerX);
 % size of the output
-fileName = [o.dataFile(1:end-8) 'Tracers.bin'];
+fileName = [o.dataFile(1:end-8) 'EulerVelocities.bin'];
 % take the name of the Data file, strip the word Data, and add on the
 % word Tracers
 
@@ -198,9 +200,32 @@ for k = 1:ny
 end
 fclose(fid);
 
+end % writeEulerVelocities
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function writeTracerPositions(o,time,xtra,ytra)
 
-end % writeTracers
+[ntime,ntra] = size(xtra);
+% number of time steps and number of tracers
+
+fileName = [o.dataFile(1:end-8) 'TracerPositions.bin'];
+% take the name of the Data file, strip the word Data, and add on the
+% word TracerPositions
+
+fid = fopen(fileName,'w');
+fwrite(fid,[ntime;ntra],'double');
+% write the sizes
+fwrite(fid,time,'double');
+% write the time horizon
+for k = 1:ntime
+  fwrite(fid,xtra(k,:)','double');
+end
+for k = 1:ntime
+  fwrite(fid,ytra(k,:)','double');
+end
+fclose(fid);
+
+end % writeTracerPositions
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
@@ -277,7 +302,7 @@ end % loadGeometry
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [nx,ny,eulerX,eulerY,u,v] = loadEuler(o,fileName)
+function [nx,ny,eulerX,eulerY,u,v] = loadEulerVelocities(o,fileName)
 
 fid = fopen(fileName,'r');
 val = fread(fid,'double');
@@ -320,14 +345,59 @@ for k = 1:ny
   istart = iend + 1;
 end
 
+end % loadEulerVelocities
 
-end % loadEuler
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [ntime,ntra,time,xtra,ytra] = ...
+    loadTracerPositions(o,fileName)
+
+fid = fopen(fileName,'r');
+val = fread(fid,'double');
+fclose(fid);
+
+ntime = val(1);
+ntra = val(2);
+val = val(3:end);
+
+xtra = zeros(ntime,ntra);
+ytra = zeros(ntime,ntra);
+
+istart = 1;
+% start of a pointer to where everything is stored in val
+
+iend = istart + ntime - 1;
+time = val(istart:iend);
+istart = iend + 1;
+
+for k = 1:ntime
+  iend = istart + ntra - 1;
+  xtra(k,:) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ntime
+  iend = istart + ntra - 1;
+  ytra(k,:) = val(istart:iend);
+  istart = iend + 1;
+end
 
 
+end % loadTracerPositions
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function plotData(o,Xinner,Xouter,eulerX,eulerY,u,v,xtra,ytra)
+function plotData(o)
+
+fileName = o.dataFile;
+[Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
+    o.loadGeometry(fileName);
+
+fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
+   [ny,nx,eulerX,eulerY,u,v] = o.loadEulerVelocities(fileName1);
+
+fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+[ntime,ntra,time,xtra,ytra] = ...
+    o.loadTracerPositions(fileName1);
 
 figure(1); clf; hold on;
 
@@ -346,9 +416,16 @@ end % plotData
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function runMovie(o,Xinner,Xouter,xtra,ytra)
+function runMovie(o)
 
-ntime = size(xtra,1);
+fileName = o.dataFile;
+[Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
+    o.loadGeometry(fileName);
+
+fileName = [fileName(1:end-8) 'TracerPositions.bin'];
+[ntime,ntra,time,xtra,ytra] = ...
+    o.loadTracerPositions(fileName);
+
 
 figure(2);
 for k = 1:ntime
@@ -357,7 +434,7 @@ for k = 1:ntime
   hold on
   vec1 = [Xouter(1:end/2);Xouter(1)];
   vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
-  plot(vec1,vec2,'k')
+  plot(vec1,vec2,'k','linewidth',2)
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
   plot(xtra(k,:),ytra(k,:),'r.')
@@ -372,7 +449,7 @@ for k = 1:ntime
   hold on
   vec1 = [Xouter(1:end/2);Xouter(1)];
   vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
-  plot(vec1,vec2,'k')
+  plot(vec1,vec2,'k','linewidth',2)
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
   plot(xtra(k,:),ytra(k,:),'r.')

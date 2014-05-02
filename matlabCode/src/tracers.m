@@ -1,4 +1,4 @@
-function [t,xtra,ytra] = tracers(X0,options,prams,fileName)
+function [time,xtra,ytra] = tracers(X0,options,prams,fileName)
 
 om = monitor(options,prams);
 
@@ -24,7 +24,7 @@ op = poten(Ninner,fmm);
 xmin = options.xmin; xmax = options.xmax; nx = options.nx;
 ymin = options.ymin; ymax = options.ymax; ny = options.ny;
 
-if ~options.savedEuler
+if options.computeEuler
   [eulerX,eulerY] = ...
       meshgrid(linspace(xmin,xmax,nx),linspace(ymin,ymax,ny));
   % build the Eulerian grid that is used to interpolate in the time
@@ -46,11 +46,11 @@ if ~options.savedEuler
   u = reshape(vel(1:end/2),size(eulerX));
   v = reshape(vel(end/2+1:end),size(eulerY));
   % put velocity field in format that works well for interp2
-  om.writeTracers(eulerX,eulerY,u,v);
+  om.writeEulerVelocities(eulerX,eulerY,u,v);
   % save the velocity field so we don't have to keep recomputing it
 else
-  fileName = [fileName(1:end-8) 'Tracers.bin'];
-  [ny,nx,eulerX,eulerY,u,v] = om.loadEuler(fileName);
+  fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
+  [ny,nx,eulerX,eulerY,u,v] = om.loadEulerVelocities(fileName1);
   if (nx ~= options.nx || ny ~= options.ny)
     message = 'Saved Euler grid does not match input parameters';
     om.writeMessage(message);
@@ -65,7 +65,7 @@ odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
 tic
 opts.RelTol = prams.rtol;
 opts.AbsTol = prams.atol;
-[t,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0);
+[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0);
 om.writeMessage(' ');
 
 om.writeStars
@@ -80,9 +80,16 @@ om.writeMessage(' ');
 xtra = Xtra(:,1:end/2);
 ytra = Xtra(:,end/2+1:end);
 
-
 if options.usePlot
-  om.plotData(Xinner,Xouter,eulerX,eulerY,u,v,xtra,ytra);
-  om.runMovie(Xinner,Xouter,xtra,ytra);
+%  om.plotData(Xinner,Xouter,eulerX,eulerY,u,v,xtra,ytra);
+%  om.runMovie(Xinner,Xouter,xtra,ytra);
+  om.plotData;
+  om.runMovie;
 end
+
+om.writeTracerPositions(time,xtra,ytra);
+fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+[ntime,ntra,time,xtra,ytra] = ...
+    om.loadTracerPositions(fileName1);
+
 
