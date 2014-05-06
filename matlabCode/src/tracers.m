@@ -29,6 +29,12 @@ if options.computeEuler
       meshgrid(linspace(xmin,xmax,nx),linspace(ymin,ymax,ny));
   % build the Eulerian grid that is used to interpolate in the time
   % integrator
+
+%  [r,theta] = ...
+%    meshgrid(linspace(1.37607e-1,1.0e0,100),(0:99)*2*pi/100);
+%  eulerX = r.*cos(theta) + 3.9010990e0;
+%  eulerY = r.*sin(theta) + 2.4065934e1;
+
   tic
   vel = op.layerEval(0,[eulerX(:);eulerY(:)],...
       options.ymThresh,options.ypThresh,...

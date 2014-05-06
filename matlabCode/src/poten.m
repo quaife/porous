@@ -276,6 +276,11 @@ else
       exactStokesDLfmm(o,outerGeom,outerEta,innerGeom.X,1);
 end
 
+%stokesSLPtar = 0*stokesSLPtar;
+%stokesDLPtar = 0*stokesDLPtar;
+%
+%Gfinner = innerEta;
+
 Gfinner = Gfinner + stokesSLP;
 % add in contribution from all other exclusions
 Gfouter = Gfouter + stokesSLPtar;
@@ -472,14 +477,41 @@ fprintf(message);
 x = Xtra(1:end/2);
 y = Xtra(end/2+1:end);
 
+[r,theta] = ...
+  meshgrid(linspace(1.37607e-1,1.0e0,100),(0:99)*2*pi/100-pi);
+rx = (x - 3.9010990e0);
+ry = (y - 2.4065934e1);
+z = rx + 1i*ry;
+r0 = abs(z);
+theta0 = angle(z);
+% interpolate in radial variables
+
+%dt = DelaunayTri(eulerX(:),eulerY(:));
+%triplot(dt);
+%axis equal
+%pause
+
+%velx = interp2(r,theta,u,r0,theta0,'spline');
+%vely = interp2(r,theta,v,r0,theta0,'spline');
+
 velx = interp2(eulerX,eulerY,u,x,y,'spline');
 vely = interp2(eulerX,eulerY,v,x,y,'spline');
-
-s = find(y<0);
-if numel(s) > 0
-  velx(s) = 0;
-  vely(s) = 0;
+%velxOb = TriScatteredInterp(eulerX(:),eulerY(:),u(:));
+%velyOb = TriScatteredInterp(eulerX(:),eulerY(:),v(:));
+%velxOb.Method = 'nearest';
+%velyOb.Method = 'nearest';
+%velx = velxOb(x,y);
+%vely = velyOb(x,y);
+if velx~=velx
+  fprintf('\n Problem with Interpolant\n');
+  pause
 end
+
+%s = find(y<0);
+%if numel(s) > 0
+%  velx(s) = 0;
+%  vely(s) = 0;
+%end
 
 vel = [velx;vely];
 
@@ -497,6 +529,7 @@ targetPnts = capsules(Xtar,'targets');
 [~,NearOuter] = outerGeom.getZone(targetPnts,2);
 
 if ~o.fmm
+  [~,vel3] = o.exactStokesSL(innerGeom,sigmaInner,Xtar,1);
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
       NearInner,@o.exactStokesSL,targetPnts,0,'inner');
   vel2 = o.nearSingInt(outerGeom,sigmaOuter,@o.exactStokesDLdiag,...
@@ -509,6 +542,11 @@ else
 end
 
 vel = vel1 + vel2;
+z = Xtar(1:end/2) + 1i*Xtar(end/2+1:end);
+s = find(abs(z) < 1);
+vel(s) = 0;
+vel(s + targetPnts.N) = 0;
+
 
 load ../examples/radii.dat
 load ../examples/centers.dat
@@ -529,8 +567,6 @@ for k = 1:targetPnts.N
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
-
-
 end
 % set velocity inside exclusions to 0
 

@@ -65,7 +65,7 @@ if strcmp(side,'inner')
 %       -0.5*log(rho2) + (rx+ry)./rho2.*ry];
 %  u = [-(x-2.5);(y-14)];
 elseif strcmp(side,'outer')
-  order = 20;
+  order = 10;
   % controls how smooth the boundary data is
   [x,y] = oc.getXY(X);
   % Separate out x and y coordinates
@@ -78,7 +78,8 @@ elseif strcmp(side,'outer')
   ind = y<-6;
   vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
   % typical mollifer so that velocity decays smoothly to 0
-  vy(vy==Inf) = 0;
+  vy = -exp(1./(((x-2.5)/max(x-2.5)).^2-1))/exp(-1);
+  vy(abs(vy)==Inf) = 0;
   % fix points where we divided by 0.  Limiting value is 0
 
   vy = sign(vy).*abs(vy).^(1/order);

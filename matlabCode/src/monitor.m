@@ -439,8 +439,8 @@ for k = 1:ntime
 
   plot(xtra(k,:),ytra(k,:),'r.')
   ax = o.axis;
-  ax(4) = max(ytra(k,:))+2;
-  ax(3) = ax(4) - 10;
+%  ax(4) = max(ytra(k,:))+2;
+%  ax(3) = ax(4) - 10;
   axis equal
   axis(ax)
   set(gca,'visible','off')
@@ -454,8 +454,8 @@ for k = 1:ntime
 
   plot(xtra(k,:),ytra(k,:),'r.')
   ax = o.axis;
-  ax(3) = min(ytra(k,:))-2;
-  ax(4) = ax(3) + 10;
+%  ax(3) = min(ytra(k,:))-2;
+%  ax(4) = ax(3) + 10;
   axis equal
   axis(ax)
   set(gca,'visible','off')
