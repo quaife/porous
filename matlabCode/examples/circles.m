@@ -7,7 +7,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 1;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -26,9 +26,10 @@ prams.ntime = 101;
 options.bieSolve = false;
 options.computeEuler = true;
 options.tracersSimulation = true;
-options.axis = [-0.5 5.5 0 30];
+%options.axis = [3.65 3.8 23.95 24.15];
+%options.axis = [-0.5 5.5 15 30];
 %options.axis = [3.5 4.5 23.8 24.5];
-%options.axis = [-0.1 5.1 20 30];
+options.axis = [-0.1 5.1 0 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
 options.fmm = false;

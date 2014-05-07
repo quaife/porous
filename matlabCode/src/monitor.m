@@ -402,6 +402,7 @@ fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 figure(1); clf; hold on;
 
 quiver(eulerX,eulerY,u,v,'g')
+%plot(eulerX,eulerY,'go')
 plot(xtra,ytra,'r')
 vec1 = [Xouter(1:end/2);Xouter(1)];
 vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
@@ -437,10 +438,11 @@ for k = 1:ntime
   plot(vec1,vec2,'k','linewidth',2)
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
-  plot(xtra(k,:),ytra(k,:),'r.')
+%  plot(xtra(k,:),ytra(k,:),'r.')
+  plot(xtra(k,95),ytra(k,95),'r.')
   ax = o.axis;
-%  ax(4) = max(ytra(k,:))+2;
-%  ax(3) = ax(4) - 10;
+  ax(4) = max(ytra(k,:))+2;
+  ax(3) = ax(4) - 10;
   axis equal
   axis(ax)
   set(gca,'visible','off')
@@ -452,10 +454,12 @@ for k = 1:ntime
   plot(vec1,vec2,'k','linewidth',2)
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
-  plot(xtra(k,:),ytra(k,:),'r.')
+%  plot(xtra(k,:),ytra(k,:),'r.')
+  plot(xtra(k,95),ytra(k,95),'r.')
   ax = o.axis;
 %  ax(3) = min(ytra(k,:))-2;
-%  ax(4) = ax(3) + 10;
+  ax(3) = min(ytra(k,95))-2;
+  ax(4) = ax(3) + 10;
   axis equal
   axis(ax)
   set(gca,'visible','off')
