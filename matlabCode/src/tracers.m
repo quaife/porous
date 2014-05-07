@@ -15,7 +15,7 @@ if ((prams.Ninner == Ninner) + ...
 end
 
 innerGeom = capsules(Xinner,'inner');
-outerGeom = capsules(Xouter,'inner');
+outerGeom = capsules(Xouter,'outer');
 % build objects for the inner and outer boundaries
 
 fmm = options.fmm;
