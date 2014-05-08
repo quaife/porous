@@ -219,7 +219,6 @@ end % k = exclusions
 
 
 invGf = real(invGf);
-%invGf = f;
 
 
 
@@ -294,6 +293,47 @@ Gf = [Gfinner(:);Gfouter(:)];
 
 
 end % matVecMultiply
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Gf = SLPmatVecMultiply(o,f,innerGeom)
+% Gf = matVecMultiply(f,innerGeom) is the main
+% matrix-vector-multiplication routine.  f is the density function,
+% innerGeom and outerGeom are objects corresponding to the inner and
+% outer boundaries, respectively
+
+Ninner = innerGeom.N;
+nv = innerGeom.nv;
+Gfinner = zeros(2*Ninner,nv);
+innerEta = zeros(2*Ninner,nv);
+% allocate space for density function and layer potentials
+
+for k = 1:nv
+  istart = (k-1)*2*Ninner + 1;
+  iend = istart + 2*Ninner - 1;
+  innerEta(:,k) = f(istart:iend);
+end
+% unstack f so that it is one x-coordinate and one y-coordinate per
+% column
+
+Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
+% diagonal term from exclusions
+
+if ~o.fmm
+  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
+else
+  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
+end
+
+
+Gfinner = Gfinner + stokesSLP;
+% add in contribution from all other exclusions
+    
+
+Gf = [Gfinner(:);Gfouter(:)];
+
+
+end % SLPmatVecMultiply
 
 
 
