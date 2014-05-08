@@ -7,12 +7,12 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 2;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
-prams.maxIter = 2*(prams.Nouter + prams.nv*prams.Ninner);
-%prams.maxIter = 1;
+%prams.maxIter = 2*(prams.Nouter + prams.nv*prams.Ninner);
+prams.maxIter = 1500;
 % maximum number of gmres iterations
 prams.atol = 1e-6;
 prams.rtol = 1e-3;
@@ -25,9 +25,8 @@ prams.ntime = 1501;
 % Different options
 options.bieSolve = true;
 options.computeEuler = true;
-options.tracersSimulation = false;
-options.axis = [-0.5 5.5 0 30];
 options.tracersSimulation = true;
+options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
 %options.axis = [3.5 4.5 23.8 24.5];
