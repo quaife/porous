@@ -280,6 +280,10 @@ if (normr <= tolb)               % Initial guess is a good enough solution
     return
 end
 
+fprintf('here\n')
+fprintf('%s\n',num2str(n))
+fprintf('%s\n',num2str(inner))
+fprintf('%s\n',num2str(outer))
 resvec = zeros(inner*outer+1,1);  % Preallocate vector for norm of residuals
 resvec(1) = normr;                % resvec(1) = norm(b-A*x0)
 normrmin = normr;                 % Norm of residual from xmin
@@ -288,7 +292,9 @@ normrmin = normr;                 % Norm of residual from xmin
 J = zeros(2,inner);
 
 U = zeros(n,inner);
+whos
 R = zeros(inner,inner);
+disp('here')
 w = zeros(inner+1,1);
 
 for outiter = 1 : outer
@@ -373,7 +379,7 @@ for outiter = 1 : outer
             rho = norm(v(initer:initer+1));
             J(:,initer) = v(initer:initer+1)./rho;
             w(initer+1) = -J(2,initer).*w(initer);
-            disp([w(initer+1) J(2,initer) w(initer)])
+%            disp([w(initer+1) J(2,initer) w(initer)])
             w(initer) = conj(J(1,initer)).*w(initer);
             v(initer) = rho;
             v(initer+1) = 0;
@@ -420,11 +426,11 @@ for outiter = 1 : outer
                 xm = xm + additive;
             end
             r = b - iterapp('mtimes',afun,atype,afcnstr,xm,varargin{:});
-            disp(initer)
-            normr
-            norm(r)
-            tol*n2b
-            pause
+%            disp(initer)
+%            normr
+%            norm(r)
+%            tol*n2b
+%            pause
             if norm(r) <= tol*n2b
                 x = xm;
                 flag = 0;

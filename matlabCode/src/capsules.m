@@ -27,7 +27,7 @@ function o = capsules(X,side)
 o.N = size(X,1)/2;              % points per component
 o.nv = size(X,2);               % number of components
 o.X = X;                        % position of component 
-if (strcmp(side,'inner') || strcmp(side,'outer'))
+if strcmp(side,'outer')
   oc = curve;
   [o.sa,o.xt,o.cur] = oc.diffProp(o.X);
   % Jacobian, tangent, and curvature
@@ -38,6 +38,13 @@ if (strcmp(side,'inner') || strcmp(side,'outer'))
 
   [~,~,o.length] = oc.geomProp(X);
   % total arclength needed for near-singular integration
+end
+
+if strcmp(side,'inner')
+  oc = curve;
+  [o.sa] = oc.diffProp(o.X);
+%  o.u = o.bgFlow(X,side);
+  [~,~,o.length] = oc.geomProp(X);
 end
 
 end % capsules: constructor

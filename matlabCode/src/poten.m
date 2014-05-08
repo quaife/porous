@@ -395,16 +395,6 @@ for k = 1:geom.nv
 end % k = exclusions
 
 
-
-X = geom.X;
-N = size(X,1)/2;
-nv = size(X,2);
-oc = curve;
-[x,y] = oc.getXY(X);
-sa = geom.sa;
-[fx,fy] = oc.getXY(f.*[sa;sa]);
-stokesSLP = zeros(2*N,nv);
-
 end % exactStokesSLdiag
 
 
@@ -463,7 +453,6 @@ sa = geom.sa;
 fDOTt = fx.*tx + fy.*ty;
 
 stokesDLP = zeros(2*N,1);
-
 
 for j = 1:N
   rho2 = (x(j)-x).^2 + (y(j)-y).^2;
@@ -831,17 +820,17 @@ end % nearSingInt
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesSLP,stokesSLPtar] = ...
-    exactStokesSL(o,vesicle,f,Xtar,K1)
-% [stokesSLP,stokesSLPtar] = exactStokesSL(vesicle,f,Xtar,K1)
-% computes the single-layer potential due to f around all vesicles 
+    exactStokesSL(o,geom,f,Xtar,K1)
+% [stokesSLP,stokesSLPtar] = exactStokesSL(geom,f,Xtar,K1)
+% computes the single-layer potential due to f around all geoms 
 % except itself.  Also can pass a set of target points Xtar and a 
-% collection of vesicles K1 and the single-layer potential due to
-% vesicles in K1 will be evaluated at Xtar.
+% collection of geoms K1 and the single-layer potential due to
+% geoms in K1 will be evaluated at Xtar.
 % Everything but Xtar is in the 2*N x nv format
 % Xtar is in the 2*Ntar x ncol format
 
-X = vesicle.X; % Vesicle positions
-sa = vesicle.sa; % Arclength term
+X = geom.X; % Vesicle positions
+sa = geom.sa; % Arclength term
 
 if nargin == 5
   Ntar = size(Xtar,1)/2;
@@ -855,34 +844,34 @@ else
   % points
 end
 
-den = f.*[sa;sa]*2*pi/vesicle.N;
+den = f.*[sa;sa]*2*pi/geom.N;
 % multiply by arclength term
 
 for k2 = 1:ncol % loop over columns of target points
   for j = 1:Ntar % loop over rows of target points
-    dis2 = (Xtar(j,k2) - X(1:vesicle.N,K1)).^2 + ... 
-        (Xtar(j+Ntar,k2) - X(vesicle.N+1:2*vesicle.N,K1)).^2;
-    diffxy = [Xtar(j,k2) - X(1:vesicle.N,K1) ; ...
-        Xtar(j+Ntar,k2) - X(vesicle.N+1:2*vesicle.N,K1)];
+    dis2 = (Xtar(j,k2) - X(1:geom.N,K1)).^2 + ... 
+        (Xtar(j+Ntar,k2) - X(geom.N+1:2*geom.N,K1)).^2;
+    diffxy = [Xtar(j,k2) - X(1:geom.N,K1) ; ...
+        Xtar(j+Ntar,k2) - X(geom.N+1:2*geom.N,K1)];
     % distance squared and difference of source and target location
 
     coeff = log(dis2)/2;
     % first part of single-layer potential for Stokes
     
-    val = coeff.*den(1:vesicle.N,K1);
+    val = coeff.*den(1:geom.N,K1);
     stokesSLPtar(j,k2) = -sum(val(:));
-    val = coeff.*den(vesicle.N+1:2*vesicle.N,K1);
+    val = coeff.*den(geom.N+1:2*geom.N,K1);
     stokesSLPtar(j+Ntar,k2) = -sum(val(:));
     % log term in stokes single-layer potential
 
-    coeff = (diffxy(1:vesicle.N,:).*den(1:vesicle.N,K1) + ...
-        diffxy(vesicle.N+1:2*vesicle.N,:).*...
-        den(vesicle.N+1:2*vesicle.N,K1))./dis2;
+    coeff = (diffxy(1:geom.N,:).*den(1:geom.N,K1) + ...
+        diffxy(geom.N+1:2*geom.N,:).*...
+        den(geom.N+1:2*geom.N,K1))./dis2;
     % second part of single-layer potential for Stokes
 
-    val = coeff.*diffxy(1:vesicle.N,:);
+    val = coeff.*diffxy(1:geom.N,:);
     stokesSLPtar(j,k2) = stokesSLPtar(j,k2) + sum(val(:));
-    val = coeff.*diffxy(vesicle.N+1:2*vesicle.N,:);
+    val = coeff.*diffxy(geom.N+1:2*geom.N,:);
     stokesSLPtar(j+Ntar,k2) = stokesSLPtar(j+Ntar,k2) + sum(val(:));
     % r \otimes r term of the stokes single-layer potential
   end % j
@@ -892,42 +881,42 @@ end % k2
 stokesSLPtar = 1/(4*pi)*stokesSLPtar;
 % 1/4/pi is the coefficient in front of the single-layer potential
 
-stokesSLP = zeros(2*vesicle.N,vesicle.nv); % Initialize to zero
+stokesSLP = zeros(2*geom.N,geom.nv); % Initialize to zero
 if nargin == 3
-  for k1 = 1:vesicle.nv % vesicle of targets
-    K = [(1:k1-1) (k1+1:vesicle.nv)];
-    % Loop over all vesicles except k1
-    for j=1:vesicle.N
-      dis2 = (X(j,k1) - X(1:vesicle.N,K)).^2 + ...
-          (X(j+vesicle.N,k1) - X(vesicle.N+1:2*vesicle.N,K)).^2;
-      diffxy = [X(j,k1) - X(1:vesicle.N,K) ; ...
-          X(j+vesicle.N,k1) - X(vesicle.N+1:2*vesicle.N,K)];
+  for k1 = 1:geom.nv % geom of targets
+    K = [(1:k1-1) (k1+1:geom.nv)];
+    % Loop over all geoms except k1
+    for j=1:geom.N
+      dis2 = (X(j,k1) - X(1:geom.N,K)).^2 + ...
+          (X(j+geom.N,k1) - X(geom.N+1:2*geom.N,K)).^2;
+      diffxy = [X(j,k1) - X(1:geom.N,K) ; ...
+          X(j+geom.N,k1) - X(geom.N+1:2*geom.N,K)];
       % distance squared and difference of source and target location
 
       coeff = log(dis2)/2;
       % first part of single-layer potential for Stokes
 
-      val = coeff.*den(1:vesicle.N,K);
+      val = coeff.*den(1:geom.N,K);
       stokesSLP(j,k1) = -sum(val(:));
-      val = coeff.*den(vesicle.N+1:2*vesicle.N,K);
-      stokesSLP(j+vesicle.N,k1) = -sum(val(:));
+      val = coeff.*den(geom.N+1:2*geom.N,K);
+      stokesSLP(j+geom.N,k1) = -sum(val(:));
       % logarithm terms in the single-layer potential
 
-      coeff = (diffxy(1:vesicle.N,:).*den(1:vesicle.N,K) + ...
-          diffxy(vesicle.N+1:2*vesicle.N,:).*...
-          den(vesicle.N+1:2*vesicle.N,K))./dis2;
+      coeff = (diffxy(1:geom.N,:).*den(1:geom.N,K) + ...
+          diffxy(geom.N+1:2*geom.N,:).*...
+          den(geom.N+1:2*geom.N,K))./dis2;
       % second part of single-layer potential for Stokes
 
-      val = coeff.*diffxy(1:vesicle.N,:);
+      val = coeff.*diffxy(1:geom.N,:);
       stokesSLP(j,k1) = stokesSLP(j,k1) + sum(val(:));
-      val = coeff.*diffxy(vesicle.N+1:2*vesicle.N,:);
-      stokesSLP(j+vesicle.N,k1) = stokesSLP(j+vesicle.N,k1) + ...
+      val = coeff.*diffxy(geom.N+1:2*geom.N,:);
+      stokesSLP(j+geom.N,k1) = stokesSLP(j+geom.N,k1) + ...
           sum(val(:));
       % r \otimes r term of the single-layer potential
 
     end % j
   end % k1
-  % Evaluate single-layer potential at vesicles but oneself
+  % Evaluate single-layer potential at geoms but oneself
   stokesSLP = 1/(4*pi)*stokesSLP;
   % 1/4/pi is the coefficient in front of the single-layer potential
 end % nargin == 3
@@ -936,19 +925,19 @@ end % exactStokesSL
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesDLP,stokesDLPtar] = ...
-    exactStokesDL(o,vesicle,f,Xtar,K1)
-% [stokesDLP,stokesDLPtar] = exactStokesDL(vesicle,f,Xtar,K1)
-% computes the double-layer potential due to f around all vesicles 
+    exactStokesDL(o,geom,f,Xtar,K1)
+% [stokesDLP,stokesDLPtar] = exactStokesDL(geom,f,Xtar,K1)
+% computes the double-layer potential due to f around all geoms 
 % except itself.  Also can pass a set of target points Xtar and a 
-% collection of vesicles K1 and the double-layer potential due to
-% vesicles in K1 will be evaluated at Xtar.
+% collection of geoms K1 and the double-layer potential due to
+% geoms in K1 will be evaluated at Xtar.
 % Everything but Xtar is in the 2*N x nv format
 % Xtar is in the 2*Ntar x ncol format
 
-nv = vesicle.nv; % number of vesicles
-X = vesicle.X; % Vesicle positions
-normal = vesicle.normal; % Outward normal
-sa = vesicle.sa; % Jacobian
+nv = geom.nv; % number of geoms
+X = geom.X; % Vesicle positions
+normal = geom.normal; % Outward normal
+sa = geom.sa; % Jacobian
 
 if nargin == 5
   Ntar = size(Xtar,1)/2;
@@ -963,58 +952,58 @@ else
   % points
 end
 
-den = f.*[sa;sa]*2*pi/vesicle.N;
+den = f.*[sa;sa]*2*pi/geom.N;
 
 for k2 = 1:ncol % loop over columns of target points
   for j = 1:Ntar % loop over rows of target points
-    diffxy = [Xtar(j,k2) - X(1:vesicle.N,K1) ; ...
-        Xtar(j+Ntar,k2) - X(vesicle.N+1:2*vesicle.N,K1)];
-    dis2 = diffxy(1:vesicle.N,:).^2 + ...
-        diffxy(vesicle.N+1:2*vesicle.N,:).^2;
+    diffxy = [Xtar(j,k2) - X(1:geom.N,K1) ; ...
+        Xtar(j+Ntar,k2) - X(geom.N+1:2*geom.N,K1)];
+    dis2 = diffxy(1:geom.N,:).^2 + ...
+        diffxy(geom.N+1:2*geom.N,:).^2;
     % difference of source and target location and distance squared
 
-    coeff = (diffxy(1:vesicle.N,:).*normal(1:vesicle.N,K1) + ...
-      diffxy(vesicle.N+1:2*vesicle.N,:).*...
-      normal(vesicle.N+1:2*vesicle.N,K1))./dis2.^2.* ...
-      (diffxy(1:vesicle.N,:).*den(1:vesicle.N,K1) + ...
-      diffxy(vesicle.N+1:2*vesicle.N,:).*...
-      den(vesicle.N+1:2*vesicle.N,K1));
+    coeff = (diffxy(1:geom.N,:).*normal(1:geom.N,K1) + ...
+      diffxy(geom.N+1:2*geom.N,:).*...
+      normal(geom.N+1:2*geom.N,K1))./dis2.^2.* ...
+      (diffxy(1:geom.N,:).*den(1:geom.N,K1) + ...
+      diffxy(geom.N+1:2*geom.N,:).*...
+      den(geom.N+1:2*geom.N,K1));
     % \frac{(r \dot n)(r \dot density)}{\rho^{4}} term
 
     stokesDLPtar(j,k2) = stokesDLPtar(j,k2) + ...
-        sum(sum(coeff.*diffxy(1:vesicle.N,:)));
+        sum(sum(coeff.*diffxy(1:geom.N,:)));
     stokesDLPtar(j+Ntar,k2) = stokesDLPtar(j+Ntar,k2) + ...
-        sum(sum(coeff.*diffxy(vesicle.N+1:2*vesicle.N,:)));
+        sum(sum(coeff.*diffxy(geom.N+1:2*geom.N,:)));
     % r \otimes r term of the single-layer potential
   end % j
 end % k2
 stokesDLPtar = stokesDLPtar/pi;
-% double-layer potential due to vesicles indexed over K1 
+% double-layer potential due to geoms indexed over K1 
 % evaluated at arbitrary points
 
 if nargin == 3
-  stokesDLP = zeros(2*vesicle.N,nv);
+  stokesDLP = zeros(2*geom.N,nv);
   for k1 = 1:nv
     K = [(1:k1-1) (k1+1:nv)];
-    for j=1:vesicle.N
-      diffxy = [X(j,k1) - X(1:vesicle.N,K) ; ...
-          X(j+vesicle.N,k1) - X(vesicle.N+1:2*vesicle.N,K)];
-      dis2 = diffxy(1:vesicle.N,:).^2 + ...
-          diffxy(vesicle.N+1:2*vesicle.N,:).^2;
+    for j=1:geom.N
+      diffxy = [X(j,k1) - X(1:geom.N,K) ; ...
+          X(j+geom.N,k1) - X(geom.N+1:2*geom.N,K)];
+      dis2 = diffxy(1:geom.N,:).^2 + ...
+          diffxy(geom.N+1:2*geom.N,:).^2;
       % difference of source and target location and distance squared
 
-      coeff = (diffxy(1:vesicle.N,:).*normal(1:vesicle.N,K) + ...
-        diffxy(vesicle.N+1:2*vesicle.N,:).*...
-        normal(vesicle.N+1:2*vesicle.N,K))./dis2.^2 .* ...
-        (diffxy(1:vesicle.N,:).*den(1:vesicle.N,K) + ...
-        diffxy(vesicle.N+1:2*vesicle.N,:).*...
-        den(vesicle.N+1:2*vesicle.N,K));
+      coeff = (diffxy(1:geom.N,:).*normal(1:geom.N,K) + ...
+        diffxy(geom.N+1:2*geom.N,:).*...
+        normal(geom.N+1:2*geom.N,K))./dis2.^2 .* ...
+        (diffxy(1:geom.N,:).*den(1:geom.N,K) + ...
+        diffxy(geom.N+1:2*geom.N,:).*...
+        den(geom.N+1:2*geom.N,K));
       % \frac{(r \dot n)(r \dot density)}{\rho^{4}} term
 
       stokesDLP(j,k1) = stokesDLP(j,k1) + ...
-          sum(sum(coeff.*diffxy(1:vesicle.N,:)));
-      stokesDLP(j+vesicle.N,k1) = stokesDLP(j+vesicle.N,k1) + ...
-          sum(sum(coeff.*diffxy(vesicle.N+1:2*vesicle.N,:)));
+          sum(sum(coeff.*diffxy(1:geom.N,:)));
+      stokesDLP(j+geom.N,k1) = stokesDLP(j+geom.N,k1) + ...
+          sum(sum(coeff.*diffxy(geom.N+1:2*geom.N,:)));
       % double-layer potential for Stokes
     end
   end
@@ -1024,32 +1013,32 @@ if nargin == 3
 else
   stokesDLP = [];
 end
-% double-layer potential due to all vesicles except oneself
+% double-layer potential due to all geoms except oneself
 
 end % exactStokesDL
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesSLP,stokesSLPtar] = ...
-    exactStokesSLfmm(o,vesicle,f,Xtar,K)
-% [stokesSLP,stokeSLPtar] = exactStokesSLfmm(vesicle,f,Xtar,K) uses 
-% the FMM to compute the single-layer potential due to all vesicles
-% except itself vesicle is a class of object capsules and f is the 
+    exactStokesSLfmm(o,geom,f,Xtar,K)
+% [stokesSLP,stokeSLPtar] = exactStokesSLfmm(geom,f,Xtar,K) uses 
+% the FMM to compute the single-layer potential due to all geoms
+% except itself geom is a class of object capsules and f is the 
 % density function NOT scaled by arclength term.  Xtar is a set of 
-% points where the single-layer potential due to all vesicles in index 
+% points where the single-layer potential due to all geoms in index 
 % set K needs to be evaulated
 global fmms
 
 fmms = fmms + 1;
 % count the total number of calls to fmm
 
-N = vesicle.N; % number of points per vesicle
-nv = vesicle.nv; % number of vesicles
-X = vesicle.X; % vesicle positions
+N = geom.N; % number of points per geom
+nv = geom.nv; % number of geoms
+X = geom.X; % geom positions
 oc = curve;
 [x,y] = oc.getXY(X); % seperate x and y coordinates
 
-den = f.*[vesicle.sa;vesicle.sa]*2*pi/N;
+den = f.*[geom.sa;geom.sa]*2*pi/N;
 
 if (nargin == 5)
   stokesSLP = [];
@@ -1075,7 +1064,7 @@ else
     [u,v] = stokesSLPfmm(f1(:,k),f2(:,k),x(:,k),y(:,k));
     stokesSLP(:,k) = stokesSLP(:,k) - [u;v];
   end
-  % Subtract potential due to each vesicle on its own.  Nothing
+  % Subtract potential due to each geom on its own.  Nothing
   % to change here for potential at Xtar
 end
 
@@ -1083,7 +1072,7 @@ if nargin == 3
   stokesSLPtar = [];
 else
   [x,y] = oc.getXY(X(:,K)); 
-  % seperate x and y coordinates at vesicles indexed by K
+  % seperate x and y coordinates at geoms indexed by K
   [Ntar,ncol] = size(Xtar);
   Ntar = Ntar/2;
   x2 = Xtar(1:Ntar,:);
@@ -1092,7 +1081,7 @@ else
   y = [y(:);y2(:)];
   % Stack the x and y coordinates of the target points
   [f1,f2] = oc.getXY(den(:,K));
-  % seperate x and y coordinates at vesicles indexed by K
+  % seperate x and y coordinates at geoms indexed by K
   f1 = [f1(:);zeros(Ntar*ncol,1)];
   f2 = [f2(:);zeros(Ntar*ncol,1)];
   % pad density function with zeros so that Xtar doesn't
@@ -1118,27 +1107,27 @@ end % exactStokesSLfmm
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesDLP,stokesDLPtar] = ...
-    exactStokesDLfmm(o,vesicle,f,Xtar,K)
-% [stokesDLP,stokeDLPtar] = exactStokesDLfmm(vesicle,f,Xtar,K) uses 
-% the FMM to compute the double-layer potential due to all vesicles
-% except itself vesicle is a class of object capsules and f is the 
+    exactStokesDLfmm(o,geom,f,Xtar,K)
+% [stokesDLP,stokeDLPtar] = exactStokesDLfmm(geom,f,Xtar,K) uses 
+% the FMM to compute the double-layer potential due to all geoms
+% except itself geom is a class of object capsules and f is the 
 % density function NOT scaled by arclength term.  Xtar is a set of 
-% points where the single-layer potential due to all vesicles in index 
+% points where the single-layer potential due to all geoms in index 
 % set K needs to be evaulated
 global fmms
 
 fmms = fmms + 1;
 % count the total number of calls to fmm
 
-N = vesicle.N; % number of points per vesicle
-nv = vesicle.nv; % number of vesicles
-X = vesicle.X; % vesicle positions
+N = geom.N; % number of points per geom
+nv = geom.nv; % number of geoms
+X = geom.X; % geom positions
 oc = curve;
 [x,y] = oc.getXY(X); % seperate x and y coordinates
-[nx,ny] = oc.getXY(vesicle.normal);
+[nx,ny] = oc.getXY(geom.normal);
 % seperate the x and y coordinates of the normal vector
 
-den = f.*[vesicle.sa;vesicle.sa]*2*pi/N;
+den = f.*[geom.sa;geom.sa]*2*pi/N;
 
 if (nargin == 5)
   stokesDLP = [];
@@ -1164,7 +1153,7 @@ else
         nx(:,k),ny(:,k));
     stokesDLP(:,k) = stokesDLP(:,k) - [u;v];
   end
-  % Subtract potential due to each vesicle on its own.  Nothing
+  % Subtract potential due to each geom on its own.  Nothing
   % to change here for potential at Xtar
 end
 
@@ -1172,8 +1161,8 @@ if nargin == 3
   stokesDLPtar = [];
 else
   [x,y] = oc.getXY(X(:,K)); 
-  % seperate x and y coordinates at vesicles indexed by K
-  [nx,ny] = oc.getXY(vesicle.normal(:,K));
+  % seperate x and y coordinates at geoms indexed by K
+  [nx,ny] = oc.getXY(geom.normal(:,K));
   [Ntar,ncol] = size(Xtar);
   Ntar = Ntar/2;
   x2 = Xtar(1:Ntar,:);
@@ -1182,7 +1171,7 @@ else
   y = [y(:);y2(:)];
   % Stack the x and y coordinates of the target points
   [f1,f2] = oc.getXY(den(:,K));
-  % seperate x and y coordinates at vesicles indexed by K
+  % seperate x and y coordinates at geoms indexed by K
   f1 = [f1(:);zeros(Ntar*ncol,1)];
   f2 = [f2(:);zeros(Ntar*ncol,1)];
   % pad density function with zeros so that Xtar doesn't

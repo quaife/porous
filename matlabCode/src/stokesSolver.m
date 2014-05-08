@@ -20,6 +20,8 @@ om.clearFiles;
 
 innerGeom = capsules(Xinner,'inner');
 outerGeom = capsules(Xouter,'outer');
+clear Xinner
+clear Xouter
 % create objects for the inner and outer boundaries.
 % The outer boundary will need more points so need
 % two classes.  Also, think that the double-layer potential
@@ -27,20 +29,21 @@ outerGeom = capsules(Xouter,'outer');
 % circle may not be a very good preconditioner.  This way, we can use
 % multigrid with Picard
 
-rhs = [innerGeom.u(:); outerGeom.u(:)];
+%rhs = [innerGeom.u(:); outerGeom.u(:)];
+rhs = [zeros(2*innerGeom.N*innerGeom.nv,1); outerGeom.u(:)];
 % right-hand side which corresponds to no-slip on the solid walls
 
 op = poten(prams.Ninner,options.fmm);
 % object for evaluating layer potentials
 
 tic
-%[eta,flag,relres,iter,relresvec] = gmres(...
-%    @(X) op.matVecMultiply(X,innerGeom,outerGeom),...
-%    rhs,[],prams.gmresTol,prams.maxIter,...
-%    @(X) op.matVecPreco(X,innerGeom));
 [eta,flag,relres,iter,relresvec] = gmres(...
     @(X) op.matVecMultiply(X,innerGeom,outerGeom),...
-    rhs,[],prams.gmresTol,prams.maxIter);
+    rhs,[],prams.gmresTol,prams.maxIter,...
+    @(X) op.matVecPreco(X,innerGeom));
+%[eta,flag,relres,iter,relresvec] = gmres(...
+%    @(X) op.matVecMultiply(X,innerGeom,outerGeom),...
+%    rhs,[],prams.gmresTol,prams.maxIter);
 % do unpreconditioned GMRES to find density function
 om.writeStars
 message = ['****     GMRES took ' num2str(toc,'%4.2e') ...
@@ -71,7 +74,7 @@ iend = istart + 2*prams.Nouter - 1;
 sigmaOuter = eta(istart:iend);
 % unstack the density function at the outer boundary
 
-om.writeGeometry(Xinner,Xouter,sigmaInner,sigmaOuter);
+om.writeGeometry(innerGeom.X,outerGeom.X,sigmaInner,sigmaOuter);
 % write the density function to the data file for post processing
 om.writeStars
 message = '****    Density function and geometry    ****';
