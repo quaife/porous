@@ -325,10 +325,17 @@ else
   stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
 end
 
-
 Gfinner = Gfinner + stokesSLP;
 % add in contribution from all other exclusions
     
+
+theta = (0:Ninner-1)'*2*pi/Ninner;
+x0 = [cos(theta);sin(theta)];
+for k = 1:nv
+  rankOneMod = (x0'*innerEta(:,k))*x0;
+  Gfinner(:,k) = Gfinner(:,k) + rankOneMod;
+end
+
 
 Gf = [Gfinner(:)];
 
@@ -1086,27 +1093,28 @@ X = geom.X; % geom positions
 oc = curve;
 [x,y] = oc.getXY(X); % seperate x and y coordinates
 
-den = f.*[geom.sa;geom.sa]*2*pi/N;
-[f1,f2] = oc.getXY(den);
-stokesSLP = zeros(2*N,1);
+[fx,fy] = oc.getXY(f);
+stokesSLP = zeros(2*N,nv);
 
-for j = 1:N
-  ind = [(1:j-1) (j+1:N)];
-  xSou = x(ind);
-  ySou = y(ind);
-  fxSou = fx(ind);
-  fySou = fy(ind);
+for k = 1:nv
+  for j = 1:N
+    xSou = x(:,k);
+    ySou = y(:,k);
+    fxSou = fx(:,k);
+    fySou = fy(:,k);
 
-  rho = (x(j) - xSou).^2 + (y(j) - ySou).^2;
-  br = 1./rho;
-  logpart = -1/2*log(rho);
-  stokesSLP(j) = sum(logpart.*fxSou);
-  stokesSLP(j+N) = sum(logpart.*fySou);
+    rho = (x(j,k) - xSou).^2 + (y(j,k) - ySou).^2;
+    rho(j) = 1;
+    logpart = -1/2*log(rho);
+    stokesSLP(j,k) = sum(logpart.*fxSou);
+    stokesSLP(j+N,k) = sum(logpart.*fySou);
 
-  rdotf = ((x(j) - xSou).*fxSou + (y(j) - ySou).*fySou).*br;
-  stokesSLP(j) = stokesSLP(j) + sum(rdotf.*(x(j) - xSou));
-  stokesSLP(j+N) = stokesSLP(j+N) + sum(rdotf.*(y(j) - ySou));
+    rdotf = ((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou)./rho;
+    stokesSLP(j,k) = stokesSLP(j,k) + sum(rdotf.*(x(j,k) - xSou));
+    stokesSLP(j+N,k) = stokesSLP(j+N,k) + sum(rdotf.*(y(j,k) - ySou));
+  end
 end
+stokesSLP = stokesSLP/4/pi;
 
 end % exactStokesSLDirect
 
@@ -1152,9 +1160,13 @@ else
   % Wrap the output of the FMM into the usual 
   % [[x1;y1] [x2;y2] ...] format
 
-  for k = 1:nv
-    [u,v] = stokesSLPfmm(f1(:,k),f2(:,k),x(:,k),y(:,k));
-    stokesSLP(:,k) = stokesSLP(:,k) - [u;v];
+  if (N <= 256)
+    stokesSLP = stokesSLP - o.exactStokesSLDirect(geom,den);
+  else
+    for k = 1:nv
+      [u,v] = stokesSLPfmm(f1(:,k),f2(:,k),x(:,k),y(:,k));
+      stokesSLP(:,k) = stokesSLP(:,k) - [u;v];
+    end
   end
   % Subtract potential due to each geom on its own.  Nothing
   % to change here for potential at Xtar

@@ -1,4 +1,4 @@
-function S = SLPsolve(Xinner,options,prams)
+function [S,relResVec] = SLPsolve(Xinner,options,prams)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DESCRIPTION:
 % INPUTS
@@ -9,6 +9,8 @@ function S = SLPsolve(Xinner,options,prams)
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+preco = false;
+op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
 % create objects for the inner and outer boundaries.
@@ -18,21 +20,32 @@ innerGeom = capsules(Xinner,'inner');
 % circle may not be a very good preconditioner.  This way, we can use
 % multigrid with Picard
 
-rhs = [1/2*ones(prams.Ninner,prams.nv); ones(prams.Ninner,prams.nv)];
+%rhs = [1/2*ones(prams.Ninner,prams.nv); ones(prams.Ninner,prams.nv)];
+theta = (0:prams.Ninner-1)'*2*pi/prams.Ninner;
+etaTrue = zeros(2*prams.Ninner,prams.nv);
+for k = 1:prams.nv
+  etaTrue(:,k) = [exp(cos(theta));exp(sin(theta))];
+end
+rhs = op.SLPmatVecMultiply(etaTrue,innerGeom);
+rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 % right-hand side which corresponds to no-slip on the solid walls
 
-op = poten(prams.Ninner,options.fmm);
 % object for evaluating layer potentials
 
 tic
-[eta,flag,relres,iter,relresvec] = gmres(...
-    @(X) op.SLPmatVecMultiply(X,innerGeom),...
-    rhs(:),[],prams.gmresTol,prams.maxIter,...
-    @(X) op.matVecPreco(X,innerGeom));
-%[eta,flag,relres,iter,relresvec] = gmres(...
-%    @(X) op.SLPmatVecMultiply(X,innerGeom),...
-%    rhs,[],prams.gmresTol,prams.maxIter);
-% do unpreconditioned GMRES to find density function
+if preco
+  fprintf('Using preconditioner\n')
+  [eta1,flag,relres,iter,relresvec1] = gmres(...
+      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+      rhs(:),[],prams.gmresTol,prams.maxIter,...
+      @(X) op.matVecPreco(X,innerGeom));
+else
+  fprintf('Not using preconditioner\n')
+  [eta1,flag,relres,iter,relresvec1] = gmres(...
+      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+      rhs(:),[],prams.gmresTol,prams.maxIter);
+end
+% do GMRES to find density function
 om.writeStars
 message = ['****    pGMRES took ' num2str(toc,'%4.2e') ...
     ' seconds     ****'];
@@ -53,7 +66,6 @@ elseif (flag == 1)
 else 
   message = 'GMRES HAD A PROBLEM';
   om.writeMessage(message,'%s\n');
-  relresvec
 end
 om.writeStars
 om.writeMessage(' ');
@@ -61,95 +73,116 @@ om.writeMessage(' ');
 sa = innerGeom.sa;
 rhs2 = rhs.*sqrt(2*pi*[sa;sa])/sqrt(innerGeom.N);
 
-tic
-[eta2,flag,relres,iter,relresvec] = minres(...
-    @(X) op.SLPmatVecMultiply2(X,innerGeom),...
-    rhs2(:),prams.gmresTol,prams.maxIter,...
-    @(X) op.matVecPreco(X,innerGeom));
-%[eta2,flag,relres,iter,relresvec] = minres(...
-%    @(X) op.SLPmatVecMultiply2(X,innerGeom),...
-%    rhs2,prams.gmresTol,prams.maxIter);
-om.writeStars
-message = ['****    minres took ' num2str(toc,'%4.2e') ...
-    ' seconds     ****'];
-om.writeMessage(message,'%s\n');
-if (flag == 0)
-  message = ['****    minres required ' num2str(iter,'%3d'),...
-      ' iterations    ****'];
-  om.writeMessage(message,'%s\n');
-elseif (flag == 1)
-  message = '****    minres tolerance not achieved    ****';
-  om.writeMessage(message,'%s\n');
-  message = ['****    achieved tolerance is ' ...
-      num2str(relres,'%4.2e') '   ****'];
-  om.writeMessage(message,'%s\n');
-  message = ['****    minres took ' num2str(iter,'%3d'),...
-      ' iterations        ****'];
-  om.writeMessage(message,'%s\n');
-else 
-  message = 'MINRES HAD A PROBLEM';
-  om.writeMessage(message,'%s\n');
-  flag
+%tic
+%if preco
+%  [eta2,flag,relres,iter,relresvec2] = minres(...
+%      @(X) op.SLPmatVecMultiply2(X,innerGeom),...
+%      rhs2(:),prams.gmresTol,prams.maxIter,...
+%      @(X) op.matVecPreco(X,innerGeom));
+%else
+%  [eta2,flag,relres,iter,relresvec2] = minres(...
+%      @(X) op.SLPmatVecMultiply2(X,innerGeom),...
+%      rhs2(:),prams.gmresTol,prams.maxIter);
+%end
+%% do MINRES to find density function
+%om.writeStars
+%message = ['****    minres took ' num2str(toc,'%4.2e') ...
+%    ' seconds     ****'];
+%om.writeMessage(message,'%s\n');
+%if (flag == 0)
+%  message = ['****    minres required ' num2str(iter,'%3d'),...
+%      ' iterations    ****'];
+%  om.writeMessage(message,'%s\n');
+%elseif (flag == 1)
+%  message = '****    minres tolerance not achieved    ****';
+%  om.writeMessage(message,'%s\n');
+%  message = ['****    achieved tolerance is ' ...
+%      num2str(relres,'%4.2e') '   ****'];
+%  om.writeMessage(message,'%s\n');
+%  message = ['****    minres took ' num2str(iter,'%3d'),...
+%      ' iterations        ****'];
+%  om.writeMessage(message,'%s\n');
+%else 
+%  message = 'MINRES HAD A PROBLEM';
+%  om.writeMessage(message,'%s\n');
+%  flag
+%end
+%om.writeStars
+%om.writeMessage(' ');
+%
+%
+%tic
+%if preco
+%  [eta3,flag,relres,iter,relresvec3] = symmlq(...
+%      @(X) op.SLPmatVecMultiply2(X,innerGeom),...
+%      rhs2(:),prams.gmresTol,prams.maxIter,...
+%      @(X) op.matVecPreco(X,innerGeom));
+%else
+%  [eta3,flag,relres,iter,relresvec3] = symmlq(...
+%      @(X) op.SLPmatVecMultiply2(X,innerGeom),...
+%      rhs2(:),prams.gmresTol,prams.maxIter);
+%end
+%% do SYMMLQ to find density function
+%om.writeStars
+%message = ['****    symmlq took ' num2str(toc,'%4.2e') ...
+%    ' seconds     ****'];
+%om.writeMessage(message,'%s\n');
+%if (flag == 0)
+%  message = ['****    symmlq required ' num2str(iter,'%3d'),...
+%      ' iterations    ****'];
+%  om.writeMessage(message,'%s\n');
+%elseif (flag == 1)
+%  message = '****    symmlq tolerance not achieved    ****';
+%  om.writeMessage(message,'%s\n');
+%  message = ['****    achieved tolerance is ' ...
+%      num2str(relres,'%4.2e') '   ****'];
+%  om.writeMessage(message,'%s\n');
+%  message = ['****    symmlq took ' num2str(iter,'%3d'),...
+%      ' iterations        ****'];
+%  om.writeMessage(message,'%s\n');
+%else 
+%  message = 'SYMMLQ HAD A PROBLEM';
+%  om.writeMessage(message,'%s\n');
+%  flag
+%end
+%om.writeStars
+%om.writeMessage(' ');
+%
+eta1 = reshape(eta1,2*prams.Ninner,prams.nv);
+%eta2 = reshape(eta2,2*prams.Ninner,prams.nv);
+%eta2 = eta2./sqrt(2*pi*[sa;sa])*sqrt(innerGeom.N);
+%%norm(eta - eta2(:))/norm(eta)
+%eta3 = reshape(eta3,2*prams.Ninner,prams.nv);
+%eta3 = eta3./sqrt(2*pi*[sa;sa])*sqrt(innerGeom.N);
+%%norm(eta - eta3(:))/norm(eta)
+%
+norm(op.SLPmatVecMultiply(eta1(:),innerGeom) - rhs(:))/norm(rhs(:))
+%norm(op.SLPmatVecMultiply(eta2(:),innerGeom) - rhs(:))/norm(rhs(:))
+%norm(op.SLPmatVecMultiply(eta3(:),innerGeom) - rhs(:))/norm(rhs(:))
+%
+%
+relResVec = [];
+%relResVec = relresvec1;
+%relResVec(1:numel(relresvec2),2) = relresvec2;
+%relResVec(1:numel(relresvec3),3) = relresvec3;
+
+
+S = zeros(2*prams.Ninner);
+
+for k = 1:prams.nv
+  geom = capsules(innerGeom.X(:,k),'inner');
+  e = eye(2*prams.Ninner,1);
+  for j = 1:2*prams.Ninner;
+  %  disp(2*prams.Ninner - j);
+    S(:,j) = op.SLPmatVecMultiply(e,geom);
+    e(j) = 0;
+    e(j+1) = 1;
+  end
+%  eValues = eig(S);
+%  disp(max(eValues)/min(eValues))
+%  disp(norm(S - S'))
+%  om.writeStars
 end
-om.writeStars
-om.writeMessage(' ');
 
-
-tic
-[eta3,flag,relres,iter,relresvec] = symmlq(...
-    @(X) op.SLPmatVecMultiply2(X,innerGeom),...
-    rhs2(:),prams.gmresTol,prams.maxIter,...
-    @(X) op.matVecPreco(X,innerGeom));
-%[eta3,flag,relres,iter,relresvec] = minres(...
-%    @(X) op.SLPmatVecMultiply2(X,innerGeom),...
-%    rhs2,prams.gmresTol,prams.maxIter);
-om.writeStars
-message = ['****    symmlq took ' num2str(toc,'%4.2e') ...
-    ' seconds     ****'];
-om.writeMessage(message,'%s\n');
-if (flag == 0)
-  message = ['****    symmlq required ' num2str(iter,'%3d'),...
-      ' iterations    ****'];
-  om.writeMessage(message,'%s\n');
-elseif (flag == 1)
-  message = '****    symmlq tolerance not achieved    ****';
-  om.writeMessage(message,'%s\n');
-  message = ['****    achieved tolerance is ' ...
-      num2str(relres,'%4.2e') '   ****'];
-  om.writeMessage(message,'%s\n');
-  message = ['****    symmlq took ' num2str(iter,'%3d'),...
-      ' iterations        ****'];
-  om.writeMessage(message,'%s\n');
-else 
-  message = 'SYMMLQ HAD A PROBLEM';
-  om.writeMessage(message,'%s\n');
-  flag
-end
-om.writeStars
-om.writeMessage(' ');
-
-
-eta2 = reshape(eta2,2*prams.Ninner,prams.nv);
-eta2 = eta2./sqrt(2*pi*[sa;sa])*sqrt(innerGeom.N);
-%norm(eta - eta2(:))/norm(eta)
-eta3 = reshape(eta3,2*prams.Ninner,prams.nv);
-eta3 = eta3./sqrt(2*pi*[sa;sa])*sqrt(innerGeom.N);
-%norm(eta - eta3(:))/norm(eta)
-
-norm(op.SLPmatVecMultiply(eta2(:),innerGeom) - rhs(:))/norm(rhs(:))
-norm(op.SLPmatVecMultiply(eta3(:),innerGeom) - rhs(:))/norm(rhs(:))
-
-
-
-
-S = zeros(2*prams.Ninner*prams.nv);
-
-e = eye(2*prams.Ninner*prams.nv,1);
-for k = 1:2*prams.Ninner*prams.nv;
-  disp(2*prams.Ninner*prams.nv - k);
-  S(:,k) = op.SLPmatVecMultiply2(e,innerGeom);
-  e(k) = 0;
-  e(k+1) = 1;
-end
-
+%S = [];
 
