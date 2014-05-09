@@ -1078,6 +1078,41 @@ end % exactStokesDL
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function stokesSLP = exactStokesSLDirect(o,geom,f)
+
+N = geom.N; % number of points per geom
+nv = geom.nv; % number of geoms
+X = geom.X; % geom positions
+oc = curve;
+[x,y] = oc.getXY(X); % seperate x and y coordinates
+
+den = f.*[geom.sa;geom.sa]*2*pi/N;
+[f1,f2] = oc.getXY(den);
+stokesSLP = zeros(2*N,1);
+
+for j = 1:N
+  ind = [(1:j-1) (j+1:N)];
+  xSou = x(ind);
+  ySou = y(ind);
+  fxSou = fx(ind);
+  fySou = fy(ind);
+
+  rho = (x(j) - xSou).^2 + (y(j) - ySou).^2;
+  br = 1./rho;
+  logpart = -1/2*log(rho);
+  stokesSLP(j) = sum(logpart.*fxSou);
+  stokesSLP(j+N) = sum(logpart.*fySou);
+
+  rdotf = ((x(j) - xSou).*fxSou + (y(j) - ySou).*fySou).*br;
+  stokesSLP(j) = stokesSLP(j) + sum(rdotf.*(x(j) - xSou));
+  stokesSLP(j+N) = stokesSLP(j+N) + sum(rdotf.*(y(j) - ySou));
+end
+
+end % exactStokesSLDirect
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesSLP,stokesSLPtar] = ...
     exactStokesSLfmm(o,geom,f,Xtar,K)
 % [stokesSLP,stokeSLPtar] = exactStokesSLfmm(geom,f,Xtar,K) uses 
