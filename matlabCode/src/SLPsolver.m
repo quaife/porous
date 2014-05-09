@@ -148,13 +148,13 @@ norm(eta - eta3(:))
 
 S = zeros(2*prams.Ninner*prams.nv);
 
-%e = eye(2*prams.Ninner*prams.nv,1);
-%for k = 1:2*prams.Ninner*prams.nv;
-%  disp(2*prams.Ninner*prams.nv - k);
-%  S(:,k) = op.SLPmatVecMultiply2(e,innerGeom);
-%  e(k) = 0;
-%  e(k+1) = 1;
-%end
+e = eye(2*prams.Ninner*prams.nv,1);
+for k = 1:2*prams.Ninner*prams.nv;
+  disp(2*prams.Ninner*prams.nv - k);
+  S(:,k) = op.SLPmatVecMultiply2(e,innerGeom);
+  e(k) = 0;
+  e(k+1) = 1;
+end
 
 
 
