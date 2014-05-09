@@ -18,10 +18,6 @@ innerGeom = capsules(Xinner,'inner');
 % circle may not be a very good preconditioner.  This way, we can use
 % multigrid with Picard
 
-%rhs = [zeros(prams.Ninner*prams.nv,1); ...
-%    reshape(innerGeom.X(end/2+1:end,:),prams.Ninner*prams.nv,1)];
-%rhs = [1/2*ones(prams.Ninner*prams.nv,1); ...
-%    ones(prams.Ninner*prams.nv,1)];
 rhs = [1/2*ones(prams.Ninner,prams.nv); ones(prams.Ninner,prams.nv)];
 % right-hand side which corresponds to no-slip on the solid walls
 
@@ -135,13 +131,13 @@ om.writeMessage(' ');
 
 eta2 = reshape(eta2,2*prams.Ninner,prams.nv);
 eta2 = eta2./sqrt(2*pi*[sa;sa])*sqrt(innerGeom.N);
-eta2 = eta2(:);
-norm(eta - eta2(:))
+%norm(eta - eta2(:))/norm(eta)
 eta3 = reshape(eta3,2*prams.Ninner,prams.nv);
 eta3 = eta3./sqrt(2*pi*[sa;sa])*sqrt(innerGeom.N);
-eta3 = eta3(:);
-norm(eta - eta3(:))
+%norm(eta - eta3(:))/norm(eta)
 
+norm(op.SLPmatVecMultiply(eta2(:),innerGeom) - rhs(:))/norm(rhs(:))
+norm(op.SLPmatVecMultiply(eta3(:),innerGeom) - rhs(:))/norm(rhs(:))
 
 
 
@@ -157,14 +153,3 @@ for k = 1:2*prams.Ninner*prams.nv;
 end
 
 
-
-%sigmaInner = zeros(2*prams.Ninner,prams.nv);
-%% initialize space for desnity function along inner boundaries
-%for k = 1:prams.nv
-%  istart = 2*(k-1)*prams.Ninner + 1;
-%  iend = istart + 2*prams.Ninner - 1;
-%  sigmaInner(:,k) = eta(istart:iend);
-%end
-%% unstack the density function at the inner boundaries
-%
-%

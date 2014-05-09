@@ -1141,7 +1141,6 @@ else
   % need to multiply by arclength term.  Seperate it into
   % x and y coordinate
 
-
   [u,v] = stokesSLPfmm(f1(:),f2(:),x(:),y(:));
   stokesSLP = zeros(2*N,nv); % initialize
   for k = 1:nv
@@ -1152,7 +1151,6 @@ else
   end
   % Wrap the output of the FMM into the usual 
   % [[x1;y1] [x2;y2] ...] format
-
 
   for k = 1:nv
     [u,v] = stokesSLPfmm(f1(:,k),f2(:,k),x(:,k),y(:,k));

@@ -4,11 +4,11 @@ load radii.dat;
 load centers.dat;
 
 prams.Nouter = [];
-prams.Ninner = 32;
+prams.Ninner = 128;
 % number of points per circle exclusion
-prams.nv = 1;
+prams.nv = 100;
 % number of exclusions
-prams.gmresTol = 1e-10;
+prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = min(2*prams.nv*prams.Ninner,100);
 % maximum number of gmres iterations
@@ -16,12 +16,12 @@ prams.maxIter = min(2*prams.nv*prams.Ninner,100);
 % Different options
 options.bieSolve = true;
 options.farField = 'circles';
-options.fmm = false;
-options.profile = false;
+options.fmm = true;
+options.profile = true;
 options.saveData = true;
 options.verbose = true;
 options.dataFile = ' ';
-options.logFile = ' ';
+options.logFile = 'output/stokesSLPtest.log';
 options.axis = [];
 
 %theta = (0:prams.Ninner-1)'*2*pi/prams.Ninner;
