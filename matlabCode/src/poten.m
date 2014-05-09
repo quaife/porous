@@ -330,7 +330,7 @@ Gfinner = Gfinner + stokesSLP;
 % add in contribution from all other exclusions
     
 
-Gf = [Gfinner(:);Gfouter(:)];
+Gf = [Gfinner(:)];
 
 
 end % SLPmatVecMultiply
@@ -338,9 +338,54 @@ end % SLPmatVecMultiply
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function f = exactStokesSLdiag(o,geom,f)
-% f = exactStokesSLdiag(geom,f) computes the single-layer potential due to a bunch of circles in the object geom.  f is the density function.  The geometry MUST all be circles.  Otherwise, this is incorrect.  This is much faster than Alpert
+function Gf = SLPmatVecMultiply2(o,f,innerGeom)
+% Gf = matVecMultiply(f,innerGeom) is the main
+% matrix-vector-multiplication routine.  f is the density function,
+% innerGeom and outerGeom are objects corresponding to the inner and
+% outer boundaries, respectively
 
+Ninner = innerGeom.N;
+nv = innerGeom.nv;
+Gfinner = zeros(2*Ninner,nv);
+innerEta = zeros(2*Ninner,nv);
+% allocate space for density function and layer potentials
+
+sa = innerGeom.sa;
+for k = 1:nv
+  istart = (k-1)*2*Ninner + 1;
+  iend = istart + 2*Ninner - 1;
+  innerEta(:,k) = f(istart:iend)*sqrt(innerGeom.N)./...
+      sqrt(2*pi*[sa(:,k);sa(:,k)]);
+end
+% unstack f so that it is one x-coordinate and one y-coordinate per
+% column
+
+Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
+% diagonal term from exclusions
+
+if ~o.fmm
+  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
+else
+  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
+end
+
+Gfinner = Gfinner + stokesSLP;
+% add in contribution from all other exclusions
+    
+Gfinner = sqrt(2*pi*[sa;sa])/sqrt(innerGeom.N).*Gfinner;
+Gf = Gfinner(:);
+
+
+end % SLPmatVecMultiply2
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Gf = exactStokesSLdiag(o,geom,f)
+% Gf = exactStokesSLdiag(geom,f) computes the single-layer potential due to a bunch of circles in the object geom.  f is the density function.  The geometry MUST all be circles.  Otherwise, this is incorrect.  This is much faster than Alpert
+
+Gf = zeros(2*geom.N,geom.nv);
 sigmah = zeros(2*geom.N,1);
 modes = (-geom.N/2:geom.N/2-1)';
 for k = 1:geom.nv
@@ -389,11 +434,25 @@ for k = 1:geom.nv
   sigmah(geom.N/2+2+geom.N) = sigmap1(2);
 
 
-  f(:,k) = [ifft(ifftshift(sigmah(1:end/2))); ...
+  Gf(:,k) = [ifft(ifftshift(sigmah(1:end/2))); ...
        ifft(ifftshift(sigmah(end/2+1:end)))];
 
 end % k = exclusions
 
+% deal with the rank-one null space
+%theta = (0:geom.N-1)'*2*pi/geom.N;
+%for k = 1:geom.nv
+%  sigma = f(:,k);
+%  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
+%  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
+%
+%  fCosSin(1) = sigmah(geom.N/2)+sigmah(geom.N/2+2);
+%  fCosSin(2) = 1i*(-sigmah(geom.N/2+geom.N)+sigmah(geom.N/2+2+geom.N));
+%
+%  Gf(1:end/2,k) = fCosSin(1)/geom.N * cos(theta);
+%  Gf(end/2+1:end,k) = fCosSin(2)/geom.N * sin(theta);
+%
+%end % k = exclusions
 
 end % exactStokesSLdiag
 

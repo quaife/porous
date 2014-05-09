@@ -59,7 +59,6 @@ om.writeMessage(message,'%s\n');
 om.writeStars
 om.writeMessage(' ');
 
-
 sigmaInner = zeros(2*prams.Ninner,prams.nv);
 % initialize space for desnity function along inner boundaries
 for k = 1:prams.nv
