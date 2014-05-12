@@ -7,7 +7,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 2;
+prams.nv = 17;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -17,14 +17,14 @@ prams.maxIter = 1500;
 prams.atol = 1e-6;
 prams.rtol = 1e-3;
 % absolute and relative tolerances for ode45
-prams.T = 150;
+prams.T = 100;
 % time horizon for ode45
-prams.ntime = 1501;
+prams.ntime = 501;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = false;
-options.computeEuler = true;
+options.bieSolve = true;
+options.computeEuler = false;
 options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
@@ -33,7 +33,7 @@ options.axis = [-0.5 5.5 0 30];
 options.axis = [-0.1 5.1 0 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.logFile = 'output/circles.log';
 options.profile = false;
 options.saveData = true;
@@ -65,8 +65,8 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-%  [xtar,ytar] = meshgrid(linspace(0.26,4.52,10),linspace(30,30,1));
-  xtar = [2.4]; ytar = [30];
+  [xtar,ytar] = meshgrid(linspace(0.5,4.1,10),linspace(30,30,1));
+%  xtar = [4.2]; ytar = [30];
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
@@ -76,7 +76,7 @@ if options.tracersSimulation
   options.nx = 100;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
-  options.ymax = 35;
+  options.ymax = 33;
   options.ny = 900;
   % min, max, and number of Euler locations in y direction
   options.ymThresh = options.ymin + 2;

@@ -261,6 +261,8 @@ Gfouter = Gfouter + o.exactStokesDLdiag(outerGeom,outerEta);
 Gfouter = Gfouter + o.exactStokesN0diag(outerGeom,outerEta);
 % rank one modification to remove null space
 
+[~,NearOuter] = outerGeom.getZone(innerGeom,2);
+
 if ~o.fmm
   stokesSLP = o.exactStokesSL(innerGeom,innerEta);
   [~,stokesSLPtar] = ...
@@ -273,6 +275,12 @@ else
       o.exactStokesSLfmm(innerGeom,innerEta,outerGeom.X,(1:nv));
   [~,stokesDLPtar] = ...
       o.exactStokesDLfmm(outerGeom,outerEta,innerGeom.X,1);
+
+  stokesDLPtar2 = o.nearSingInt(...
+      outerGeom,outerEta,@o.exactStokesDLdiag,...
+      NearOuter,@o.exactStokesDLfmm,innerGeom,0,'outer');
+  norm(stokesDLPtar)
+  norm(stokesDLPtar2-stokesDLPtar)
 end
 
 %stokesSLPtar = 0*stokesSLPtar;
