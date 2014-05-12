@@ -12,7 +12,7 @@ prams.nv = 50;
 prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = min(2*prams.nv*prams.Ninner,500);
-%prams.maxIter = 10;
+%prams.maxIter = 30;
 % maximum number of gmres iterations
 
 % Different options

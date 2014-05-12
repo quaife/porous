@@ -9,7 +9,7 @@ function [S,P] = SLPsolve(Xinner,options,prams)
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-preco = true;
+preco = false;
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
@@ -168,14 +168,16 @@ relResVec = [];
 %relResVec(1:numel(relresvec3),3) = relresvec3;
 
 
-S = zeros(2*prams.Ninner*prams.nv);
-P = zeros(2*prams.Ninner*prams.nv);
-e = eye(2*prams.Ninner*prams.nv,1);
-for j = 1:2*prams.Ninner*prams.nv
-  disp(2*prams.Ninner*prams.nv - j)
-  S(:,j) = op.SLPmatVecMultiply(e,innerGeom);
-  P(:,j) = op.matVecPreco(e,innerGeom);
-  e(j) = 0;
-  e(j+1) = 1;
-end
+S = [];
+P = S;
+%S = zeros(2*prams.Ninner*prams.nv);
+%P = zeros(2*prams.Ninner*prams.nv);
+%e = eye(2*prams.Ninner*prams.nv,1);
+%for j = 1:2*prams.Ninner*prams.nv
+%  disp(2*prams.Ninner*prams.nv - j)
+%  S(:,j) = op.SLPmatVecMultiply2(e,innerGeom);
+%  P(:,j) = op.matVecPreco(e,innerGeom);
+%  e(j) = 0;
+%  e(j+1) = 1;
+%end
 
