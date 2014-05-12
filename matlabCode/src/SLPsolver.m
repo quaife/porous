@@ -9,7 +9,11 @@ function [S,P] = SLPsolve(Xinner,options,prams)
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+<<<<<<< HEAD
 preco = false
+=======
+preco = false;
+>>>>>>> c23e11a9e6eb087926de1d86f5e48957af03f4d1
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
@@ -168,6 +172,8 @@ relResVec = [];
 %relResVec(1:numel(relresvec3),3) = relresvec3;
 
 
+S = [];
+P = S;
 S = zeros(2*prams.Ninner*prams.nv);
 P = zeros(2*prams.Ninner*prams.nv);
 e = eye(2*prams.Ninner*prams.nv,1);
@@ -178,4 +184,3 @@ for j = 1:2*prams.Ninner*prams.nv
   e(j) = 0;
   e(j+1) = 1;
 end
-
