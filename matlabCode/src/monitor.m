@@ -429,6 +429,8 @@ fileName = [fileName(1:end-8) 'TracerPositions.bin'];
 
 
 figure(2);
+nfile = 1;
+%for k = 1:(ntime-1)/500:ntime
 for k = 1:ntime
   clf
   subplot(1,2,1)
@@ -464,6 +466,9 @@ for k = 1:ntime
   axis(ax)
   set(gca,'visible','off')
 
+%  fileName = ['figs/image' num2str(nfile,'%04d')];
+%  nfile = nfile + 1;
+%  print(gcf,'-dpng','-r300',fileName);
 
   pause(0.01)
 end

@@ -167,22 +167,30 @@ relResVec = [];
 %relResVec(1:numel(relresvec3),3) = relresvec3;
 
 
-S = zeros(2*prams.Ninner);
-
-for k = 1:prams.nv
-  geom = capsules(innerGeom.X(:,k),'inner');
-  e = eye(2*prams.Ninner,1);
-  for j = 1:2*prams.Ninner;
-  %  disp(2*prams.Ninner - j);
-    S(:,j) = op.SLPmatVecMultiply(e,geom);
-    e(j) = 0;
-    e(j+1) = 1;
-  end
-%  eValues = eig(S);
-%  disp(max(eValues)/min(eValues))
-%  disp(norm(S - S'))
-%  om.writeStars
+S = zeros(2*prams.Ninner*prams.nv);
+e = eye(2*prams.Ninner*prams.nv,1);
+for j = 1:2*prams.Ninner*prams.nv
+  S(:,j) = op.SLPmatVecMultiply(e,innerGeom);
+  e(j) = 0;
+  e(j+1) = 1;
 end
+
+
+%S = zeros(2*prams.Ninner);
+%for k = 1:prams.nv
+%  geom = capsules(innerGeom.X(:,k),'inner');
+%  e = eye(2*prams.Ninner,1);
+%  for j = 1:2*prams.Ninner;
+%  %  disp(2*prams.Ninner - j);
+%    S(:,j) = op.SLPmatVecMultiply(e,geom);
+%    e(j) = 0;
+%    e(j+1) = 1;
+%  end
+%%  eValues = eig(S);
+%%  disp(max(eValues)/min(eValues))
+%%  disp(norm(S - S'))
+%%  om.writeStars
+%end
 
 %S = [];
 

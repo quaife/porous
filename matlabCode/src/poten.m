@@ -330,11 +330,11 @@ Gfinner = Gfinner + stokesSLP;
     
 
 theta = (0:Ninner-1)'*2*pi/Ninner;
-x0 = [cos(theta);sin(theta)];
 for k = 1:nv
-  rankOneMod = (x0'*innerEta(:,k))*x0;
-  Gfinner(:,k) = Gfinner(:,k) + rankOneMod;
+  Gfinner(:,k) = Gfinner(:,k) + (2*pi/Ninner)^2*...
+      ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
 end
+% rank one modification to remove null space
 
 
 Gf = [Gfinner(:)];

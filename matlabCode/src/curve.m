@@ -161,13 +161,10 @@ if any(strcmp(options,'circles'))
   % paramterization of the circular exclusions
 
 elseif any(strcmp(options,'square'))
-  a = 5/2; b = 45/2; order = 10;
+  a = 2.15e0; b = 9*a; order = 10;
   % parameters for the boundary
   r = (cos(t).^order + sin(t).^order).^(-1/order);
-  x = a*r.*(cos(t))+a; y = b*r.*(sin(t))+b-8;
-
-%  x = 2*cos(t);
-%  y = 2*sin(t);
+  x = a*r.*(cos(t))+2.39e0; y = b*r.*(sin(t))+b-5;
 
   X = [x;y];
   % rounded off square.  Increase order ot make it more square
