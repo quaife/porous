@@ -9,7 +9,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 100;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
