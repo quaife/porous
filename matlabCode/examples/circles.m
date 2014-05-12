@@ -7,7 +7,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 465;
+prams.nv = 2;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -23,7 +23,7 @@ prams.ntime = 1501;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = true;
+options.bieSolve = false;
 options.computeEuler = true;
 options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
@@ -33,7 +33,7 @@ options.axis = [-0.5 5.5 0 30];
 options.axis = [-0.1 5.1 0 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.logFile = 'output/circles.log';
 options.profile = false;
 options.saveData = true;
@@ -64,19 +64,20 @@ end
 
 
 if options.tracersSimulation
-  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-%  [xtar,ytar] = meshgrid(linspace(0.2,4.8,10),linspace(30,30,1));
+%  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
+%  [xtar,ytar] = meshgrid(linspace(0.26,4.52,10),linspace(30,30,1));
+  xtar = [2.4]; ytar = [30];
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
   % file that has all the necessary density function and geometry stored
-  options.xmin = 0.05;
-  options.xmax = 4.95;
-  options.nx = 200;
+  options.xmin = 0.25;
+  options.xmax = 4.53;
+  options.nx = 100;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
   options.ymax = 35;
-  options.ny = 1800;
+  options.ny = 900;
   % min, max, and number of Euler locations in y direction
   options.ymThresh = options.ymin + 2;
   options.ypThresh = options.ymax - 2;

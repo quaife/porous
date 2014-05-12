@@ -77,15 +77,15 @@ elseif strcmp(side,'outer')
   [x,y] = oc.getXY(X);
   % Separate out x and y coordinates
   vx = zeros(N,1);
-  vy = zeros(N,1);
-  ind = y>35;
-  vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
-  % typical mollifer so that velocity decays smoothly to 0
-
-  ind = y<-6;
-  vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
-  % typical mollifer so that velocity decays smoothly to 0
-  vy = -exp(1./(((x-2.5)/max(x-2.5)).^2-1))/exp(-1);
+%  vy = zeros(N,1);
+%  ind = y>35;
+%  vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
+%  % typical mollifer so that velocity decays smoothly to 0
+%
+%  ind = y<-6;
+%  vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
+%  % typical mollifer so that velocity decays smoothly to 0
+  vy = -exp(1./(((x-2.39)/max(x-2.39)).^2-1))/exp(-1);
   vy(abs(vy)==Inf) = 0;
   % fix points where we divided by 0.  Limiting value is 0
 

@@ -262,17 +262,17 @@ Gfouter = Gfouter + o.exactStokesN0diag(outerGeom,outerEta);
 % rank one modification to remove null space
 
 if ~o.fmm
-  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
+  stokesSLP = o.exactStokesSL(innerGeom,innerEta);
   [~,stokesSLPtar] = ...
-      exactStokesSL(o,innerGeom,innerEta,outerGeom.X,(1:nv));
+      o.exactStokesSL(innerGeom,innerEta,outerGeom.X,(1:nv));
   [~,stokesDLPtar] = ...
-      exactStokesDL(o,outerGeom,outerEta,innerGeom.X,1);
+      o.exactStokesDL(outerGeom,outerEta,innerGeom.X,1);
 else
-  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
+  stokesSLP = o.exactStokesSLfmm(innerGeom,innerEta);
   [~,stokesSLPtar] = ...
-      exactStokesSLfmm(o,innerGeom,innerEta,outerGeom.X,(1:nv));
+      o.exactStokesSLfmm(innerGeom,innerEta,outerGeom.X,(1:nv));
   [~,stokesDLPtar] = ...
-      exactStokesDLfmm(o,outerGeom,outerEta,innerGeom.X,1);
+      o.exactStokesDLfmm(outerGeom,outerEta,innerGeom.X,1);
 end
 
 %stokesSLPtar = 0*stokesSLPtar;

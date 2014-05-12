@@ -452,7 +452,7 @@ for k = 1:ntime
   subplot(1,2,2)
   hold on
   vec1 = [Xouter(1:end/2);Xouter(1)];
-  vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
+  vec2 = [Xouter(end/2+1:end);Xouter(end/2+1)];
   plot(vec1,vec2,'k','linewidth',2)
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
