@@ -277,22 +277,18 @@ if ~o.fmm
       NearOuter,@o.exactStokesDL,innerGeom,0,'outer');
 else
   stokesSLP = o.exactStokesSLfmm(innerGeom,innerEta);
-  [~,stokesSLPtar] = ...
-      o.exactStokesSLfmm(innerGeom,innerEta,outerGeom.X,(1:nv));
-  [~,stokesDLPtar] = ...
-      o.exactStokesDLfmm(outerGeom,outerEta,innerGeom.X,1);
+%  [~,stokesSLPtar] = ...
+%      o.exactStokesSLfmm(innerGeom,innerEta,outerGeom.X,(1:nv));
+%  [~,stokesDLPtar] = ...
+%      o.exactStokesDLfmm(outerGeom,outerEta,innerGeom.X,1);
 
-  stokesDLPtar2 = o.nearSingInt(...
+  stokesSLPtar = o.nearSingInt(...
+      innerGeom,innerEta,@o.exactStokesSLdiag,...
+      NearInner,@o.exactStokesSLfmm,outerGeom,0,'inner');
+  stokesDLPtar = o.nearSingInt(...
       outerGeom,outerEta,@o.exactStokesDLdiag,...
-      NearOuter,@o.exactStokesDLfmm,innerGeom,0,'outer');
-  norm(stokesDLPtar)
-  norm(stokesDLPtar2-stokesDLPtar)
+      NearOuter,@o.exactStokesDL,innerGeom,0,'outer');
 end
-
-%stokesSLPtar = 0*stokesSLPtar;
-%stokesDLPtar = 0*stokesDLPtar;
-%
-%Gfinner = innerEta;
 
 Gfinner = Gfinner + stokesSLP;
 % add in contribution from all other exclusions
@@ -307,11 +303,10 @@ for k = 1:nv
   Gfinner(:,k) = Gfinner(:,k) + (2*pi/Ninner)^2*...
       ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
 end
-% rank one modification to remove null space
-    
+% rank one modification to remove null space.  Each exclusion results
+% in a one dimensional null space
 
 Gf = [Gfinner(:);Gfouter(:)];
-
 
 end % matVecMultiply
 
