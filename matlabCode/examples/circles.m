@@ -2,17 +2,18 @@ addpath ../src
 
 load radii.dat;
 load centers.dat;
+centers = centers(433,:);
+radii = radii(433);
 
-prams.Nouter = 1024;
+prams.Nouter = 512;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 17;
+prams.nv = 1;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
-%prams.maxIter = 2*(prams.Nouter + prams.nv*prams.Ninner);
-prams.maxIter = 1500;
+prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
 % maximum number of gmres iterations
 prams.atol = 1e-6;
 prams.rtol = 1e-3;
@@ -25,7 +26,7 @@ prams.ntime = 501;
 % Different options
 options.bieSolve = true;
 options.computeEuler = false;
-options.tracersSimulation = true;
+options.tracersSimulation = false;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
@@ -33,7 +34,7 @@ options.axis = [-0.5 5.5 0 30];
 options.axis = [-0.1 5.1 0 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.logFile = 'output/circles.log';
 options.profile = false;
 options.saveData = true;

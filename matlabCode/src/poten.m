@@ -225,7 +225,8 @@ invGf = real(invGf);
 end % matVecPreco
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function Gf = matVecMultiply(o,f,innerGeom,outerGeom)
+function Gf = matVecMultiply(o,f,innerGeom,outerGeom,...
+    NearInner,NearOuter)
 % Gf = matVecMultiply(f,innerGeom,outerGeom) is the main
 % matrix-vector-multiplication routine.  f is the density function,
 % innerGeom and outerGeom are objects corresponding to the inner and
@@ -261,14 +262,19 @@ Gfouter = Gfouter + o.exactStokesDLdiag(outerGeom,outerEta);
 Gfouter = Gfouter + o.exactStokesN0diag(outerGeom,outerEta);
 % rank one modification to remove null space
 
-[~,NearOuter] = outerGeom.getZone(innerGeom,2);
 
 if ~o.fmm
   stokesSLP = o.exactStokesSL(innerGeom,innerEta);
-  [~,stokesSLPtar] = ...
-      o.exactStokesSL(innerGeom,innerEta,outerGeom.X,(1:nv));
-  [~,stokesDLPtar] = ...
-      o.exactStokesDL(outerGeom,outerEta,innerGeom.X,1);
+%  [~,stokesSLPtar] = ...
+%      o.exactStokesSL(innerGeom,innerEta,outerGeom.X,(1:nv));
+%  [~,stokesDLPtar] = ...
+%      o.exactStokesDL(outerGeom,outerEta,innerGeom.X,1);
+  stokesSLPtar = o.nearSingInt(...
+      innerGeom,innerEta,@o.exactStokesSLdiag,...
+      NearInner,@o.exactStokesSL,outerGeom,0,'inner');
+  stokesDLPtar = o.nearSingInt(...
+      outerGeom,outerEta,@o.exactStokesDLdiag,...
+      NearOuter,@o.exactStokesDL,innerGeom,0,'outer');
 else
   stokesSLP = o.exactStokesSLfmm(innerGeom,innerEta);
   [~,stokesSLPtar] = ...
@@ -295,6 +301,13 @@ Gfouter = Gfouter + stokesSLPtar;
 
 Gfinner = Gfinner + stokesDLPtar;
 % add in contribution from the outer boundary to all the exclusions
+
+theta = (0:Ninner-1)'*2*pi/Ninner;
+for k = 1:nv
+  Gfinner(:,k) = Gfinner(:,k) + (2*pi/Ninner)^2*...
+      ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
+end
+% rank one modification to remove null space
     
 
 Gf = [Gfinner(:);Gfouter(:)];
@@ -858,6 +871,8 @@ for k1 = 1:nvSou
           plot(Xtar(J,k2),Xtar(Ntar+J,k2),'b.')
           plot(XLag(1:numel(J),:),XLag(numel(J)+1:end,:),'kx')
           plot(XLag(i,:),XLag(numel(J)+i,:),'gx')
+          axis equal
+          axis([-1 6 27.5 29])
 
           figure(1); clf; hold on
           plot((0:interpOrder-1)*beta*h(k2),...
