@@ -352,7 +352,11 @@ Gfinner = Gfinner + stokesSLP;
 
 theta = (0:Ninner-1)'*2*pi/Ninner;
 for k = 1:nv
-  Gfinner(:,k) = Gfinner(:,k) + (2*pi/Ninner)^2*...
+  rad = innerGeom.length(k)/2/pi;
+  % rad/4 is the right scaling so that the preconditioner and rank one
+  % modification are inverses of each other when applied to
+  % [cos(theta);sin(theta)]
+  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)^1*...
       ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
 end
 % rank one modification to remove null space
@@ -400,6 +404,18 @@ end
 Gfinner = Gfinner + stokesSLP;
 % add in contribution from all other exclusions
     
+theta = (0:Ninner-1)'*2*pi/Ninner;
+for k = 1:nv
+  rad = innerGeom.length(k)/2/pi;
+  % rad/4 is the right scaling so that the preconditioner and rank one
+  % modification are inverses of each other when applied to
+  % [cos(theta);sin(theta)]
+  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)^1*...
+      ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
+end
+% rank one modification to remove null space
+
+% rank one modification to remove null space
 Gfinner = sqrt(2*pi*[sa;sa])/sqrt(innerGeom.N).*Gfinner;
 Gf = Gfinner(:);
 

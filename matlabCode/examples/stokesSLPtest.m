@@ -5,9 +5,9 @@ load radii.dat;
 load centers.dat;
 
 prams.Nouter = [];
-prams.Ninner = 64;
+prams.Ninner = 8;
 % number of points per circle exclusion
-prams.nv = 2;
+prams.nv = 100;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -28,21 +28,21 @@ options.axis = [];
 theta = (0:prams.Ninner-1)'*2*pi/prams.Ninner;
 %X = [1/2*cos(theta) cos(theta)+3 cos(theta) cos(theta)+3; ...
 %     1/2*sin(theta) sin(theta) sin(theta)+3 sin(theta)+3];
-%Xinner = [cos(theta);sin(theta)];
-Xinner = [cos(theta) cos(theta)+3; ...
-     sin(theta) sin(theta)];
-%oc = curve;
-%Xinner = oc.initConfig(prams.Ninner,'circles', ...
-%          'nv',prams.nv, ...
-%          'center',centers, ...
-%          'radii',radii);
+%Xinner = 2*[cos(theta);sin(theta)];
+%Xinner = [cos(theta) cos(theta)+3; ...
+%     sin(theta) sin(theta)];
+oc = curve;
+Xinner = oc.initConfig(prams.Ninner,'circles', ...
+          'nv',prams.nv, ...
+          'center',centers, ...
+          'radii',radii);
 % circular exclusions
 
 if options.profile
   profile off; profile on;
 end
 
-[S,relResVec] = SLPsolver(Xinner,options,prams);
+[S,P] = SLPsolver(Xinner,options,prams);
 % solve density function and write to .bin files.  It this calculation
 % has already ben done, everything can be loaded in tracers to do the
 % Lagrange tracker simulation.
