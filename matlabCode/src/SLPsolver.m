@@ -170,11 +170,12 @@ relResVec = [];
 
 S = zeros(2*prams.Ninner*prams.nv);
 P = zeros(2*prams.Ninner*prams.nv);
-%e = eye(2*prams.Ninner*prams.nv,1);
-%for j = 1:2*prams.Ninner*prams.nv
-%  S(:,j) = op.SLPmatVecMultiply(e,innerGeom);
-%  P(:,j) = op.matVecPreco(e,innerGeom);
-%  e(j) = 0;
-%  e(j+1) = 1;
-%end
+e = eye(2*prams.Ninner*prams.nv,1);
+for j = 1:2*prams.Ninner*prams.nv
+  disp(2*prams.Ninner*prams.nv - j)
+  S(:,j) = op.SLPmatVecMultiply(e,innerGeom);
+  P(:,j) = op.matVecPreco(e,innerGeom);
+  e(j) = 0;
+  e(j+1) = 1;
+end
 

@@ -351,7 +351,7 @@ for k = 1:nv
   % rad/4 is the right scaling so that the preconditioner and rank one
   % modification are inverses of each other when applied to
   % [cos(theta);sin(theta)]
-  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)^1*...
+  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)*...
       ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
 end
 % rank one modification to remove null space
@@ -405,7 +405,7 @@ for k = 1:nv
   % rad/4 is the right scaling so that the preconditioner and rank one
   % modification are inverses of each other when applied to
   % [cos(theta);sin(theta)]
-  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)^1*...
+  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)*...
       ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
 end
 % rank one modification to remove null space
