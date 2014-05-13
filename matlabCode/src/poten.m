@@ -160,12 +160,11 @@ sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
 SBDf = o.matVecPreco(f,innerGeom,[]);
 % block diagonal preconditioner applied to the right hand side f
 
-%res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
-%fprintf('initial residual\n')
-%clf;plot(res(1:innerGeom.N))
-%pause
 nPre = 1;
-for k = 1:nPre
+sigma = SBDf;
+% with initial guess being 0, first pre smoothing step simply lets
+% sigma be SBDf
+for k = 1:nPre-1
   Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
   sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
 end
@@ -175,13 +174,18 @@ resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
 
 [errCoarse,flag,relres,iter] = gmres(...
     @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
-    -resCoarse,[],1e-8,numel(resCoarse),...
-    @(X) o.matVecPreco(X,innerGeomCoarse));
+    -resCoarse,[],1e-10,numel(resCoarse),...
+    @(X) o.matVecPreco(X,innerGeomCoarse,[]));
+%iter(2)
+%[errCoarse,flag,relres,iter] = gmres(...
+%    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
+%    -resCoarse,[],1e-10,numel(resCoarse));
+%iter(2)
 
 err = o.prolong(errCoarse,innerGeomCoarse.N,innerGeom.N);
 sigma = sigma + err;
 
-nPost = 1;
+nPost = 0;
 for k = 1:nPost
   Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
   sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;

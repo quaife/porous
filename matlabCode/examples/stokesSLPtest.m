@@ -7,18 +7,19 @@ load centers.dat;
 prams.Nouter = [];
 prams.Ninner = 64;
 % number of points per circle exclusion
-prams.nv = 20;
+prams.nv = 50;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = min(2*prams.nv*prams.Ninner,500);
+%prams.maxIter = 1;
 %prams.maxIter = 30;
 % maximum number of gmres iterations
 
 % Different options
 options.bieSolve = true;
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.profile = false;
 options.saveData = true;
 options.verbose = true;
@@ -38,7 +39,7 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'center',centers, ...
           'radii',radii);
 % circular exclusions
-XinnerCoarse = oc.initConfig(32,'circles',...
+XinnerCoarse = oc.initConfig(8,'circles',...
           'nv',prams.nv, ...
           'center',centers, ...
           'radii',radii);

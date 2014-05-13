@@ -24,9 +24,9 @@ prams.ntime = 501;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = true;
+options.bieSolve = false;
 options.computeEuler = true;
-options.tracersSimulation = false;
+options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
