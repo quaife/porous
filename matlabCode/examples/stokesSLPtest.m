@@ -5,9 +5,9 @@ load radii.dat;
 load centers.dat;
 
 prams.Nouter = [];
-prams.Ninner = 32;
+prams.Ninner = 128;
 % number of points per circle exclusion
-prams.nv = 4;
+prams.nv = 2;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -27,8 +27,8 @@ options.logFile = 'output/stokesSLPtest.log';
 options.axis = [];
 
 theta = (0:prams.Ninner-1)'*2*pi/prams.Ninner;
-X = [cos(theta) cos(theta)+2.01 cos(theta) cos(theta)+2.01; ...
-     sin(theta) sin(theta) sin(theta)+2.01 sin(theta)+2.01];
+%X = [cos(theta) cos(theta)+2.01 cos(theta) cos(theta)+2.01; ...
+%     sin(theta) sin(theta) sin(theta)+2.01 sin(theta)+2.01];
 %Xinner = 2*[cos(theta);sin(theta)];
 %Xinner = [cos(theta) cos(theta)+2.1; ...
 %     sin(theta) sin(theta)];
