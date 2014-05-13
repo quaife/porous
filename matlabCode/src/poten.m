@@ -217,7 +217,7 @@ for k = 1:innerGeom.nv
 end % k = exclusions
 istart = iend + 1;
 iend = numel(f);
-%invGf(istart:iend) = DLPpreco * f(istart:iend);
+invGf(istart:iend) = DLPpreco * f(istart:iend);
 
 
 invGf = real(invGf);

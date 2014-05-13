@@ -9,7 +9,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 100;
+prams.nv = 200;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -24,9 +24,9 @@ prams.ntime = 501;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = false;
-options.computeEuler = false;
-options.tracersSimulation = true;
+options.bieSolve = true;
+options.computeEuler = true;
+options.tracersSimulation = false;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
@@ -74,11 +74,11 @@ if options.tracersSimulation
   % file that has all the necessary density function and geometry stored
   options.xmin = 0.25;
   options.xmax = 4.53;
-  options.nx = 100;
+  options.nx = 200;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
   options.ymax = 33;
-  options.ny = 900;
+  options.ny = 1800;
   % min, max, and number of Euler locations in y direction
   options.ymThresh = options.ymin + 2;
   options.ypThresh = options.ymax - 2;
