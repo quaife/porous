@@ -148,6 +148,102 @@ end % regularWeights
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse)
+% sigma = twoGridPreco(f,innerGeom) is used as the block-diagonal
+% preconditioner due to the inner circles.  Does inverse of each term
+% using a circle who has the same circumference as the geometry
+%f = rand(size(f));
+
+sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
+%sigma = f;
+
+SBDf = o.matVecPreco(f,innerGeom,[]);
+% block diagonal preconditioner applied to the right hand side f
+
+%res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
+%fprintf('initial residual\n')
+%clf;plot(res(1:innerGeom.N))
+%pause
+nPre = 1;
+for k = 1:nPre
+  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
+  sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+end
+
+res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
+resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
+
+[errCoarse,flag,relres,iter] = gmres(...
+    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
+    -resCoarse,[],1e-8,numel(resCoarse),...
+    @(X) o.matVecPreco(X,innerGeomCoarse));
+
+err = o.prolong(errCoarse,innerGeomCoarse.N,innerGeom.N);
+sigma = sigma + err;
+
+nPost = 1;
+for k = 1:nPost
+  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
+  sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+end
+
+
+end % twoGridPreco
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function zCoarse = restrict(o,z,Nfine,Ncoarse)
+
+nSecs = numel(z)/Nfine;
+nRestrict = log2(Nfine/Ncoarse);
+
+for k = 1:nRestrict
+  Nfine = Nfine/2;
+  zCoarse = zeros(numel(z)/2,1);
+  for j = 1:nSecs
+    istart = (j-1)*Nfine + 1;
+    iend = istart + Nfine - 1;
+    zCoarse(istart:iend) = 1/2*z(2*(istart:iend)-1);
+    zCoarse(istart:iend) = zCoarse(istart:iend) + ...
+      1/4*z(2*(istart:iend));
+    zCoarse(istart+1:iend) = zCoarse(istart+1:iend) + ...
+      1/4*z(2*(istart+1:iend)-2);
+    zCoarse(istart) = zCoarse(istart) + 1/4*z(2*iend);
+    % take care of periodicity
+  end
+  z = zCoarse;
+end
+
+
+
+
+end % restrict
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function zFine = prolong(o,z,Ncoarse,Nfine)
+
+nSecs = numel(z)/Ncoarse;
+nProlong = log2(Nfine/Ncoarse);
+for k = 1:nProlong
+  Ncoarse = Ncoarse*2;
+  zFine = zeros(numel(z)*2,1);
+  for j = 1:nSecs
+    istart = (j-1)*Ncoarse + 1;
+    iend = istart + Ncoarse - 1;
+    zFine(istart:2:iend) = z((istart+1)/2:iend/2);
+    zFine(istart+1:2:iend) = 1/2*z((istart+1)/2:iend/2);
+    zFine(istart+1:2:iend-2) = zFine(istart+1:2:iend-2) + ...
+        1/2*z(((istart+1)/2:(iend-2)/2)+1);
+    zFine(iend) = zFine(iend) + 1/2*z((istart+1)/2);
+  end
+  z = zFine;
+end
+
+
+
+end % prolong
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function invGf = matVecPreco(o,f,innerGeom,DLPpreco)
 % invGf = matVecPreco(f,innerGeom) is used as the block-diagonal preconditioner due to the inner circles.  Does inverse of each term using a circle who has the same circumference as the geometry
 

@@ -1,4 +1,4 @@
-function [S,P] = SLPsolve(Xinner,options,prams)
+function [S,P] = SLPsolve(Xinner,XinnerCoarse,options,prams)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DESCRIPTION:
 % INPUTS
@@ -9,10 +9,13 @@ function [S,P] = SLPsolve(Xinner,options,prams)
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-preco = false;
+preco = '2grid';
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
+innerGeomCoarse = capsules(XinnerCoarse,'inner');
+
+
 % create objects for the inner and outer boundaries.
 % The outer boundary will need more points so need
 % two classes.  Also, think that the double-layer potential
@@ -31,44 +34,50 @@ rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 
 % object for evaluating layer potentials
 
-%tic
-%if preco
-%  fprintf('Using preconditioner\n')
-%  [eta1,flag,relres,iter,relresvec1] = gmres(...
-%      @(X) op.SLPmatVecMultiply(X,innerGeom),...
-%      rhs(:),[],prams.gmresTol,prams.maxIter,...
-%      @(X) op.matVecPreco(X,innerGeom));
-%else
-%  fprintf('Not using preconditioner\n')
-%  [eta1,flag,relres,iter,relresvec1] = gmres(...
-%      @(X) op.SLPmatVecMultiply(X,innerGeom),...
-%      rhs(:),[],prams.gmresTol,prams.maxIter);
-%end
-%% do GMRES to find density function
-%om.writeStars
-%message = ['****    pGMRES took ' num2str(toc,'%4.2e') ...
-%    ' seconds     ****'];
-%om.writeMessage(message,'%s\n');
-%if (flag == 0)
-%  message = ['****    pGMRES required ' num2str(iter(2),'%3d'),...
-%      ' iterations    ****'];
-%  om.writeMessage(message,'%s\n');
-%elseif (flag == 1)
-%  message = '****    GMRES tolerance not achieved     ****';
-%  om.writeMessage(message,'%s\n');
-%  message = ['****    achieved tolerance is ' ...
-%      num2str(relres,'%4.2e') '   ****'];
-%  om.writeMessage(message,'%s\n');
-%  message = ['****    pGMRES took ' num2str(iter(2),'%3d'),...
-%      ' iterations        ****'];
-%  om.writeMessage(message,'%s\n');
-%else 
-%  message = 'GMRES HAD A PROBLEM';
-%  om.writeMessage(message,'%s\n');
-%end
-%om.writeStars
-%om.writeMessage(' ');
-%
+tic
+if strcmp(preco,'BD')
+  fprintf('Using block-diagonal preconditioner\n')
+  [eta1,flag,relres,iter,relresvec1] = gmres(...
+      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+      rhs(:),[],prams.gmresTol,prams.maxIter,...
+      @(X) op.matVecPreco(X,innerGeom));
+elseif strcmp(preco,'2grid')
+  fprintf('Using two grid V-cycle\n')
+  [eta1,flag,relres,iter,relresvec1] = gmres(...
+      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+      rhs(:),[],prams.gmresTol,prams.maxIter,...
+      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse));
+else
+  fprintf('Not using preconditioner\n')
+  [eta1,flag,relres,iter,relresvec1] = gmres(...
+      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+      rhs(:),[],prams.gmresTol,prams.maxIter);
+end
+% do GMRES to find density function
+om.writeStars
+message = ['****    pGMRES took ' num2str(toc,'%4.2e') ...
+    ' seconds     ****'];
+om.writeMessage(message,'%s\n');
+if (flag == 0)
+  message = ['****    pGMRES required ' num2str(iter(2),'%3d'),...
+      ' iterations    ****'];
+  om.writeMessage(message,'%s\n');
+elseif (flag == 1)
+  message = '****    GMRES tolerance not achieved     ****';
+  om.writeMessage(message,'%s\n');
+  message = ['****    achieved tolerance is ' ...
+      num2str(relres,'%4.2e') '   ****'];
+  om.writeMessage(message,'%s\n');
+  message = ['****    pGMRES took ' num2str(iter(2),'%3d'),...
+      ' iterations        ****'];
+  om.writeMessage(message,'%s\n');
+else 
+  message = 'GMRES HAD A PROBLEM';
+  om.writeMessage(message,'%s\n');
+end
+om.writeStars
+om.writeMessage(' ');
+
 %
 %
 %
@@ -76,7 +85,7 @@ rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 %rhs2 = rhs.*sqrt(2*pi*[sa;sa])/sqrt(innerGeom.N);
 %
 %tic
-%if preco
+%if strcmp(preco,'BD')
 %  [eta2,flag,relres,iter,relresvec2] = minres(...
 %      @(X) op.SLPmatVecMultiply2(X,innerGeom),...
 %      rhs2(:),prams.gmresTol,prams.maxIter,...
@@ -114,7 +123,7 @@ rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 %
 %
 %tic
-%if preco
+%if strcmp(preco,'BD')
 %  [eta3,flag,relres,iter,relresvec3] = symmlq(...
 %      @(X) op.SLPmatVecMultiply2(X,innerGeom),...
 %      rhs2(:),prams.gmresTol,prams.maxIter,...
@@ -169,13 +178,13 @@ rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 
 S = [];
 P = S;
-S = zeros(2*prams.Ninner*prams.nv);
-P = zeros(2*prams.Ninner*prams.nv);
-e = eye(2*prams.Ninner*prams.nv,1);
-for j = 1:2*prams.Ninner*prams.nv
-%  disp(2*prams.Ninner*prams.nv - j)
-  S(:,j) = op.SLPmatVecMultiply(e,innerGeom);
-  P(:,j) = op.matVecPreco(e,innerGeom);
-  e(j) = 0;
-  e(j+1) = 1;
-end
+%S = zeros(2*prams.Ninner*prams.nv);
+%P = zeros(2*prams.Ninner*prams.nv);
+%e = eye(2*prams.Ninner*prams.nv,1);
+%for j = 1:2*prams.Ninner*prams.nv
+%%  disp(2*prams.Ninner*prams.nv - j)
+%  S(:,j) = op.SLPmatVecMultiply(e,innerGeom);
+%  P(:,j) = op.matVecPreco(e,innerGeom);
+%  e(j) = 0;
+%  e(j+1) = 1;
+%end

@@ -5,9 +5,9 @@ load radii.dat;
 load centers.dat;
 
 prams.Nouter = [];
-prams.Ninner = 128;
+prams.Ninner = 64;
 % number of points per circle exclusion
-prams.nv = 2;
+prams.nv = 20;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -38,12 +38,17 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'center',centers, ...
           'radii',radii);
 % circular exclusions
+XinnerCoarse = oc.initConfig(32,'circles',...
+          'nv',prams.nv, ...
+          'center',centers, ...
+          'radii',radii);
+% coarse grid
 
 if options.profile
   profile off; profile on;
 end
 
-[S,P] = SLPsolver(Xinner,options,prams);
+[S,P] = SLPsolver(Xinner,XinnerCoarse,options,prams);
 % solve density function and write to .bin files.  It this calculation
 % has already ben done, everything can be loaded in tracers to do the
 % Lagrange tracker simulation.
