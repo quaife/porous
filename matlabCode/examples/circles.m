@@ -9,7 +9,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 465;
+prams.nv = 100;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -24,9 +24,9 @@ prams.ntime = 501;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = true;
-options.computeEuler = true;
-options.tracersSimulation = false;
+options.bieSolve = false;
+options.computeEuler = false;
+options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
@@ -66,7 +66,7 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-  [xtar,ytar] = meshgrid(linspace(0.5,4.1,10),linspace(30,30,1));
+  [xtar,ytar] = meshgrid(linspace(0.3,4.3,200),linspace(30,30,1));
 %  xtar = [4.2]; ytar = [30];
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
