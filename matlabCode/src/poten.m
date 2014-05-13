@@ -148,7 +148,7 @@ end % regularWeights
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function invGf = matVecPreco(o,f,innerGeom)
+function invGf = matVecPreco(o,f,innerGeom,DLPpreco)
 % invGf = matVecPreco(f,innerGeom) is used as the block-diagonal preconditioner due to the inner circles.  Does inverse of each term using a circle who has the same circumference as the geometry
 
 invGf = f;
@@ -215,7 +215,9 @@ for k = 1:innerGeom.nv
   % move back to physical space
 
 end % k = exclusions
-
+istart = iend + 1;
+iend = numel(f);
+%invGf(istart:iend) = DLPpreco * f(istart:iend);
 
 
 invGf = real(invGf);
@@ -252,6 +254,7 @@ outerEta = f(istart:iend);
 % unstack f so that it is one x-coordinate and one y-coordinate per
 % column
 
+%Gfinner = innerEta;
 Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
 % diagonal term from exclusions
 
@@ -261,7 +264,6 @@ Gfouter = Gfouter + o.exactStokesDLdiag(outerGeom,outerEta);
 % double-layer potential
 Gfouter = Gfouter + o.exactStokesN0diag(outerGeom,outerEta);
 % rank one modification to remove null space
-
 
 if ~o.fmm
   stokesSLP = o.exactStokesSL(innerGeom,innerEta);
@@ -287,7 +289,7 @@ else
       NearInner,@o.exactStokesSLfmm,outerGeom,0,'inner');
   stokesDLPtar = o.nearSingInt(...
       outerGeom,outerEta,@o.exactStokesDLdiag,...
-      NearOuter,@o.exactStokesDL,innerGeom,0,'outer');
+      NearOuter,@o.exactStokesDLfmm,innerGeom,0,'outer');
 end
 
 Gfinner = Gfinner + stokesSLP;
@@ -297,6 +299,7 @@ Gfouter = Gfouter + stokesSLPtar;
 
 Gfinner = Gfinner + stokesDLPtar;
 % add in contribution from the outer boundary to all the exclusions
+%Gfouter = outerEta;
 
 theta = (0:Ninner-1)'*2*pi/Ninner;
 for k = 1:nv
@@ -1333,6 +1336,96 @@ end
 
 
 end % exactStokesDLfmm
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function D = stokesDLmatrix(o,geom)
+% D = stokesDLmatrix(geom), generate double-layer potential for 
+% Stokes geom is a data structure defined as in the capsules class
+% D is (2N,2N,nv) array where N is the number of points per curve and 
+% nv is the number of curves in X 
+
+
+N = geom.N; % Number of points per geom 
+nv = geom.nv; % Number of geoms
+X = geom.X; % Vesicle positions
+oc = curve;
+[x,y] = oc.getXY(X);
+
+normal = geom.normal; % Normal vector
+tang = geom.xt; % Tangent vector
+sa = geom.sa; % Jacobian
+
+D = zeros(2*N,2*N,nv);
+for k=1:nv  % Loop over curves
+  for j=1:N % Loop over targets
+    rho2 = (x(j,k)-x(:,k)).^2 + (y(j,k)-y(:,k)).^2;
+    rho2(j) = 1;
+    % Set diagonal term to one to avoid dividing by zero
+
+    coeff = ((x(j,k) - x(:,k)).*normal(1:N,k) + ...
+        (y(j,k) - y(:,k)).*normal(N+1:2*N,k)).*...
+        sa(:,k)./rho2.^2/pi;
+    % part of kernel of the double-layer potential
+
+    D(j,:,k) = 2*pi/N*[coeff.*(x(j,k) - x(:,k)).^2; ...
+      coeff.*(x(j,k) - x(:,k)).*(y(j,k) - y(:,k))]';
+    D(j+N,:,k) = 2*pi/N*[coeff.*(y(j,k) - y(:,k)).*(x(j,k)-x(:,k)); ...
+      coeff.*(y(j,k) - y(:,k)).^2]';
+    % Build double-layer potential matrix D
+
+    rc = [j j+N];
+    D(rc,rc,k) = -2*pi/N*sa(j,k)*geom.cur(j,k)/2/pi*...
+      [tang(j,k)^2 tang(j,k)*tang(j+N,k);...
+      tang(j+N,k)*tang(j,k) tang(j+N,k)^2];
+    % Diagonal term requires the limiting value.  Otherwise, above formula
+    % would divide by zero
+  end % j
+end % k
+
+
+end % stokesDLmatrix
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function N0 = stokesN0matrix(o,geom)
+% N0 = stokesN0matrix(geom) generates the the integral 
+% operator with kernel normal(x) \otimes normal(y) which removes
+% the rank one defficiency of the double-layer potential.  Need
+% this operator for solid walls
+
+N = geom.N; % Number of points per geom 
+nv = geom.nv; % Number of geoms
+X = geom.X; % Vesicle positions
+oc = curve;
+[x,y] = oc.getXY(X);
+
+normal = geom.normal; % Normal vector
+sa = geom.sa; % Jacobian
+
+
+N0 = zeros(2*N,2*N,nv);
+for k = 1:1 % Loop over curves
+  % Only want to form N0 for the outer boundary.
+  % Rotlets and Stokeslets take care of null space for inner 
+  % boundaries
+  for j = 1:2*N % Loop over targets
+    N0(j,:,k) = normal(j,k)*normal(:,k).*...
+        [sa(:,k);sa(:,k)]*2*pi/N;
+    % compute the columns of the modification to the double-layer
+    % potential.
+  end
+end
+% Use N0 if solving (-1/2 + DLP)\eta = f where f has no flux through
+% the boundary.  By solving (-1/2 + DLP + N0)\eta = f, we guarantee
+% that \eta also has no flux through the boundary.  This is not
+% required, but it means we're enforcing one addition condition on eta
+% which removes the rank one kernel.  DLP is the double-layer potential
+% for stokes equation
+
+end % stokesN0matrix
+
 
 
 
