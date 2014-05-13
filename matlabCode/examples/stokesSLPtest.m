@@ -5,9 +5,9 @@ load radii.dat;
 load centers.dat;
 
 prams.Nouter = [];
-prams.Ninner = 64;
+prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 50;
+prams.nv = 400;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -39,7 +39,7 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'center',centers, ...
           'radii',radii);
 % circular exclusions
-XinnerCoarse = oc.initConfig(8,'circles',...
+XinnerCoarse = oc.initConfig(32,'circles',...
           'nv',prams.nv, ...
           'center',centers, ...
           'radii',radii);
