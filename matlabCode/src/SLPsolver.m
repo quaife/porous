@@ -9,7 +9,7 @@ function [S,P] = SLPsolve(Xinner,XinnerCoarse,options,prams)
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-preco = '2grid';
+preco = 'none';
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');

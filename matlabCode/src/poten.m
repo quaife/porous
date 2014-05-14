@@ -148,6 +148,37 @@ end % regularWeights
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function sigma = twoGridIter(o,f,innerGeom,innerGeomCoarse)
+% Try out Equation (2.8) from "Two-Grid Solution of Symm's Integral
+% Equation" by J. Saranen and G. Vainikko
+
+sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
+% initial guess
+SBDf = o.matVecPreco(f,innerGeom,[]);
+% block diagonal preconditioner applied to the right hand side f
+
+niter = 1;
+for k = 1:niter
+  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
+  v = o.matVecPreco(Gsigma,innerGeom,[]) - SBDf;
+
+  Gv = o.SLPmatVecMultiply(v,innerGeom);
+  GcRHS = o.restrict(Gv - o.matVecPreco(v,innerGeom,[]),...
+     innerGeom.N,innerGeomCoarse.N); 
+  [GcCoarse,flag,relres,iter] = gmres(...
+    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
+    GcRHS,[],1e-10,numel(GcRHS));
+  % can put in preconditioner here
+  Gc = o.prolong(GcCoarse,innerGeomCoarse.N,innerGeom.N);
+
+  sigma = sigma - v + Gc;
+end
+% DON'T KNOW IF IT IS A BUG OR IF IT JUST DOESN'T WORK
+
+
+end % twoGridIter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse)
 % sigma = twoGridPreco(f,innerGeom) is used as the block-diagonal
 % preconditioner due to the inner circles.  Does inverse of each term

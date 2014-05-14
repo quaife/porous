@@ -134,10 +134,10 @@ end % writeMessage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function writeGeometry(o,Xinner,Xouter,sigmaInner,sigmaOuter)
-% writeGeometry(Xinner,Xouter,sigmaInner,sigmaOuter) writes the geometry
-% and the density function to .bin file.  This can be loaded later to do
-% the tracer simulations without having to regenerate the density
-% function
+% writeGeometry(Xinner,Xouter,sigmaInner,sigmaOuter) writes the
+% geometry and the density function to .bin file.  This can be loaded
+% later to do the tracer simulations without having to regenerate the
+% density function
 
 fid = fopen(o.dataFile,'w');
 fwrite(fid,[o.Ninner;o.Nouter;o.nv],'double');
@@ -403,7 +403,7 @@ figure(1); clf; hold on;
 
 quiver(eulerX,eulerY,u,v,'g')
 %plot(eulerX,eulerY,'go')
-plot(xtra,ytra,'r')
+plot(xtra,ytra,'r-')
 vec1 = [Xouter(1:end/2);Xouter(1)];
 vec2 = [Xouter(end/2+1:end);Xouter(end/2)];
 plot(vec1,vec2,'k')
@@ -431,7 +431,7 @@ fileName = [fileName(1:end-8) 'TracerPositions.bin'];
 figure(2);
 nfile = 1;
 %for k = 1:(ntime-1)/500:ntime
-for k = 1:ntime
+for k = 1:5:ntime
   clf
   subplot(1,2,1)
   hold on
