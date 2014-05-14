@@ -179,33 +179,56 @@ end
 end % twoGridIter
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse)
+function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse,sigma0)
 % sigma = twoGridPreco(f,innerGeom) is used as the block-diagonal
 % preconditioner due to the inner circles.  Does inverse of each term
 % using a circle who has the same circumference as the geometry
 %f = rand(size(f));
 
-sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
-%sigma = f;
+global GMRESiter
+%GMRESiter = GMRESiter + 1;
+%MAXITER = [40 42 50 60 65 70];
+%MAXITER = [20 22 30 40 65 70 70*ones(1,100)];
+%maxIter = MAXITER(GMRESiter);
+%TOL = [1e-8 1e-10*ones(1,100)];
+%tol = TOL(GMRESiter);
+tol = 1e-10;
 
 SBDf = o.matVecPreco(f,innerGeom,[]);
 % block diagonal preconditioner applied to the right hand side f
 
+if nargin == 4
+  sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
+else
+  sigma = sigma0;
+end
+% initial guess
+
 nPre = 1;
-sigma = SBDf;
-% with initial guess being 0, first pre smoothing step simply lets
-% sigma be SBDf
-for k = 1:nPre-1
-  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
-  sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+if nargin == 4
+  sigma = SBDf;
+  % with initial guess being 0, first pre smoothing step simply lets
+  % sigma be SBDf
+  for k = 1:nPre-1
+    Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
+    sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+  end
+else
+  for k = 1:nPre
+    Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
+    sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+  end
 end
 
 res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
 resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
+maxIter = numel(resCoarse);
+%tol = max(1e-10,1e-12*norm(resCoarse));
 
+tol = min(1/2,norm(res,inf));
 [errCoarse,flag,relres,iter] = gmres(...
     @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
-    -resCoarse,[],1e-10,numel(resCoarse),...
+    -resCoarse,[],tol,maxIter,...
     @(X) o.matVecPreco(X,innerGeomCoarse,[]));
 %errCoarse = o.matVecPreco(-resCoarse,innerGeomCoarse,[]);
 %iter(2)
@@ -216,6 +239,7 @@ resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
 
 err = o.prolong(errCoarse,innerGeomCoarse.N,innerGeom.N);
 sigma = sigma + err;
+disp([iter(2) norm(res,inf) norm(err,inf)]);
 
 nPost = 0;
 for k = 1:nPost
@@ -287,14 +311,17 @@ invGf = f;
 % want the part corresponding to the outer walls to be the identity
 
 sigmah = zeros(2*innerGeom.N,1);
-modes = (-innerGeom.N/2:innerGeom.N/2-1)';
+%modes = (-innerGeom.N/2:innerGeom.N/2-1)';
+modes = [(0:innerGeom.N/2-1) (-innerGeom.N/2:-1)]';
 for k = 1:innerGeom.nv
   rad = innerGeom.length(k)/2/pi;
   istart = (k-1)*2*innerGeom.N+1;
   iend = istart + 2*innerGeom.N - 1;
   sigma = f(istart:iend);
-  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
-  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
+%  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
+%  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
+  sigmah(1:end/2) = fft(sigma(1:end/2));
+  sigmah(end/2+1:end) = fft(sigma(end/2+1:end));
   for j = 1:innerGeom.N
     if abs(modes(j)) > 1
       % these terms are all diagonal in Fourier space
@@ -331,19 +358,27 @@ for k = 1:innerGeom.nv
 % keep this mode consistent with the [cos(theta);-sin(theta)] mapping
 
   g = A*[fm1;fp1]; 
-  j = innerGeom.N/2;
+%  j = innerGeom.N/2;
+%  sigmah(j) = g(1);
+%  sigmah(j+innerGeom.N) = g(2);
+%  j = innerGeom.N/2+2;
+%  sigmah(j) = g(3);
+%  sigmah(j+innerGeom.N) = g(4);
+  j = innerGeom.N;
   sigmah(j) = g(1);
   sigmah(j+innerGeom.N) = g(2);
-  j = innerGeom.N/2+2;
+  j = 2;
   sigmah(j) = g(3);
   sigmah(j+innerGeom.N) = g(4);
   % put in the 1 and -1 modes which are not diagonal; they communicate
   % with one another
 
 
+%  invGf(istart:iend) = ...
+%      [ifft(ifftshift(sigmah(1:end/2))); ...
+%       ifft(ifftshift(sigmah(end/2+1:end)))];
   invGf(istart:iend) = ...
-      [ifft(ifftshift(sigmah(1:end/2))); ...
-       ifft(ifftshift(sigmah(end/2+1:end)))];
+      [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
   % move back to physical space
 
 end % k = exclusions
@@ -561,12 +596,15 @@ function Gf = exactStokesSLdiag(o,geom,f)
 
 Gf = zeros(2*geom.N,geom.nv);
 sigmah = zeros(2*geom.N,1);
-modes = (-geom.N/2:geom.N/2-1)';
+%modes = (-geom.N/2:geom.N/2-1)';
+modes = [(0:geom.N/2-1) (-geom.N/2:-1)]';
 for k = 1:geom.nv
   rad = geom.length(k)/2/pi;
   sigma = f(:,k);
-  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
-  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
+%  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
+%  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
+  sigmah(1:end/2) = fft(sigma(1:end/2));
+  sigmah(end/2+1:end) = fft(sigma(end/2+1:end));
 
   sigmam1 = zeros(2,1);
   sigmap1 = zeros(2,1);
@@ -602,31 +640,22 @@ for k = 1:geom.nv
     end
 
   end
-  sigmah(geom.N/2) = sigmam1(1);
-  sigmah(geom.N/2+2) = sigmap1(1);
-  sigmah(geom.N/2+geom.N) = sigmam1(2);
-  sigmah(geom.N/2+2+geom.N) = sigmap1(2);
+%  sigmah(geom.N/2) = sigmam1(1);
+%  sigmah(geom.N/2+2) = sigmap1(1);
+%  sigmah(geom.N/2+geom.N) = sigmam1(2);
+%  sigmah(geom.N/2+2+geom.N) = sigmap1(2);
+  sigmah(geom.N) = sigmam1(1);
+  sigmah(2) = sigmap1(1);
+  sigmah(2*geom.N) = sigmam1(2);
+  sigmah(geom.N+2) = sigmap1(2);
 
 
-  Gf(:,k) = [ifft(ifftshift(sigmah(1:end/2))); ...
-       ifft(ifftshift(sigmah(end/2+1:end)))];
+%  Gf(:,k) = [ifft(ifftshift(sigmah(1:end/2))); ...
+%       ifft(ifftshift(sigmah(end/2+1:end)))];
+  Gf(:,k) = [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
 
 end % k = exclusions
 
-% deal with the rank-one null space
-%theta = (0:geom.N-1)'*2*pi/geom.N;
-%for k = 1:geom.nv
-%  sigma = f(:,k);
-%  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
-%  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
-%
-%  fCosSin(1) = sigmah(geom.N/2)+sigmah(geom.N/2+2);
-%  fCosSin(2) = 1i*(-sigmah(geom.N/2+geom.N)+sigmah(geom.N/2+2+geom.N));
-%
-%  Gf(1:end/2,k) = fCosSin(1)/geom.N * cos(theta);
-%  Gf(end/2+1:end,k) = fCosSin(2)/geom.N * sin(theta);
-%
-%end % k = exclusions
 
 end % exactStokesSLdiag
 

@@ -9,7 +9,7 @@ prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 200;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -20,7 +20,7 @@ prams.rtol = 1e-3;
 % absolute and relative tolerances for ode45
 prams.T = 100;
 % time horizon for ode45
-prams.ntime = 501;
+prams.ntime = 5001;
 % number of time steps that ode45 will output
 
 % Different options
@@ -66,7 +66,8 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-  [xtar,ytar] = meshgrid(linspace(0.3,4.3,200),linspace(30,30,1));
+%  [xtar,ytar] = meshgrid(linspace(0.3,4.3,200),linspace(30,30,1));
+  [xtar,ytar] = meshgrid(linspace(2,2,1),linspace(30,30,1));
 %  xtar = [4.2]; ytar = [30];
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
@@ -74,16 +75,15 @@ if options.tracersSimulation
   % file that has all the necessary density function and geometry stored
   options.xmin = 0.25;
   options.xmax = 4.53;
-  options.nx = 200;
+  options.nx = 400;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
   options.ymax = 33;
-  options.ny = 1800;
+  options.ny = 3600;
   % min, max, and number of Euler locations in y direction
-  options.ymThresh = options.ymin + 2;
+%  options.ymThresh = options.ymin + 2;
+  options.ymThresh = options.ymin + 0;
   options.ypThresh = options.ymax - 2;
-%  options.ymThresh = 23.6;
-%  options.ypThresh = 24.4;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra] = tracers(X0,options,prams,fileName);

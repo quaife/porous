@@ -9,7 +9,7 @@ function [S,P] = SLPsolve(Xinner,XinnerCoarse,options,prams)
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-preco = 'none';
+preco = '2grid';
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
@@ -34,6 +34,9 @@ rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 
 % object for evaluating layer potentials
 
+if options.profile
+  profile off; profile on;
+end
 tic
 if strcmp(preco,'BD')
   fprintf('Using block-diagonal preconditioner\n')
@@ -42,11 +45,23 @@ if strcmp(preco,'BD')
       rhs(:),[],prams.gmresTol,prams.maxIter,...
       @(X) op.matVecPreco(X,innerGeom,[]));
 elseif strcmp(preco,'2grid')
+  global GMRESiter
+  GMRESiter = 0;
   fprintf('Using two grid V-cycle\n')
-  [eta1,flag,relres,iter,relresvec1] = gmres(...
-      @(X) op.SLPmatVecMultiply(X,innerGeom),...
-      rhs(:),[],prams.gmresTol,prams.maxIter,...
-      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse));
+%  [eta1,flag,relres,iter,relresvec1] = gmres(...
+%      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+%      rhs(:),[],prams.gmresTol,prams.maxIter,...
+%      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse));
+
+  eta = rhs;
+  norm(op.SLPmatVecMultiply(eta,innerGeom)-rhs(:))/norm(rhs(:))
+  for k = 1:10
+    eta = op.twoGridPreco(rhs(:),innerGeom,innerGeomCoarse,eta(:));
+    eta = reshape(eta,2*innerGeom.N,innerGeom.nv);
+    norm(op.SLPmatVecMultiply(eta,innerGeom)-rhs(:))/norm(rhs(:))
+  end
+  pause
+
 else
   fprintf('Not using preconditioner\n')
   [eta1,flag,relres,iter,relresvec1] = gmres(...
@@ -77,6 +92,13 @@ else
 end
 om.writeStars
 om.writeMessage(' ');
+
+if options.profile
+  profile off;
+  filename = [options.logFile(1:end-4) 'Profile'];
+  profsave(profile('info'),filename);
+end
+% save the profile
 
 %
 %

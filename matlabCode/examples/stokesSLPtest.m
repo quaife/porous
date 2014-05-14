@@ -7,7 +7,7 @@ load centers.dat;
 prams.Nouter = [];
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 10;
+prams.nv = 200;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -19,7 +19,7 @@ prams.maxIter = min(2*prams.nv*prams.Ninner,500);
 % Different options
 options.bieSolve = true;
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.profile = false;
 options.saveData = true;
 options.verbose = true;
@@ -45,9 +45,9 @@ XinnerCoarse = oc.initConfig(32,'circles',...
           'radii',radii);
 % coarse grid
 
-if options.profile
-  profile off; profile on;
-end
+%if options.profile
+%  profile off; profile on;
+%end
 
 [S,P] = SLPsolver(Xinner,XinnerCoarse,options,prams);
 % solve density function and write to .bin files.  It this calculation
@@ -56,11 +56,11 @@ end
 
 
 
-if options.profile
-  profile off;
-  filename = [options.logFile(1:end-4) 'Profile'];
-  profsave(profile('info'),filename);
-end
-% save the profile
+%if options.profile
+%  profile off;
+%  filename = [options.logFile(1:end-4) 'Profile'];
+%  profsave(profile('info'),filename);
+%end
+%% save the profile
 
 
