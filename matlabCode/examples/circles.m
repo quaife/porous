@@ -75,11 +75,11 @@ if options.tracersSimulation
   % file that has all the necessary density function and geometry stored
   options.xmin = 0.25;
   options.xmax = 4.53;
-  options.nx = 400;
+  options.nx = 800;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
   options.ymax = 33;
-  options.ny = 3600;
+  options.ny = 7200;
   % min, max, and number of Euler locations in y direction
 %  options.ymThresh = options.ymin + 2;
   options.ymThresh = options.ymin + 0;
