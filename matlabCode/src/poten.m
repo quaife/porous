@@ -1286,31 +1286,6 @@ oc = curve;
 [fx,fy] = oc.getXY(f);
 stokesSLP = zeros(2*N,nv);
 
-tic
-for k = 1:nv
-  for j = 1:N
-    xSou = x(:,k);
-    ySou = y(:,k);
-    fxSou = fx(:,k);
-    fySou = fy(:,k);
-
-    rho = (x(j,k) - xSou).^2 + (y(j,k) - ySou).^2;
-    rho(j) = 1;
-    logpart = -1/2*log(rho);
-    stokesSLP(j,k) = sum(logpart.*fxSou);
-    stokesSLP(j+N,k) = sum(logpart.*fySou);
-
-    rdotf = ((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou)./rho;
-    stokesSLP(j,k) = stokesSLP(j,k) + sum(rdotf.*(x(j,k) - xSou));
-    stokesSLP(j+N,k) = stokesSLP(j+N,k) + sum(rdotf.*(y(j,k) - ySou));
-  end
-end
-stokesSLP = stokesSLP/4/pi;
-toc
-stokesSLP2 = stokesSLP;
-
-
-tic
 for k = 1:nv
   for j = 1:N
     xSou = x(:,k);
@@ -1322,15 +1297,12 @@ for k = 1:nv
     rho(j) = 1;
     rdotf = ((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou)./rho;
     logpart = -1/2*log(rho);
-    stokesSLP(j,k) = sum(logpart.*fxSou);
-    stokesSLP(j+N,k) = sum(logpart.*fySou);
 
-    stokesSLP(j,k) = stokesSLP(j,k) + sum(rdotf.*(x(j,k) - xSou));
-    stokesSLP(j+N,k) = stokesSLP(j+N,k) + sum(rdotf.*(y(j,k) - ySou));
+    stokesSLP(j,k) = sum(logpart.*fxSou + rdotf.*(x(j,k) - xSou));
+    stokesSLP(j+N,k) = sum(logpart.*fySou + rdotf.*(y(j,k) - ySou));
   end
 end
 stokesSLP = stokesSLP/4/pi;
-toc
 
 end % exactStokesSLDirect
 
