@@ -1295,8 +1295,8 @@ for k = 1:nv
 
     rho = (x(j,k) - xSou).^2 + (y(j,k) - ySou).^2;
     rho(j) = 1;
-    rdotf = ((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou)./rho;
     logpart = -1/2*log(rho);
+    rdotf = ((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou)./rho;
 
     stokesSLP(j,k) = sum(logpart.*fxSou + rdotf.*(x(j,k) - xSou));
     stokesSLP(j+N,k) = sum(logpart.*fySou + rdotf.*(y(j,k) - ySou));

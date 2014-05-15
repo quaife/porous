@@ -60,7 +60,7 @@ elseif strcmp(preco,'2grid')
 elseif strcmp(preco,'2gridIter')
   eta1 = rhs;
 %  err = norm(op.SLPmatVecMultiply(eta1,innerGeom)-rhs(:))/norm(rhs(:));
-  iter = [0 8];
+  iter = [0 20];
   for k = 1:iter(2)
     eta1 = op.twoGridPreco(rhs(:),innerGeom,innerGeomCoarse,eta1(:));
     eta1 = reshape(eta1,2*innerGeom.N,innerGeom.nv);

@@ -7,7 +7,7 @@ load centers.dat;
 prams.Nouter = [];
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 200;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
