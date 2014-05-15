@@ -8,8 +8,11 @@ function [S,P] = SLPsolve(Xinner,XinnerCoarse,options,prams)
 % OUTPUTS:
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+global matVecLarge matVecSmall
+matVecLarge = 0;
+matVecSmall = 0;
 
-preco = '2grid';
+preco = 'BD';
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
@@ -34,6 +37,10 @@ rhs = reshape(rhs,2*prams.Ninner,prams.nv);
 
 % object for evaluating layer potentials
 
+matVecLarge = 0;
+matVecSmall = 0;
+% reset to 0 since we are now doing solver
+
 if options.profile
   profile off; profile on;
 end
@@ -45,22 +52,24 @@ if strcmp(preco,'BD')
       rhs(:),[],prams.gmresTol,prams.maxIter,...
       @(X) op.matVecPreco(X,innerGeom,[]));
 elseif strcmp(preco,'2grid')
-  global GMRESiter
-  GMRESiter = 0;
   fprintf('Using two grid V-cycle\n')
-%  [eta1,flag,relres,iter,relresvec1] = gmres(...
-%      @(X) op.SLPmatVecMultiply(X,innerGeom),...
-%      rhs(:),[],prams.gmresTol,prams.maxIter,...
-%      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse));
-
-  eta = rhs;
-  norm(op.SLPmatVecMultiply(eta,innerGeom)-rhs(:))/norm(rhs(:))
-  for k = 1:10
-    eta = op.twoGridPreco(rhs(:),innerGeom,innerGeomCoarse,eta(:));
-    eta = reshape(eta,2*innerGeom.N,innerGeom.nv);
-    norm(op.SLPmatVecMultiply(eta,innerGeom)-rhs(:))/norm(rhs(:))
+  [eta1,flag,relres,iter,relresvec1] = gmres(...
+      @(X) op.SLPmatVecMultiply(X,innerGeom),...
+      rhs(:),[],prams.gmresTol,prams.maxIter,...
+      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse));
+elseif strcmp(preco,'2gridIter')
+  eta1 = rhs;
+%  err = norm(op.SLPmatVecMultiply(eta1,innerGeom)-rhs(:))/norm(rhs(:));
+  iter = [0 8];
+  for k = 1:iter(2)
+    eta1 = op.twoGridPreco(rhs(:),innerGeom,innerGeomCoarse,eta1(:));
+    eta1 = reshape(eta1,2*innerGeom.N,innerGeom.nv);
+%    err = [err norm(op.SLPmatVecMultiply(eta1,innerGeom)-rhs(:))/norm(rhs(:))];
   end
-  pause
+%  err(1:end-1)./err(2:end)
+%  err
+%  pause
+  flag = 0;
 
 else
   fprintf('Not using preconditioner\n')
@@ -68,6 +77,15 @@ else
       @(X) op.SLPmatVecMultiply(X,innerGeom),...
       rhs(:),[],prams.gmresTol,prams.maxIter);
 end
+
+eta1 = reshape(eta1,2*innerGeom.N,innerGeom.nv);
+fprintf('Number of large matvecs is %d\n',matVecLarge)
+fprintf('Number of small matvecs is %d\n',matVecSmall)
+res = norm(op.SLPmatVecMultiply(eta1,innerGeom)-rhs(:))/norm(rhs(:));
+fprintf('Final relative residual is %4.2e\n',res)
+err = norm(eta1 - etaTrue)/norm(etaTrue);
+fprintf('Final relative error is %4.2e\n',err)
+
 % do GMRES to find density function
 om.writeStars
 message = ['****    pGMRES took ' num2str(toc,'%4.2e') ...

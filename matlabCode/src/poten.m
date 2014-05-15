@@ -185,13 +185,6 @@ function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse,sigma0)
 % using a circle who has the same circumference as the geometry
 %f = rand(size(f));
 
-global GMRESiter
-%GMRESiter = GMRESiter + 1;
-%MAXITER = [40 42 50 60 65 70];
-%MAXITER = [20 22 30 40 65 70 70*ones(1,100)];
-%maxIter = MAXITER(GMRESiter);
-%TOL = [1e-8 1e-10*ones(1,100)];
-%tol = TOL(GMRESiter);
 tol = 1e-10;
 
 SBDf = o.matVecPreco(f,innerGeom,[]);
@@ -204,6 +197,7 @@ else
 end
 % initial guess
 
+global matVecLarge
 nPre = 1;
 if nargin == 4
   sigma = SBDf;
@@ -223,23 +217,15 @@ end
 res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
 resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
 maxIter = numel(resCoarse);
-%tol = max(1e-10,1e-12*norm(resCoarse));
 
-tol = min(1/2,norm(res,inf));
 [errCoarse,flag,relres,iter] = gmres(...
     @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
     -resCoarse,[],tol,maxIter,...
     @(X) o.matVecPreco(X,innerGeomCoarse,[]));
-%errCoarse = o.matVecPreco(-resCoarse,innerGeomCoarse,[]);
-%iter(2)
-%[errCoarse,flag,relres,iter] = gmres(...
-%    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
-%    -resCoarse,[],1e-10,numel(resCoarse));
-%iter(2)
 
 err = o.prolong(errCoarse,innerGeomCoarse.N,innerGeom.N);
 sigma = sigma + err;
-disp([iter(2) norm(res,inf) norm(err,inf)]);
+%disp([iter(2) norm(res,inf) norm(err,inf)]);
 
 nPost = 0;
 for k = 1:nPost
@@ -488,7 +474,13 @@ function Gf = SLPmatVecMultiply(o,f,innerGeom)
 % innerGeom and outerGeom are objects corresponding to the inner and
 % outer boundaries, respectively
 
+global matVecLarge matVecSmall
 Ninner = innerGeom.N;
+if Ninner == 256
+  matVecLarge = matVecLarge + 1;
+elseif Ninner == 32
+  matVecSmall = matVecSmall + 1;
+end
 nv = innerGeom.nv;
 Gfinner = zeros(2*Ninner,nv);
 innerEta = zeros(2*Ninner,nv);
