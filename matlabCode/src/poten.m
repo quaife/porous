@@ -185,7 +185,7 @@ function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse,sigma0)
 % using a circle who has the same circumference as the geometry
 %f = rand(size(f));
 
-tol = 1e-10;
+tol = 1e-2;
 
 SBDf = o.matVecPreco(f,innerGeom,[]);
 % block diagonal preconditioner applied to the right hand side f

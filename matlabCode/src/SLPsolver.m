@@ -12,7 +12,7 @@ global matVecLarge matVecSmall
 matVecLarge = 0;
 matVecSmall = 0;
 
-preco = 'BD';
+preco = '2gridIter';
 op = poten(prams.Ninner,options.fmm);
 om = monitor(options,prams);
 innerGeom = capsules(Xinner,'inner');
