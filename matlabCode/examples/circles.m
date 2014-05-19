@@ -81,6 +81,8 @@ if options.tracersSimulation
   options.ymax = 33;
   options.ny = 7200;
   % min, max, and number of Euler locations in y direction
+  options.nparts = 5;
+  % need to compute in sections otherwise seem to run out of memory
 %  options.ymThresh = options.ymin + 2;
   options.ymThresh = options.ymin + 0;
   options.ypThresh = options.ymax - 2;

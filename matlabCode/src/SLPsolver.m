@@ -53,22 +53,27 @@ if strcmp(preco,'BD')
       @(X) op.matVecPreco(X,innerGeom,[]));
 elseif strcmp(preco,'2grid')
   fprintf('Using two grid V-cycle\n')
+  maxIter = min(prams.maxIter,2*innerGeomCoarse.N*innerGeom.nv);
+  % maximum number of iterations done at the coarse grid solve
   [eta1,flag,relres,iter,relresvec1] = gmres(...
       @(X) op.SLPmatVecMultiply(X,innerGeom),...
       rhs(:),[],prams.gmresTol,prams.maxIter,...
-      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse));
+      @(X) op.twoGridPreco(X,innerGeom,innerGeomCoarse,...
+        1e-10,maxIter));
 elseif strcmp(preco,'2gridIter')
   eta1 = rhs;
-%  err = norm(op.SLPmatVecMultiply(eta1,innerGeom)-rhs(:))/norm(rhs(:));
-  iter = [0 20];
-  for k = 1:iter(2)
-    eta1 = op.twoGridPreco(rhs(:),innerGeom,innerGeomCoarse,eta1(:));
+  normRes = 1e10;
+  iter = [0 0];
+  maxVcycles = 100;
+  maxIter = 10;
+  while (normRes > prams.gmresTol && iter(2) < maxVcycles)
+    iter(2) = iter(2) + 1;
+    [eta1,normRes,gmresIter] = op.twoGridPreco(rhs(:),...
+        innerGeom,innerGeomCoarse,1e-2,maxIter,eta1(:));
+    maxIter = max(10,ceil(1.5*gmresIter));
+    disp([iter(2) normRes])
     eta1 = reshape(eta1,2*innerGeom.N,innerGeom.nv);
-%    err = [err norm(op.SLPmatVecMultiply(eta1,innerGeom)-rhs(:))/norm(rhs(:))];
   end
-%  err(1:end-1)./err(2:end)
-%  err
-%  pause
   flag = 0;
 
 else

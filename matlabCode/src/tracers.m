@@ -23,6 +23,7 @@ op = poten(Ninner,fmm);
 
 xmin = options.xmin; xmax = options.xmax; nx = options.nx;
 ymin = options.ymin; ymax = options.ymax; ny = options.ny;
+nparts = options.nparts;
 
 if options.computeEuler
   [eulerX,eulerY] = ...
@@ -35,10 +36,24 @@ if options.computeEuler
 %  eulerX = r.*cos(theta) + 3.9010990e0;
 %  eulerY = r.*sin(theta) + 2.4065934e1;
 
+  cutoff = ceil(numel(eulerX)/nparts);
+  eX = eulerX(:); eY = eulerY(:);
+
   tic
-  vel = op.layerEval(0,[eulerX(:);eulerY(:)],...
-      options.ymThresh,options.ypThresh,...
-      innerGeom,outerGeom,sigmaInner,sigmaOuter);
+%  vel = op.layerEval(0,[eulerX(:);eulerY(:)],...
+%      options.ymThresh,options.ypThresh,...
+%      innerGeom,outerGeom,sigmaInner,sigmaOuter);
+  vel = zeros(2*numel(eX),1);
+  for k = 1:nparts
+    istart = (k-1)*cutoff + 1;
+    iend = min(istart + cutoff - 1,numel(eX));
+    disp([istart iend])
+    velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
+        options.ymThresh,options.ypThresh,...
+        innerGeom,outerGeom,sigmaInner,sigmaOuter);
+    vel(istart:iend) = velPart(1:end/2);
+    vel((istart:iend)+numel(eX)) = velPart(end/2+1:end);
+  end
   % evalute velocity on an Eulerian grid
   om.writeStars
   message = '****   Velocity found on Eulerian Grid   ****';
@@ -66,36 +81,34 @@ else
 end
 
 
-odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
-% function handle that evalutes the right-hand side 
-tic
-opts.RelTol = prams.rtol;
-opts.AbsTol = prams.atol;
-[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0);
-om.writeMessage(' ');
-
-om.writeStars
-message = '****       Tracer locations found        ****';
-om.writeMessage(message);
-message = ['**** Required time was ' num2str(toc,'%4.2e') ...
-    ' seconds  ****'];
-om.writeMessage(message);
-om.writeStars
-om.writeMessage(' ');
-
-xtra = Xtra(:,1:end/2);
-ytra = Xtra(:,end/2+1:end);
-
-if options.usePlot
-%  om.plotData(Xinner,Xouter,eulerX,eulerY,u,v,xtra,ytra);
-%  om.runMovie(Xinner,Xouter,xtra,ytra);
-  om.plotData;
-  om.runMovie;
-end
-
-om.writeTracerPositions(time,xtra,ytra);
-fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
-[ntime,ntra,time,xtra,ytra] = ...
-    om.loadTracerPositions(fileName1);
+%odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
+%% function handle that evalutes the right-hand side 
+%tic
+%opts.RelTol = prams.rtol;
+%opts.AbsTol = prams.atol;
+%[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0);
+%om.writeMessage(' ');
+%
+%om.writeStars
+%message = '****       Tracer locations found        ****';
+%om.writeMessage(message);
+%message = ['**** Required time was ' num2str(toc,'%4.2e') ...
+%    ' seconds  ****'];
+%om.writeMessage(message);
+%om.writeStars
+%om.writeMessage(' ');
+%
+%xtra = Xtra(:,1:end/2);
+%ytra = Xtra(:,end/2+1:end);
+%
+%if options.usePlot
+%  om.plotData;
+%  om.runMovie;
+%end
+%
+%om.writeTracerPositions(time,xtra,ytra);
+%fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+%[ntime,ntra,time,xtra,ytra] = ...
+%    om.loadTracerPositions(fileName1);
 
 

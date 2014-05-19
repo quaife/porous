@@ -179,27 +179,25 @@ end
 end % twoGridIter
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function sigma = twoGridPreco(o,f,innerGeom,innerGeomCoarse,sigma0)
+function [sigma,normRes,iter] = twoGridPreco(o,...
+      f,innerGeom,innerGeomCoarse,tol,maxIter,sigma0)
 % sigma = twoGridPreco(f,innerGeom) is used as the block-diagonal
 % preconditioner due to the inner circles.  Does inverse of each term
 % using a circle who has the same circumference as the geometry
-%f = rand(size(f));
-
-tol = 1e-2;
+global matVecLarge
 
 SBDf = o.matVecPreco(f,innerGeom,[]);
 % block diagonal preconditioner applied to the right hand side f
 
-if nargin == 4
+if nargin == 6
   sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
 else
   sigma = sigma0;
 end
 % initial guess
 
-global matVecLarge
 nPre = 1;
-if nargin == 4
+if nargin == 6
   sigma = SBDf;
   % with initial guess being 0, first pre smoothing step simply lets
   % sigma be SBDf
@@ -215,17 +213,19 @@ else
 end
 
 res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
+normRes = norm(res)/norm(f);
 resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
-maxIter = numel(resCoarse);
 
 [errCoarse,flag,relres,iter] = gmres(...
     @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
     -resCoarse,[],tol,maxIter,...
     @(X) o.matVecPreco(X,innerGeomCoarse,[]));
+iter = iter(2);
+disp([iter maxIter])
 
 err = o.prolong(errCoarse,innerGeomCoarse.N,innerGeom.N);
 sigma = sigma + err;
-%disp([iter(2) norm(res,inf) norm(err,inf)]);
+%disp([iter norm(res,inf) norm(err,inf)]);
 
 nPost = 0;
 for k = 1:nPost
