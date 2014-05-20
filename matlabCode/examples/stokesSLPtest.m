@@ -5,9 +5,9 @@ load radii.dat;
 load centers.dat;
 
 prams.Nouter = [];
-prams.Ninner = 256;
+prams.Ninner = 32;
 % number of points per circle exclusion
-prams.nv = 50;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -19,7 +19,7 @@ prams.maxIter = min(2*prams.nv*prams.Ninner,150);
 % Different options
 options.bieSolve = true;
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.profile = false;
 options.saveData = true;
 options.verbose = true;
