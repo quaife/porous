@@ -3,15 +3,17 @@ addpath ../src
 
 load radii.dat;
 load centers.dat;
+radii = [radii(189);radii(367)];
+centers = [centers(189,:);centers(367,:)];
 
 prams.Nouter = [];
-prams.Ninner = 32;
+prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 465;
+prams.nv = 2;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
-prams.maxIter = min(2*prams.nv*prams.Ninner,150);
+prams.maxIter = min(2*prams.nv*prams.Ninner,50);
 %prams.maxIter = 1;
 %prams.maxIter = 30;
 % maximum number of gmres iterations

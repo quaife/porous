@@ -130,8 +130,6 @@ end % writeMessage
 
 
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function writeGeometry(o,Xinner,Xouter,sigmaInner,sigmaOuter)
 % writeGeometry(Xinner,Xouter,sigmaInner,sigmaOuter) writes the

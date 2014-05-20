@@ -31,221 +31,186 @@ function o = poten(N,fmm)
 
 o.interpMat = o.lagrangeInterp;
 % load in the interpolation matrix which is precomputed
-% with 7 interpolation points
+% with 7 interpolation points.  This is required for the near-singular
+% interation scheme
 accuracyOrder = 8;
-%qw = o.quadratureS(N/2, accuracyOrder);
-%o.qp = qw(:,2:end);
-%o.qw = qw(:,1);
 o.fmm = fmm;
 
 end % poten: constructor
   
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function qw = quadratureS(o,m,q);
-% qw = quadratureS(m,q) generates the quadrature rules for a function
-% with m points and a logarithmic singularity at the origin.  q 
-% controls the accuracy.  All rules are from Alpert 1999.
+function Gf = SLPmatVecMultiply(o,f,innerGeom,NearI2I)
+% Gf = SLPmatVecMultiply(f,innerGeom,NearI2I) is the main
+% matrix-vector-multiplication routine for the unconfined problem.  f
+% is the density function, innerGeom is the object corresponding to
+% the inner boundary and NearI2I is the near-singular structure for
+% doing interactions between different boundaries.
 
-[v,u,a] = o.getWeights(q,2);
-[x,w] = o.regularWeights(a);
-
-n = m-2*a+1;
-h = 1/m;
-
-evalpots1 = v*h;
-evalpots3 = 1-x*h;
-
-ys = pi*[evalpots1;evalpots3];
-wt = pi*h*[u;w];
-
-wt = [wt; flipud(wt)]; ys = [ys; 2*pi-flipud(ys)];
-oc = curve;
-A = oc.sinterpS(2*m, ys); 
-h = pi/m; 
-yt = [a*h:h:(m - a)*h]';
-%regular points away from singularity
-wt = [wt; h*ones(2*length(yt),1)]/4/pi;
-%quadrature weights at regular points away from singularity
-lyt = 2*length(yt); 
-B = sparse(lyt, 2*m); 
-pos = 1+[(a:m-a)'; (m+a:2*m-a)'];
-
-for k = 1:lyt
-  B(k, pos(k)) = 1;
+global matVecLarge matVecSmall
+Ninner = innerGeom.N;
+if Ninner == 256
+  matVecLarge = matVecLarge + 1;
+elseif Ninner == 32
+  matVecSmall = matVecSmall + 1;
 end
-A = [sparse(A); B];
-qw = [wt, A];
+% have to do a multiplication on either the fine or coarse grid
 
+nv = innerGeom.nv;
+Gfinner = zeros(2*Ninner,nv);
+innerEta = zeros(2*Ninner,nv);
+% allocate space for density function and layer potentials
 
-
-end % quadratureS
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [v,u,a] = getWeights(o,q,ker)
-% [v,u,a] = getWeights(q,ker) loads quadrature rules for 
-% different types of singularities.  All rules come from 
-% Bradley Alpert's papers.  We are interested in nodesLogx.dat;
-
-switch ker
-case 0
-  xp = load('nodesr.dat');
-  lenth = [2;4;8];
-  par = [2;4;7];
-case 1
-  xp = load('nodes_sqrtx.dat');
-  lenth = [4;8;16];
-  par = [3;5;10];
-case 2
-  xp = load('nodesLog.dat');
-  lenth = [3;7;15];
-  par = [2;5;10];
+for k = 1:nv
+  istart = (k-1)*2*Ninner + 1;
+  iend = istart + 2*Ninner - 1;
+  innerEta(:,k) = f(istart:iend);
 end
+% unstack f so that it is one x-coordinate and one y-coordinate per
+% column
 
-switch q
-case 4
-  v = xp(1:lenth(1), 1);
-  u = xp(1:lenth(1), 2);
-  a = par(1);
-case 8
-  v = xp(1+lenth(1):lenth(1)+lenth(2),1);
-  u = xp(1+lenth(1):lenth(1)+lenth(2),2);
-  a = par(2);
-case 16
-  v = xp(1+lenth(2)+lenth(1):sum(lenth),1);
-  u = xp(1+lenth(2)+lenth(1):sum(lenth),2);
-  a = par(3);
-end
+Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
+% diagonal term from exclusions
 
-
-end % getWeights
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [x,w] = regularWeights(o,a)
-% [x,w] = regularWeights(a) gets quadrature rules
-% for regular functions (Alpert's quadrature rules).  These are
-% needed for integrating away from singularities
-
-par = [2;3;4;5;7;10];
-for i = 1:length(par)
-  if par(i)==a
-    key = i;
-  end
-end
-
-lenth = [2;3;4;6;8;12];
-xp = load('nodesRegular.dat');
-if key==1
-  starting = 1;
+if ~o.fmm
+%  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
+  stokesSLP = o.nearSingInt(...
+      innerGeom,innerEta,@o.exactStokesSLdiag,...
+      NearI2I,@o.exactStokesSL,innerGeom,1,'inner');
 else
-  starting = sum(lenth(1:key-1))+1; 
+%  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
+  stokesSLP = o.nearSingInt(...
+      innerGeom,innerEta,@o.exactStokesSLdiag,...
+      NearI2I,@o.exactStokesSLfmm,innerGeom,1,'inner');
 end
 
-x = xp( starting:starting+lenth(key)-1,1);
-w = xp(starting:starting+lenth(key)-1,2);
+Gfinner = Gfinner + stokesSLP;
+% add in contribution from all other exclusions
+    
 
-end % regularWeights
+theta = (0:Ninner-1)'*2*pi/Ninner;
+for k = 1:nv
+  rad = innerGeom.length(k)/2/pi;
+  % rad/4 is the right scaling so that the preconditioner and rank
+  % one modification are inverses of each other when applied to
+  % [cos(theta);sin(theta)]
+  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)*...
+      ([cos(theta);sin(theta)]'*innerEta(:,k))*...
+      [cos(theta);sin(theta)];
+end
+% rank one modification to remove null space
+
+
+Gf = [Gfinner(:)];
+
+
+end % SLPmatVecMultiply
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function sigma = twoGridIter(o,f,innerGeom,innerGeomCoarse)
-% Try out Equation (2.8) from "Two-Grid Solution of Symm's Integral
-% Equation" by J. Saranen and G. Vainikko
+function [sigma,normRes,iter] = twoGridVcycle(o,...
+      f,innerGeom,innerGeomCoarse,...
+      NearI2I,NearI2ICoarse,tol,maxIter,sigma0)
+% [sigma,normRes,iter] = twoGridVcycle(f,innerGeom,innerGeomCoarse,
+% NearI2I,NearI2ICoarse,tol,maxIter,sigma0) applies a multigrid 2
+% level V-cyle.  innerGeom and innerGeom coarse are objects for the
+% geometry at the fine and coarse levels and their near-singular
+% integration structures are NearI2I and NearI2ICoarse.  The coarse
+% grid is solved with block-diagonal preconditioned gmres to a
+% tolerance of tol and no more than maxIter iterations.  sigma0 is an
+% initial guess which allows us to use this routine iteratively.  If
+% no sigma0 is given, the block-diagonal preconditioner applied to the
+% right-hand side is used as an initial guess.  Returned is the output
+% of the V(1,0) cycle sigma, the normalized norm of the residual, and
+% the number of iterations required to do the coarse grid solve
 
-sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
-% initial guess
-SBDf = o.matVecPreco(f,innerGeom,[]);
-% block diagonal preconditioner applied to the right hand side f
+SBDf = o.matVecInvBD(f,innerGeom,[]);
+% block diagonal preconditioner applied to the right hand side f is
+% needed at each iteration of the smoother
 
-niter = 1;
-for k = 1:niter
-  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
-  v = o.matVecPreco(Gsigma,innerGeom,[]) - SBDf;
-
-  Gv = o.SLPmatVecMultiply(v,innerGeom);
-  GcRHS = o.restrict(Gv - o.matVecPreco(v,innerGeom,[]),...
-     innerGeom.N,innerGeomCoarse.N); 
-  [GcCoarse,flag,relres,iter] = gmres(...
-    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
-    GcRHS,[],1e-10,numel(GcRHS));
-  % can put in preconditioner here
-  Gc = o.prolong(GcCoarse,innerGeomCoarse.N,innerGeom.N);
-
-  sigma = sigma - v + Gc;
-end
-% DON'T KNOW IF IT IS A BUG OR IF IT JUST DOESN'T WORK
-
-
-end % twoGridIter
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [sigma,normRes,iter] = twoGridPreco(o,...
-      f,innerGeom,innerGeomCoarse,tol,maxIter,sigma0)
-% sigma = twoGridPreco(f,innerGeom) is used as the block-diagonal
-% preconditioner due to the inner circles.  Does inverse of each term
-% using a circle who has the same circumference as the geometry
-global matVecLarge
-
-SBDf = o.matVecPreco(f,innerGeom,[]);
-% block diagonal preconditioner applied to the right hand side f
-
-if nargin == 6
-  sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
+if nargin == 8
+  sigma = SBDf;
+  % this corresponds to one pre-smoothing step
 else
   sigma = sigma0;
 end
 % initial guess
 
 nPre = 1;
-if nargin == 6
-  sigma = SBDf;
+if nargin == 8
   % with initial guess being 0, first pre smoothing step simply lets
   % sigma be SBDf
   for k = 1:nPre-1
-    Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
-    sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+    Gsigma = o.SLPmatVecMultiply(sigma,innerGeom,NearI2I);
+    sigma = sigma - o.matVecInvBD(Gsigma,innerGeom,[]) + SBDf;
   end
 else
   for k = 1:nPre
-    Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
-    sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+    Gsigma = o.SLPmatVecMultiply(sigma,innerGeom,NearI2I);
+    sigma = sigma - o.matVecInvBD(Gsigma,innerGeom,[]) + SBDf;
   end
 end
+% do nPre pre-smoothing steps
 
-res = o.SLPmatVecMultiply(sigma,innerGeom) - f;
+res = o.SLPmatVecMultiply(sigma,innerGeom,NearI2I) - f;
+% compute residual
 normRes = norm(res)/norm(f);
+% compute the normalized norm of the residual
 resCoarse = o.restrict(res,innerGeom.N,innerGeomCoarse.N);
+% restrict the residual
 
 [errCoarse,flag,relres,iter] = gmres(...
-    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
+    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse,NearI2ICoarse),...
     -resCoarse,[],tol,maxIter,...
-    @(X) o.matVecPreco(X,innerGeomCoarse,[]));
+    @(X) o.matVecInvBD(X,innerGeomCoarse,[]));
+% use block diagonal preconditioned gmres to solve for the error on
+% the coarse grid
 iter = iter(2);
-disp([iter maxIter])
+% number of iterations to solve for the coarse grid
 
 err = o.prolong(errCoarse,innerGeomCoarse.N,innerGeom.N);
+% prolong the error to the fine grid
 sigma = sigma + err;
-%disp([iter norm(res,inf) norm(err,inf)]);
+% add the error
 
 nPost = 0;
 for k = 1:nPost
-  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
-  sigma = sigma - o.matVecPreco(Gsigma,innerGeom,[]) + SBDf;
+  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom,NearI2I);
+  sigma = sigma - o.matVecInvBD(Gsigma,innerGeom,[]) + SBDf;
 end
+% do nPost post-smoothing steps
 
 
-end % twoGridPreco
+end % twoGridVcycle
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function zCoarse = restrict(o,z,Nfine,Ncoarse)
+% zCoarse = restrict(z,Nfine,Ncoarse) restricts the periodic function
+% z.  z has a column vector containing arbitrarly many periodic
+% functions of size Nfine.  The output, zCoarse, has the same number
+% of periodic copies at a grid with Ncoarse points.
+% NOTE: Nfine/Ncoarse must be a power of 2
 
 nSecs = numel(z)/Nfine;
+% number of functions that need to be restricted
 nRestrict = log2(Nfine/Ncoarse);
+% number of halvings to do
+
+if nRestrict == 0
+  zCoarse = z;
+end
+% if coarse and fine grids are the same, nothing to do
 
 for k = 1:nRestrict
   Nfine = Nfine/2;
   zCoarse = zeros(numel(z)/2,1);
+  % create grid half the size
   for j = 1:nSecs
     istart = (j-1)*Nfine + 1;
     iend = istart + Nfine - 1;
@@ -255,7 +220,7 @@ for k = 1:nRestrict
     zCoarse(istart+1:iend) = zCoarse(istart+1:iend) + ...
       1/4*z(2*(istart+1:iend)-2);
     zCoarse(istart) = zCoarse(istart) + 1/4*z(2*iend);
-    % take care of periodicity
+    % usual (1/4,1/2,1/4) restriction with periodicity built in
   end
   z = zCoarse;
 end
@@ -267,9 +232,22 @@ end % restrict
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function zFine = prolong(o,z,Ncoarse,Nfine)
+% zFine = prolong(z,Ncoarse,Nfine) prolongs the periodic function z.  z
+% has a column vector containing arbitrarly many periodic functions of
+% size Ncoarse.  The output, zfine, has the same number of periodic
+% copies at a grid with Nfine points.  NOTE: Nfine/Ncoarse must be a
+% power of 2
 
 nSecs = numel(z)/Ncoarse;
+% number of functions that need to be restricted
 nProlong = log2(Nfine/Ncoarse);
+% number of doublings to do
+
+if nProlong == 0
+  zFine = z;
+end
+% if coarse and fine grids are the same, nothing to do
+
 for k = 1:nProlong
   Ncoarse = Ncoarse*2;
   zFine = zeros(numel(z)*2,1);
@@ -281,6 +259,7 @@ for k = 1:nProlong
     zFine(istart+1:2:iend-2) = zFine(istart+1:2:iend-2) + ...
         1/2*z(((istart+1)/2:(iend-2)/2)+1);
     zFine(iend) = zFine(iend) + 1/2*z((istart+1)/2);
+    % usual (1/2,1,1/2) prolongation with periodicity built in
   end
   z = zFine;
 end
@@ -290,22 +269,24 @@ end
 end % prolong
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function invGf = matVecPreco(o,f,innerGeom,DLPpreco)
-% invGf = matVecPreco(f,innerGeom) is used as the block-diagonal preconditioner due to the inner circles.  Does inverse of each term using a circle who has the same circumference as the geometry
+function invGf = matVecInvBD(o,f,innerGeom,DLPpreco)
+% invGf = matVecInvBD(f,innerGeom,DLPpreco) is used as the
+% block-diagonal preconditioner due to the inner circles and outer
+% geometry.  Does inverse of each term using a circle who has the same
+% circumference as the geometry, and the outer boundary is
+% preconditioned with the precomputed matrix DLPpreco
 
 invGf = f;
 % want the part corresponding to the outer walls to be the identity
 
 sigmah = zeros(2*innerGeom.N,1);
-%modes = (-innerGeom.N/2:innerGeom.N/2-1)';
 modes = [(0:innerGeom.N/2-1) (-innerGeom.N/2:-1)]';
 for k = 1:innerGeom.nv
   rad = innerGeom.length(k)/2/pi;
+  % radius of a geometry of the same length
   istart = (k-1)*2*innerGeom.N+1;
   iend = istart + 2*innerGeom.N - 1;
   sigma = f(istart:iend);
-%  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
-%  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
   sigmah(1:end/2) = fft(sigma(1:end/2));
   sigmah(end/2+1:end) = fft(sigma(end/2+1:end));
   for j = 1:innerGeom.N
@@ -344,12 +325,6 @@ for k = 1:innerGeom.nv
 % keep this mode consistent with the [cos(theta);-sin(theta)] mapping
 
   g = A*[fm1;fp1]; 
-%  j = innerGeom.N/2;
-%  sigmah(j) = g(1);
-%  sigmah(j+innerGeom.N) = g(2);
-%  j = innerGeom.N/2+2;
-%  sigmah(j) = g(3);
-%  sigmah(j+innerGeom.N) = g(4);
   j = innerGeom.N;
   sigmah(j) = g(1);
   sigmah(j+innerGeom.N) = g(2);
@@ -360,9 +335,6 @@ for k = 1:innerGeom.nv
   % with one another
 
 
-%  invGf(istart:iend) = ...
-%      [ifft(ifftshift(sigmah(1:end/2))); ...
-%       ifft(ifftshift(sigmah(end/2+1:end)))];
   invGf(istart:iend) = ...
       [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
   % move back to physical space
@@ -371,21 +343,24 @@ end % k = exclusions
 istart = iend + 1;
 iend = numel(f);
 invGf(istart:iend) = DLPpreco * f(istart:iend);
+% use precomputed matrix DLPpreco to precondition the outer boundary
+% density function
 
 
 invGf = real(invGf);
 
 
-
-end % matVecPreco
+end % matVecInvBD
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function Gf = matVecMultiply(o,f,innerGeom,outerGeom,...
-    NearInner,NearOuter)
-% Gf = matVecMultiply(f,innerGeom,outerGeom) is the main
-% matrix-vector-multiplication routine.  f is the density function,
-% innerGeom and outerGeom are objects corresponding to the inner and
-% outer boundaries, respectively
+    NearI2O,NearO2I)
+% Gf = matVecMultiply(f,innerGeom,outerGeom,NearI2O,NearO2I) is the
+% main confined flow matrix-vector-multiplication routine.  f is the
+% density function, innerGeom and outerGeom are objects corresponding
+% to the inner and outer boundaries, respectively, and NearI2O and
+% NearO2I are near-singular integration structures required to do
+% inner to outer (I2O) and outer to inner (O2I) interactions
 
 Ninner = innerGeom.N;
 nv = innerGeom.nv;
@@ -420,29 +395,22 @@ Gfouter = Gfouter + o.exactStokesN0diag(outerGeom,outerEta);
 
 if ~o.fmm
   stokesSLP = o.exactStokesSL(innerGeom,innerEta);
-%  [~,stokesSLPtar] = ...
-%      o.exactStokesSL(innerGeom,innerEta,outerGeom.X,(1:nv));
-%  [~,stokesDLPtar] = ...
-%      o.exactStokesDL(outerGeom,outerEta,innerGeom.X,1);
+  % TODO: Need near-singular integration here
   stokesSLPtar = o.nearSingInt(...
       innerGeom,innerEta,@o.exactStokesSLdiag,...
-      NearInner,@o.exactStokesSL,outerGeom,0,'inner');
+      NearI2O,@o.exactStokesSL,outerGeom,0,'inner');
   stokesDLPtar = o.nearSingInt(...
       outerGeom,outerEta,@o.exactStokesDLdiag,...
-      NearOuter,@o.exactStokesDL,innerGeom,0,'outer');
+      NearO2I,@o.exactStokesDL,innerGeom,0,'outer');
 else
   stokesSLP = o.exactStokesSLfmm(innerGeom,innerEta);
-%  [~,stokesSLPtar] = ...
-%      o.exactStokesSLfmm(innerGeom,innerEta,outerGeom.X,(1:nv));
-%  [~,stokesDLPtar] = ...
-%      o.exactStokesDLfmm(outerGeom,outerEta,innerGeom.X,1);
-
+  % TODO: Need near-singular integration here
   stokesSLPtar = o.nearSingInt(...
       innerGeom,innerEta,@o.exactStokesSLdiag,...
-      NearInner,@o.exactStokesSLfmm,outerGeom,0,'inner');
+      NearI2O,@o.exactStokesSLfmm,outerGeom,0,'inner');
   stokesDLPtar = o.nearSingInt(...
       outerGeom,outerEta,@o.exactStokesDLdiag,...
-      NearOuter,@o.exactStokesDLfmm,innerGeom,0,'outer');
+      NearO2I,@o.exactStokesDLfmm,innerGeom,0,'outer');
 end
 
 Gfinner = Gfinner + stokesSLP;
@@ -467,134 +435,20 @@ Gf = [Gfinner(:);Gfouter(:)];
 end % matVecMultiply
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function Gf = SLPmatVecMultiply(o,f,innerGeom)
-% Gf = matVecMultiply(f,innerGeom) is the main
-% matrix-vector-multiplication routine.  f is the density function,
-% innerGeom and outerGeom are objects corresponding to the inner and
-% outer boundaries, respectively
-
-global matVecLarge matVecSmall
-Ninner = innerGeom.N;
-if Ninner == 256
-  matVecLarge = matVecLarge + 1;
-elseif Ninner == 32
-  matVecSmall = matVecSmall + 1;
-end
-nv = innerGeom.nv;
-Gfinner = zeros(2*Ninner,nv);
-innerEta = zeros(2*Ninner,nv);
-% allocate space for density function and layer potentials
-
-for k = 1:nv
-  istart = (k-1)*2*Ninner + 1;
-  iend = istart + 2*Ninner - 1;
-  innerEta(:,k) = f(istart:iend);
-end
-% unstack f so that it is one x-coordinate and one y-coordinate per
-% column
-
-Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
-% diagonal term from exclusions
-
-if ~o.fmm
-  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
-else
-  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
-end
-
-Gfinner = Gfinner + stokesSLP;
-% add in contribution from all other exclusions
-    
-
-theta = (0:Ninner-1)'*2*pi/Ninner;
-for k = 1:nv
-  rad = innerGeom.length(k)/2/pi;
-  % rad/4 is the right scaling so that the preconditioner and rank one
-  % modification are inverses of each other when applied to
-  % [cos(theta);sin(theta)]
-  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)*...
-      ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
-end
-% rank one modification to remove null space
-
-
-Gf = [Gfinner(:)];
-
-
-end % SLPmatVecMultiply
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function Gf = SLPmatVecMultiply2(o,f,innerGeom)
-% Gf = matVecMultiply(f,innerGeom) is the main
-% matrix-vector-multiplication routine.  f is the density function,
-% innerGeom and outerGeom are objects corresponding to the inner and
-% outer boundaries, respectively
-
-Ninner = innerGeom.N;
-nv = innerGeom.nv;
-Gfinner = zeros(2*Ninner,nv);
-innerEta = zeros(2*Ninner,nv);
-% allocate space for density function and layer potentials
-
-sa = innerGeom.sa;
-for k = 1:nv
-  istart = (k-1)*2*Ninner + 1;
-  iend = istart + 2*Ninner - 1;
-  innerEta(:,k) = f(istart:iend)*sqrt(innerGeom.N)./...
-      sqrt(2*pi*[sa(:,k);sa(:,k)]);
-end
-% unstack f so that it is one x-coordinate and one y-coordinate per
-% column
-
-Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
-% diagonal term from exclusions
-
-if ~o.fmm
-  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
-else
-  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
-end
-
-Gfinner = Gfinner + stokesSLP;
-% add in contribution from all other exclusions
-    
-theta = (0:Ninner-1)'*2*pi/Ninner;
-for k = 1:nv
-  rad = innerGeom.length(k)/2/pi;
-  % rad/4 is the right scaling so that the preconditioner and rank one
-  % modification are inverses of each other when applied to
-  % [cos(theta);sin(theta)]
-  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)*...
-      ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
-end
-% rank one modification to remove null space
-
-% rank one modification to remove null space
-Gfinner = sqrt(2*pi*[sa;sa])/sqrt(innerGeom.N).*Gfinner;
-Gf = Gfinner(:);
-
-
-end % SLPmatVecMultiply2
-
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function Gf = exactStokesSLdiag(o,geom,f)
-% Gf = exactStokesSLdiag(geom,f) computes the single-layer potential due to a bunch of circles in the object geom.  f is the density function.  The geometry MUST all be circles.  Otherwise, this is incorrect.  This is much faster than Alpert
+% Gf = exactStokesSLdiag(geom,f) computes the single-layer potential
+% due to a bunch of circles in the object geom.  f is the density
+% function.  The geometry MUST all be circles.  Otherwise, this is
+% incorrect.  This is much faster than using Alpert
 
 Gf = zeros(2*geom.N,geom.nv);
 sigmah = zeros(2*geom.N,1);
-%modes = (-geom.N/2:geom.N/2-1)';
 modes = [(0:geom.N/2-1) (-geom.N/2:-1)]';
 for k = 1:geom.nv
   rad = geom.length(k)/2/pi;
   sigma = f(:,k);
-%  sigmah(1:end/2) = fftshift(fft(sigma(1:end/2)));
-%  sigmah(end/2+1:end) = fftshift(fft(sigma(end/2+1:end)));
   sigmah(1:end/2) = fft(sigma(1:end/2));
   sigmah(end/2+1:end) = fft(sigma(end/2+1:end));
 
@@ -632,18 +486,12 @@ for k = 1:geom.nv
     end
 
   end
-%  sigmah(geom.N/2) = sigmam1(1);
-%  sigmah(geom.N/2+2) = sigmap1(1);
-%  sigmah(geom.N/2+geom.N) = sigmam1(2);
-%  sigmah(geom.N/2+2+geom.N) = sigmap1(2);
   sigmah(geom.N) = sigmam1(1);
   sigmah(2) = sigmap1(1);
   sigmah(2*geom.N) = sigmam1(2);
   sigmah(geom.N+2) = sigmap1(2);
 
 
-%  Gf(:,k) = [ifft(ifftshift(sigmah(1:end/2))); ...
-%       ifft(ifftshift(sigmah(end/2+1:end)))];
   Gf(:,k) = [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
 
 end % k = exclusions
@@ -652,50 +500,14 @@ end % k = exclusions
 end % exactStokesSLdiag
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function stokesSLP = exactStokesSLdiagAlpert(o,geom,f)
-% stokesSLP = exactStokesSLdiagAlpert(geom,f) computes the diagonal
-% term of the single-layer potential due to collection of random
-% boundaries.  This will work for arbitrary boundaries
-
-X = geom.X;
-N = size(X,1)/2;
-nv = size(X,2);
-oc = curve;
-[x,y] = oc.getXY(X);
-sa = geom.sa;
-[fx,fy] = oc.getXY(f.*[sa;sa]);
-stokesSLP = zeros(2*N,nv);
-qw = o.qw;
-qp = o.qp;
-
-for k = 1:nv
-  for j = 1:N
-    ind = 1 + mod(j-1 + (0:N-1),N);
-    xSou = qp*x(ind,k);
-    ySou = qp*y(ind,k);
-    fxSou = qp*fx(ind,k);
-    fySou = qp*fy(ind,k);
-
-    rho = (x(j,k) - xSou).^2 + (y(j,k) - ySou).^2;
-    br = 1./rho;
-    logpart = -1/2*qw.*log(rho);
-    stokesSLP(j,k) = sum((logpart.*fxSou)'*qp);
-    stokesSLP(j+N,k) = sum((logpart.*fySou)'*qp);
-    % stokes single-layer potential due to the log componenet
-
-    rdotf = qw.*((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou).*br;
-    stokesSLP(j,k) = stokesSLP(j,k) + sum((rdotf .* (x(j,k) - xSou))'*qp);
-    stokesSLP(j+N,k) = stokesSLP(j+N,k) + sum((rdotf .* (y(j,k) - ySou))'*qp);
-  end
-end
-
-end % exactStokesSLdiag
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function stokesDLP = exactStokesDLdiag(o,geom,f)
+% stokesDLP = exactStokesDLdiag(geom,f) computes the double-layer
+% potential when the source and target points coincide.  f is the
+% density function, the trapezoid rule is used, and the correct
+% limiting term is used for the diagonal term.  The result will have
+% spectral accuracy as the kernel is smooth
 
 oc = curve;
 [x,y] = oc.getXY(geom.X);
@@ -730,6 +542,9 @@ end % exactStokesDLdiag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function stokesN0 = exactStokesN0diag(o,geom,f)
+% stokesN0 = exactStokesN0diag(geom,f) computes the rank one
+% modification to the double-layer potential to remove the null
+% space.  f is the density function.
 
 oc = curve;
 [nx,ny] = oc.getXY(geom.normal);
@@ -750,53 +565,31 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vel = interpolateLayerPot(o,t,Xtra,...
-    eulerX,eulerY,u,v,T);
+    eulerX,eulerY,u,v,T)
+% vel = interpolateLayerPot(t,Xtra,eulerX,eulerY,u,v,T) interpolates a
+% given velocity field (u,v) defined at the points (eulerX,eulerY)
+% at the set of points defined in Xtra.  t is the current time and T
+% is the time horizion which is used to print a progress bar
 
 message = ['ode45 ' num2str(t/T*100,'%04.1f') ' %% completed '];
 nmess = numel(message);
 fprintf(repmat('\b',1,nmess));
 fprintf(message);
+% print how far along the simulation has prcoeeded
 
 x = Xtra(1:end/2);
 y = Xtra(end/2+1:end);
 
-[r,theta] = ...
-  meshgrid(linspace(1.37607e-1,1.0e0,100),(0:99)*2*pi/100-pi);
-rx = (x - 3.9010990e0);
-ry = (y - 2.4065934e1);
-z = rx + 1i*ry;
-r0 = abs(z);
-theta0 = angle(z);
-% interpolate in radial variables
-
-%dt = DelaunayTri(eulerX(:),eulerY(:));
-%triplot(dt);
-%axis equal
-%pause
-
-%velx = interp2(r,theta,u,r0,theta0,'spline');
-%vely = interp2(r,theta,v,r0,theta0,'spline');
-
 velx = interp2(eulerX,eulerY,u,x,y,'spline');
 vely = interp2(eulerX,eulerY,v,x,y,'spline');
-%velxOb = TriScatteredInterp(eulerX(:),eulerY(:),u(:));
-%velyOb = TriScatteredInterp(eulerX(:),eulerY(:),v(:));
-%velxOb.Method = 'nearest';
-%velyOb.Method = 'nearest';
-%velx = velxOb(x,y);
-%vely = velyOb(x,y);
+% use spline interpolation to compute both componenets of the velocity
 if velx~=velx
   fprintf('\n Problem with Interpolant\n');
   pause
 end
 
-%s = find(y<0);
-%if numel(s) > 0
-%  velx(s) = 0;
-%  vely(s) = 0;
-%end
-
 vel = [velx;vely];
+% stack the output appropriately
 
 
 end % interpolateLayerPot
@@ -805,31 +598,41 @@ end % interpolateLayerPot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vel = layerEval(o,t,Xtar,ymThresh,ypThresh,...
     innerGeom,outerGeom,sigmaInner,sigmaOuter)
+% vel = layerEval(t,Xtar,ymThresh,ypThresh,innerGeom,outerGeom,
+% sigmaInner,sigmaOuter) computes the velocity due to the inner and
+% outer boundaries at a set of fixed Eulerian points.  t is the
+% current time (not needed), Xtar is the set of target points,
+% ymThresh and ypThresh are upper and lower bounds on the y
+% componenet.  Target points whose y component lies outside the window
+% [ymThresh,ypThresh] is automatically assigned a velocity of 0
 
 targetPnts = capsules(Xtar,'targets');
+% Build an object for the target points
 
-[~,NearInner] = innerGeom.getZone(targetPnts,2);
-[~,NearOuter] = outerGeom.getZone(targetPnts,2);
+[~,NearI2T] = innerGeom.getZone(targetPnts,2);
+[~,NearO2T] = outerGeom.getZone(targetPnts,2);
+% near singular integration structures due to the inner exclusions and
+% the outer geometry
 
 if ~o.fmm
-  [~,vel3] = o.exactStokesSL(innerGeom,sigmaInner,Xtar,1);
+%  [~,vel3] = o.exactStokesSL(innerGeom,sigmaInner,Xtar,1);
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
-      NearInner,@o.exactStokesSL,targetPnts,0,'inner');
+      NearI2T,@o.exactStokesSL,targetPnts,0,'inner');
+  % velocity due to the exclusions
   vel2 = o.nearSingInt(outerGeom,sigmaOuter,@o.exactStokesDLdiag,...
-      NearOuter,@o.exactStokesDL,targetPnts,0,'outer');
+      NearO2T,@o.exactStokesDL,targetPnts,0,'outer');
+  % velocity due to the outer wall
 else
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
-      NearInner,@o.exactStokesSLfmm,targetPnts,0,'inner');
+      NearI2T,@o.exactStokesSLfmm,targetPnts,0,'inner');
+  % velocity due to the exclusions
   vel2 = o.nearSingInt(outerGeom,sigmaOuter,@o.exactStokesDLdiag,...
-      NearOuter,@o.exactStokesDL,targetPnts,0,'outer');
+      NearO2T,@o.exactStokesDL,targetPnts,0,'outer');
+  % velocity due to the outer wall
 end
 
 vel = vel1 + vel2;
-z = Xtar(1:end/2) + 1i*Xtar(end/2+1:end);
-s = find(abs(z) < 1);
-vel(s) = 0;
-vel(s + targetPnts.N) = 0;
-
+% add velocity due to the two components
 
 load ../examples/radii.dat
 load ../examples/centers.dat
@@ -841,6 +644,7 @@ for k = 1:targetPnts.N
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
+  % zero velocity at points that are inside one of the exlucisions
 
   if targetPnts.X(k+targetPnts.N) < ymThresh
     vel(k) = 0;
@@ -850,8 +654,8 @@ for k = 1:targetPnts.N
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
+  % zero velocity at points that are above or below the thresholds 
 end
-% set velocity inside exclusions to 0
 
 
 end % layerEval
@@ -861,18 +665,15 @@ end % layerEval
 function LP = nearSingInt(o,souPts,f,diagLP,...
     NearStruct,kernel,tarPts,tEqualS,side,trash)
 % LP = nearSingInt(souPts,f,diagLP,...
-% zone,dist,nearest,icp,argnear,tarPts,tequalS) computes a 
-% layer potential due to f at all points in tarPts.X.  If
-% tEqualS==true, then the tarPts == souPts and the
-% self-interaction is skipped.
-% diagLP is the diagonal of the potential needed to compute
-% the layer potential of each source curve indepenedent of all others
-% if using near-singular integration
-% zone,dist,nearest,icp,argnear are required by near-singular
-% integration (they keep everything sorted and precomputed)
-% Everything is in the 2*N x nv format
-% Can pass a final argument if desired so that plots of the 
-% near-singular integration algorithm are displayed
+% NearStruct,kernel,tarPts,tequalS,side,trash) computes a layer
+% potential due to f at all points in tarPts.X.  If tEqualS==true,
+% then the tarPts == souPts and the self-interaction is skipped.
+% diagLP is the diagonal of the potential needed to compute the layer
+% potential of each source curve indepenedent of all others.
+% NearStruct contains all the variables required to do near-singular
+% integration (they keep everything sorted and precomputed) Everything
+% is in the 2*N x nv format Can pass a final argument if desired so
+% that plots of the near-singular integration algorithm are displayed
 
 dist = NearStruct.dist;
 zone = NearStruct.zone;
@@ -889,20 +690,21 @@ nvTar = size(Xtar,2); % number of target curves
 
 h = souPts.length/Nsou; % arclength term
 
-%Nup = 2^ceil(3/2*log2(Nsou));
 Nup = Nsou*2^ceil(1/2*log2(Nsou));
 % upsample to N^(3/2).  
 % only want to add on powers of 2 so that ffts are simple
 % Nup at least has to be a multiple of N
 
 vself = diagLP(souPts,f);
-if strcmp(side,'outer')
-  vself = vself - 0.5*f;
-end
 % Compute velocity due to each curve independent of others.
 % This is needed when using near-singular integration since
 % we require a value for the layer-potential on the curve of 
 % sources 
+if strcmp(side,'outer')
+  vself = vself - 0.5*f;
+  % if dealing with outer boundary, need to account for the jump in
+  % the double-layer potential
+end
 
 Xup = [interpft(Xsou(1:Nsou,:),Nup);interpft(Xsou(Nsou+1:2*Nsou,:),Nup)];
 fup = [interpft(f(1:Nsou,:),Nup);interpft(f(Nsou+1:2*Nsou,:),Nup)];
@@ -1075,14 +877,12 @@ end % nearSingInt
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [stokesSLP,stokesSLPtar] = ...
-    exactStokesSL(o,geom,f,Xtar,K1)
-% [stokesSLP,stokesSLPtar] = exactStokesSL(geom,f,Xtar,K1)
-% computes the single-layer potential due to f around all geoms 
-% except itself.  Also can pass a set of target points Xtar and a 
-% collection of geoms K1 and the single-layer potential due to
-% geoms in K1 will be evaluated at Xtar.
-% Everything but Xtar is in the 2*N x nv format
+function [stokesSLP,stokesSLPtar] = exactStokesSL(o,geom,f,Xtar,K1)
+% [stokesSLP,stokesSLPtar] = exactStokesSL(geom,f,Xtar,K1) computes
+% the single-layer potential due to f around all geoms except itself.
+% Also can pass a set of target points Xtar and a collection of geoms
+% K1 and the single-layer potential due to geoms in K1 will be
+% evaluated at Xtar.  Everything but Xtar is in the 2*N x nv format
 % Xtar is in the 2*Ntar x ncol format
 
 X = geom.X; % Vesicle positions
@@ -1111,23 +911,23 @@ for k2 = 1:ncol % loop over columns of target points
         Xtar(j+Ntar,k2) - X(geom.N+1:2*geom.N,K1)];
     % distance squared and difference of source and target location
 
-    coeff = log(dis2)/2;
+    logpart = log(dis2)/2;
     % first part of single-layer potential for Stokes
     
-    val = coeff.*den(1:geom.N,K1);
+    val = logpart.*den(1:geom.N,K1);
     stokesSLPtar(j,k2) = -sum(val(:));
-    val = coeff.*den(geom.N+1:2*geom.N,K1);
+    val = logpart.*den(geom.N+1:2*geom.N,K1);
     stokesSLPtar(j+Ntar,k2) = -sum(val(:));
     % log term in stokes single-layer potential
 
-    coeff = (diffxy(1:geom.N,:).*den(1:geom.N,K1) + ...
+    rdotf = (diffxy(1:geom.N,:).*den(1:geom.N,K1) + ...
         diffxy(geom.N+1:2*geom.N,:).*...
         den(geom.N+1:2*geom.N,K1))./dis2;
     % second part of single-layer potential for Stokes
 
-    val = coeff.*diffxy(1:geom.N,:);
+    val = rdotf.*diffxy(1:geom.N,:);
     stokesSLPtar(j,k2) = stokesSLPtar(j,k2) + sum(val(:));
-    val = coeff.*diffxy(geom.N+1:2*geom.N,:);
+    val = rdotf.*diffxy(geom.N+1:2*geom.N,:);
     stokesSLPtar(j+Ntar,k2) = stokesSLPtar(j+Ntar,k2) + sum(val(:));
     % r \otimes r term of the stokes single-layer potential
   end % j
@@ -1136,6 +936,7 @@ end % k2
 % Evaluate single-layer potential at arbitrary target points
 stokesSLPtar = 1/(4*pi)*stokesSLPtar;
 % 1/4/pi is the coefficient in front of the single-layer potential
+
 
 stokesSLP = zeros(2*geom.N,geom.nv); % Initialize to zero
 if nargin == 3
@@ -1149,23 +950,23 @@ if nargin == 3
           X(j+geom.N,k1) - X(geom.N+1:2*geom.N,K)];
       % distance squared and difference of source and target location
 
-      coeff = log(dis2)/2;
+      logpart = log(dis2)/2;
       % first part of single-layer potential for Stokes
 
-      val = coeff.*den(1:geom.N,K);
+      val = logpart.*den(1:geom.N,K);
       stokesSLP(j,k1) = -sum(val(:));
-      val = coeff.*den(geom.N+1:2*geom.N,K);
+      val = logpart.*den(geom.N+1:2*geom.N,K);
       stokesSLP(j+geom.N,k1) = -sum(val(:));
       % logarithm terms in the single-layer potential
 
-      coeff = (diffxy(1:geom.N,:).*den(1:geom.N,K) + ...
+      rdotf = (diffxy(1:geom.N,:).*den(1:geom.N,K) + ...
           diffxy(geom.N+1:2*geom.N,:).*...
           den(geom.N+1:2*geom.N,K))./dis2;
       % second part of single-layer potential for Stokes
 
-      val = coeff.*diffxy(1:geom.N,:);
+      val = rdotf.*diffxy(1:geom.N,:);
       stokesSLP(j,k1) = stokesSLP(j,k1) + sum(val(:));
-      val = coeff.*diffxy(geom.N+1:2*geom.N,:);
+      val = rdotf.*diffxy(geom.N+1:2*geom.N,:);
       stokesSLP(j+geom.N,k1) = stokesSLP(j+geom.N,k1) + ...
           sum(val(:));
       % r \otimes r term of the single-layer potential
@@ -1182,12 +983,11 @@ end % exactStokesSL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesDLP,stokesDLPtar] = ...
     exactStokesDL(o,geom,f,Xtar,K1)
-% [stokesDLP,stokesDLPtar] = exactStokesDL(geom,f,Xtar,K1)
-% computes the double-layer potential due to f around all geoms 
-% except itself.  Also can pass a set of target points Xtar and a 
-% collection of geoms K1 and the double-layer potential due to
-% geoms in K1 will be evaluated at Xtar.
-% Everything but Xtar is in the 2*N x nv format
+% [stokesDLP,stokesDLPtar] = exactStokesDL(geom,f,Xtar,K1) computes
+% the double-layer potential due to f around all geoms except itself.
+% Also can pass a set of target points Xtar and a collection of geoms
+% K1 and the double-layer potential due to geoms in K1 will be
+% evaluated at Xtar.  Everything but Xtar is in the 2*N x nv format
 % Xtar is in the 2*Ntar x ncol format
 
 nv = geom.nv; % number of geoms
@@ -1276,8 +1076,12 @@ end % exactStokesDL
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function stokesSLP = exactStokesSLDirect(o,geom,f)
+% stokesSLP = exactStokesSLDirect(geom,f) is a speedup of
+% exactStokesSL which can only be used when the source and target
+% points coincide.  It computes the single-layer potential using the
+% trapezoid rule and assigning a value of 0 to the diagonal term.
 
-N = geom.N; % number of points per geom
+n = geom.N; % number of points per geom
 nv = geom.nv; % number of geoms
 X = geom.X; % geom positions
 oc = curve;
@@ -1577,8 +1381,132 @@ end
 
 end % stokesN0matrix
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function stokesSLP = exactStokesSLdiagAlpert(o,geom,f)
+% stokesSLP = exactStokesSLdiagAlpert(geom,f) computes the diagonal
+% term of the single-layer potential due to collection of random
+% boundaries.  This will work for arbitrary boundaries
+
+X = geom.X;
+N = size(X,1)/2;
+nv = size(X,2);
+oc = curve;
+[x,y] = oc.getXY(X);
+sa = geom.sa;
+[fx,fy] = oc.getXY(f.*[sa;sa]);
+stokesSLP = zeros(2*N,nv);
+qw = o.qw;
+qp = o.qp;
+
+for k = 1:nv
+  for j = 1:N
+    ind = 1 + mod(j-1 + (0:N-1),N);
+    xSou = qp*x(ind,k);
+    ySou = qp*y(ind,k);
+    fxSou = qp*fx(ind,k);
+    fySou = qp*fy(ind,k);
+
+    rho = (x(j,k) - xSou).^2 + (y(j,k) - ySou).^2;
+    br = 1./rho;
+    logpart = -1/2*qw.*log(rho);
+    stokesSLP(j,k) = sum((logpart.*fxSou)'*qp);
+    stokesSLP(j+N,k) = sum((logpart.*fySou)'*qp);
+    % stokes single-layer potential due to the log componenet
+
+    rdotf = qw.*((x(j,k) - xSou).*fxSou + (y(j,k) - ySou).*fySou).*br;
+    stokesSLP(j,k) = stokesSLP(j,k) + sum((rdotf .* (x(j,k) - xSou))'*qp);
+    stokesSLP(j+N,k) = stokesSLP(j+N,k) + sum((rdotf .* (y(j,k) - ySou))'*qp);
+  end
+end
+
+end % exactStokesSLdiag
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function sigma = twoGridIter(o,f,innerGeom,innerGeomCoarse)
+% Try out Equation (2.8) from "Two-Grid Solution of Symm's Integral
+% Equation" by J. Saranen and G. Vainikko
+
+sigma = zeros(2*innerGeom.N*innerGeom.nv,1);
+% initial guess
+SBDf = o.matVecInvBD(f,innerGeom,[]);
+% block diagonal preconditioner applied to the right hand side f
+
+niter = 1;
+for k = 1:niter
+  Gsigma = o.SLPmatVecMultiply(sigma,innerGeom);
+  v = o.matVecInvBD(Gsigma,innerGeom,[]) - SBDf;
+
+  Gv = o.SLPmatVecMultiply(v,innerGeom);
+  GcRHS = o.restrict(Gv - o.matVecInvBD(v,innerGeom,[]),...
+     innerGeom.N,innerGeomCoarse.N); 
+  [GcCoarse,flag,relres,iter] = gmres(...
+    @(X) o.SLPmatVecMultiply(X,innerGeomCoarse),...
+    GcRHS,[],1e-10,numel(GcRHS));
+  % can put in preconditioner here
+  Gc = o.prolong(GcCoarse,innerGeomCoarse.N,innerGeom.N);
+
+  sigma = sigma - v + Gc;
+end
+% DON'T KNOW IF IT IS A BUG OR IF IT JUST DOESN'T WORK
+
+
+end % twoGridIter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Gf = SLPmatVecMultiplyGalerkin(o,f,innerGeom)
+% Gf = SLPmatVecMultiplyGalerkin(f,innerGeom) is a 
+% matrix-vector-multiplication routine that uses Bremer's trick to
+% make the linear system symmetric.  Tried this in minres and
+% symmlq and, if the same number of iterations were the same as
+% gmres, there was no CPU speedup.  In addition, as the
+% concentration increased, gmres used the fewest number of iterations.
+
+Ninner = innerGeom.N;
+nv = innerGeom.nv;
+Gfinner = zeros(2*Ninner,nv);
+innerEta = zeros(2*Ninner,nv);
+% allocate space for density function and layer potentials
+
+sa = innerGeom.sa;
+for k = 1:nv
+  istart = (k-1)*2*Ninner + 1;
+  iend = istart + 2*Ninner - 1;
+  innerEta(:,k) = f(istart:iend)*sqrt(innerGeom.N)./...
+      sqrt(2*pi*[sa(:,k);sa(:,k)]);
+end
+% unstack f so that it is one x-coordinate and one y-coordinate per
+% column
+
+Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
+% diagonal term from exclusions
+
+if ~o.fmm
+  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
+else
+  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
+end
+
+Gfinner = Gfinner + stokesSLP;
+% add in contribution from all other exclusions
+    
+theta = (0:Ninner-1)'*2*pi/Ninner;
+for k = 1:nv
+  rad = innerGeom.length(k)/2/pi;
+  % rad/4 is the right scaling so that the preconditioner and rank one
+  % modification are inverses of each other when applied to
+  % [cos(theta);sin(theta)]
+  Gfinner(:,k) = Gfinner(:,k) + rad/4*1/2/pi*(2*pi/Ninner)*...
+      ([cos(theta);sin(theta)]'*innerEta(:,k))*[cos(theta);sin(theta)];
+end
+% rank one modification to remove null space
+
+% rank one modification to remove null space
+Gfinner = sqrt(2*pi*[sa;sa])/sqrt(innerGeom.N).*Gfinner;
+Gf = Gfinner(:);
+
+
+end % SLPmatVecMultiplyGalerkin
 
 end % methods
 
