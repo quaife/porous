@@ -81,33 +81,43 @@ else
 end
 
 
-%odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
-%% function handle that evalutes the right-hand side 
-%tic
-%opts.RelTol = prams.rtol;
-%opts.AbsTol = prams.atol;
-%[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0);
-%om.writeMessage(' ');
-%
-%om.writeStars
-%message = '****       Tracer locations found        ****';
-%om.writeMessage(message);
-%message = ['**** Required time was ' num2str(toc,'%4.2e') ...
-%    ' seconds  ****'];
-%om.writeMessage(message);
-%om.writeStars
-%om.writeMessage(' ');
-%
-%xtra = Xtra(:,1:end/2);
-%ytra = Xtra(:,end/2+1:end);
-%
-%if options.usePlot
-%  om.plotData;
-%  om.runMovie;
-%end
-%
-%om.writeTracerPositions(time,xtra,ytra);
-%fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
+% function handle that evalutes the right-hand side 
+tic
+opts.RelTol = prams.rtol;
+opts.AbsTol = prams.atol;
+
+ntra = numel(X0)/2;
+Xtra = zeros(prams.ntime,2*ntra);
+for k = 1:numel(X0)/2
+  x0 = X0(k);
+  y0 = X0(k+numel(X0)/2);
+  [time,z] = ode45(odeFun,linspace(0,prams.T,prams.ntime),[x0;y0],opts);
+  Xtra(:,k) = z(:,1);
+  Xtra(:,k+ntra) = z(:,2);
+end
+%[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0,opts);
+om.writeMessage(' ');
+
+om.writeStars
+message = '****       Tracer locations found        ****';
+om.writeMessage(message);
+message = ['**** Required time was ' num2str(toc,'%4.2e') ...
+    ' seconds  ****'];
+om.writeMessage(message);
+om.writeStars
+om.writeMessage(' ');
+
+xtra = Xtra(:,1:end/2);
+ytra = Xtra(:,end/2+1:end);
+
+if options.usePlot
+  om.plotData;
+  om.runMovie;
+end
+
+om.writeTracerPositions(time,xtra,ytra);
+fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 %[ntime,ntra,time,xtra,ytra] = ...
 %    om.loadTracerPositions(fileName1);
 

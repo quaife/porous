@@ -15,17 +15,17 @@ prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
 % maximum number of gmres iterations
-prams.atol = 1e-6;
-prams.rtol = 1e-3;
+prams.atol = 1e-6/100;
+prams.rtol = 1e-3/100;
 % absolute and relative tolerances for ode45
-prams.T = 100;
+prams.T = 30;
 % time horizon for ode45
-prams.ntime = 5001;
+prams.ntime = 1501;
 % number of time steps that ode45 will output
 
 % Different options
 options.bieSolve = false;
-options.computeEuler = true;
+options.computeEuler = false;
 options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
@@ -66,9 +66,8 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-%  [xtar,ytar] = meshgrid(linspace(0.3,4.3,200),linspace(30,30,1));
-  [xtar,ytar] = meshgrid(linspace(2,2,1),linspace(30,30,1));
-%  xtar = [4.2]; ytar = [30];
+  [xtar,ytar] = meshgrid(linspace(1,4,50),linspace(30,30,1));
+%  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
@@ -83,8 +82,7 @@ if options.tracersSimulation
   % min, max, and number of Euler locations in y direction
   options.nparts = 5;
   % need to compute in sections otherwise seem to run out of memory
-%  options.ymThresh = options.ymin + 2;
-  options.ymThresh = options.ymin + 0;
+  options.ymThresh = options.ymin + 3;
   options.ypThresh = options.ymax - 2;
   % thresholds where velocity will be set to zero
 

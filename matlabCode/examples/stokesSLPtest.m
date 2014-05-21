@@ -3,25 +3,23 @@ addpath ../src
 
 load radii.dat;
 load centers.dat;
-radii = [radii(189);radii(367)];
-centers = [centers(189,:);centers(367,:)];
+%radii = [radii(189);radii(367)];
+%centers = [centers(189,:);centers(367,:)];
 
 prams.Nouter = [];
 prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 2;
+prams.nv = 200;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
-prams.maxIter = min(2*prams.nv*prams.Ninner,50);
-%prams.maxIter = 1;
-%prams.maxIter = 30;
+prams.maxIter = min(2*prams.nv*prams.Ninner,150);
 % maximum number of gmres iterations
 
 % Different options
 options.bieSolve = true;
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.profile = false;
 options.saveData = true;
 options.verbose = true;
@@ -41,11 +39,13 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'center',centers, ...
           'radii',radii);
 % circular exclusions
-XinnerCoarse = oc.initConfig(32,'circles',...
+XinnerCoarse = oc.initConfig(8,'circles',...
           'nv',prams.nv, ...
           'center',centers, ...
           'radii',radii);
 % coarse grid
+fprintf('Fine grid size:   %d\n',size(Xinner,1)/2)
+fprintf('Coarse grid size: %d\n',size(XinnerCoarse,1)/2)
 
 %if options.profile
 %  profile off; profile on;

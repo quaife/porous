@@ -23,11 +23,11 @@ if 0
   preco = 'BD';
   % block-diagonal preconditioned gmres
 end
-if 0
+if 1
   preco = '2grid';
   % V(1,0) preconditioned gmres
 end
-if 1
+if 0
   preco = '2gridIter';
   % V(1,0) iterative (no gmres) 
 end
@@ -93,13 +93,14 @@ elseif strcmp(preco,'2gridIter')
     [eta1,normRes,gmresIter] = op.twoGridVcycle(rhs(:),...
         innerGeom,innerGeomCoarse,NearI2I,NearI2ICoarse,...
         1e-2,maxIter,eta1(:));
+
+    message = ['Coarse grid solve used ' num2str(gmresIter) ...
+        ' of the allowable ' num2str(maxIter) ' iterations'];
+    om.writeMessage(message);
     maxIter = max(10,ceil(1.5*gmresIter));
     % set number of allowable coarse grid iterations to be 50% more
     % than the previous number of iterations required, as long as this
     % number exeeds 10
-    message = ['Coarse grid solve used ' num2str(iter) ...
-        ' of the allowable ' num2str(maxIter) ' iterations'];
-    om.writeMessage(message);
     message = ['Iteration ' num2str(iter(2)) ...
         ' residual is ' num2str(normRes,'%4.2e')];
     om.writeMessage(message);
@@ -127,24 +128,24 @@ err = norm(eta1 - etaTrue)/norm(etaTrue);
 fprintf('Final relative error is %4.2e\n',err)
 
 om.writeStars
-message = ['****    pGMRES took ' num2str(toc,'%4.2e') ...
+message = ['**** CPU time:     ' num2str(toc,'%4.2e') ...
     ' seconds     ****'];
 om.writeMessage(message,'%s\n');
 if (flag == 0)
-  message = ['****    pGMRES required ' num2str(iter(2),'%3d'),...
-      ' iterations    ****'];
+  message = ['**** Iterations:   ' num2str(iter(2),'%3d'),...
+      '               ****'];
   om.writeMessage(message,'%s\n');
 elseif (flag == 1)
-  message = '****    GMRES tolerance not achieved     ****';
+  message = '****          Tolerance not achieved     ****';
   om.writeMessage(message,'%s\n');
   message = ['****    achieved tolerance is ' ...
       num2str(relres,'%4.2e') '   ****'];
   om.writeMessage(message,'%s\n');
-  message = ['****    pGMRES took ' num2str(iter(2),'%3d'),...
+  message = ['**** Iterations took ' num2str(iter(2),'%3d'),...
       ' iterations        ****'];
   om.writeMessage(message,'%s\n');
 else 
-  message = 'GMRES HAD A PROBLEM';
+  message = 'SOLVER HAD A PROBLEM';
   om.writeMessage(message,'%s\n');
 end
 om.writeStars

@@ -51,7 +51,7 @@ global matVecLarge matVecSmall
 Ninner = innerGeom.N;
 if Ninner == 256
   matVecLarge = matVecLarge + 1;
-elseif Ninner == 32
+else
   matVecSmall = matVecSmall + 1;
 end
 % have to do a multiplication on either the fine or coarse grid
@@ -580,16 +580,22 @@ fprintf(message);
 x = Xtra(1:end/2);
 y = Xtra(end/2+1:end);
 
-velx = interp2(eulerX,eulerY,u,x,y,'spline');
-vely = interp2(eulerX,eulerY,v,x,y,'spline');
+%velx = interp2(eulerX,eulerY,u,x,y,'spline');
+%vely = interp2(eulerX,eulerY,v,x,y,'spline');
+velx = interp2(eulerX,eulerY,u,x,y,'cubic');
+vely = interp2(eulerX,eulerY,v,x,y,'cubic');
 % use spline interpolation to compute both componenets of the velocity
 if velx~=velx
   fprintf('\n Problem with Interpolant\n');
-  pause
+%  pause
 end
 
 vel = [velx;vely];
 % stack the output appropriately
+fprintf('\n**************************************\n')
+disp(min(velx.^2 + vely.^2));
+fprintf('\n**************************************\n')
+
 
 
 end % interpolateLayerPot
@@ -1081,7 +1087,7 @@ function stokesSLP = exactStokesSLDirect(o,geom,f)
 % points coincide.  It computes the single-layer potential using the
 % trapezoid rule and assigning a value of 0 to the diagonal term.
 
-n = geom.N; % number of points per geom
+N = geom.N; % number of points per geom
 nv = geom.nv; % number of geoms
 X = geom.X; % geom positions
 oc = curve;
