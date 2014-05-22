@@ -66,7 +66,7 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-  [xtar,ytar] = meshgrid(linspace(1,4,50),linspace(30,30,1));
+  [xtar,ytar] = meshgrid(linspace(1,4,200),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
