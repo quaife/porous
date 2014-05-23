@@ -31,23 +31,15 @@ if options.computeEuler
   % build the Eulerian grid that is used to interpolate in the time
   % integrator
 
-%  [r,theta] = ...
-%    meshgrid(linspace(1.37607e-1,1.0e0,100),(0:99)*2*pi/100);
-%  eulerX = r.*cos(theta) + 3.9010990e0;
-%  eulerY = r.*sin(theta) + 2.4065934e1;
-
   cutoff = ceil(numel(eulerX)/nparts);
   eX = eulerX(:); eY = eulerY(:);
 
   tic
-%  vel = op.layerEval(0,[eulerX(:);eulerY(:)],...
-%      options.ymThresh,options.ypThresh,...
-%      innerGeom,outerGeom,sigmaInner,sigmaOuter);
   vel = zeros(2*numel(eX),1);
   for k = 1:nparts
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
-    disp([istart iend])
+%    disp([istart iend])
     velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
         options.ymThresh,options.ypThresh,...
         innerGeom,outerGeom,sigmaInner,sigmaOuter);
@@ -80,7 +72,9 @@ else
   end
 end
 
+xtra = []; ytra = []; time = [];
 
+if 0
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
 % function handle that evalutes the right-hand side 
 tic
@@ -121,4 +115,5 @@ fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 %[ntime,ntra,time,xtra,ytra] = ...
 %    om.loadTracerPositions(fileName1);
 
+end
 

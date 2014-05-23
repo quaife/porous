@@ -620,8 +620,10 @@ targetPnts = capsules(Xtar,'targets');
 % near singular integration structures due to the inner exclusions and
 % the outer geometry
 
+oc = curve;
+indOut = oc.collision(targetPnts,outerGeom,NearO2T,o.fmm);
+
 if ~o.fmm
-%  [~,vel3] = o.exactStokesSL(innerGeom,sigmaInner,Xtar,1);
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
       NearI2T,@o.exactStokesSL,targetPnts,0,'inner');
   % velocity due to the exclusions
@@ -639,6 +641,8 @@ end
 
 vel = vel1 + vel2;
 % add velocity due to the two components
+vel(indOut) = 0;
+vel(indOut + targetPnts.N) = 0;
 
 load ../examples/radii.dat
 load ../examples/centers.dat
@@ -662,6 +666,8 @@ for k = 1:targetPnts.N
   end
   % zero velocity at points that are above or below the thresholds 
 end
+
+
 
 
 end % layerEval
@@ -828,11 +834,9 @@ for k1 = 1:nvSou
         % Point where interpolant needs to be evaluated
 
         v = filter(1,[1 -dscaled],Px);
-        v1 = v;
         nearField(J(i),k2) = nearField(J(i),k2) + ...
             v(end);
         v = filter(1,[1 -dscaled],Py);
-        v2 = v;
         nearField(J(i)+Ntar,k2) = nearField(J(i)+Ntar,k2) + ...
             v(end);
         % Assign higher-order results coming from Lagrange 
@@ -847,7 +851,8 @@ for k1 = 1:nvSou
           plot(XLag(1:numel(J),:),XLag(numel(J)+1:end,:),'kx')
           plot(XLag(i,:),XLag(numel(J)+i,:),'gx')
           axis equal
-          axis([-1 6 27.5 29])
+%          axis([-2 7 13 17])
+%          axis([-1 6 27.5 29])
 
           figure(1); clf; hold on
           plot((0:interpOrder-1)*beta*h(k2),...
@@ -855,6 +860,7 @@ for k1 = 1:nvSou
           plot((0:interpOrder-1)*beta*h(k2),...
               [vel(J(i)+Ntar,k2,k1) lagrangePts(i+numel(J),:)],'r--o')
           pause(0.01)
+          pause()
         end
         % DEBUG: PASS IN A DUMMY VARIABLE INTO THIS ROUTINE AND THEN
         % YOU CAN SEE THE INTERPOLATION POINTS AND CHECK THE SMOOTHNESS
@@ -1297,6 +1303,97 @@ end
 
 
 end % exactStokesDLfmm
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [laplaceDLP,laplaceDLPtar] = ...
+    exactLaplaceDL(o,geom,f,Xtar,K1)
+% pot = exactLaplaceDL(geom,f,Xtar,K1) 
+% computes the double-layer laplace potential due to f around all
+% geoms except itself.  Also can pass a set of target points Xtar
+% and a collection of geoms K1 and the double-layer potential due 
+% to geoms in K1 will be evaluated at Xtar.
+% Everything but Xtar is in the 2*N x nv format
+% Xtar is in the 2*Ntar x ncol format
+
+nv = geom.nv; % number of geoms
+X = geom.X; % Vesicle positions
+normal = geom.normal; % Outward normal
+sa = geom.sa; % Jacobian
+
+if nargin == 5
+  Ntar = size(Xtar,1)/2;
+  ncol = size(Xtar,2);
+  laplaceDLPtar = zeros(2*Ntar,ncol);
+else
+  K1 = [];
+  laplaceDLPtar = [];
+  ncol = 0;
+  Ntar = 0;
+  % if nargin ~= 5, user does not need the layer potential at arbitrary
+  % points
+end
+
+den = f.*[sa;sa]*2*pi/geom.N;
+% multiply by arclength term
+
+for k2 = 1:ncol % loop over columns of target points
+  for j = 1:Ntar % loop over rows of target points
+    dis2 = (X(1:geom.N,K1) - Xtar(j,k2)).^2 + ... 
+        (X(geom.N+1:2*geom.N,K1) - Xtar(j+Ntar,k2)).^2;
+    diffxy = [X(1:geom.N,K1) - Xtar(j,k2) ; ...
+        X(geom.N+1:2*geom.N,K1) - Xtar(j+Ntar,k2)];
+    % distance squared and difference of source and target location
+
+    coeff = (diffxy(1:geom.N,:).*normal(1:geom.N,K1) + ...
+      diffxy(geom.N+1:2*geom.N,:).*...
+      normal(geom.N+1:2*geom.N,K1))./dis2;
+    % this is the kernel of the double-layer potential for
+    % laplace's equation
+    val = coeff.*den(1:geom.N,K1);
+    laplaceDLPtar(j,k2) = sum(val(:));
+    val = coeff.*den(geom.N+1:2*geom.N,K1);
+    laplaceDLPtar(j+Ntar,k2) = sum(val(:));
+  end % j
+
+end % k2
+% Evaluate double-layer potential at arbitrary target points
+laplaceDLPtar = 1/(2*pi)*laplaceDLPtar;
+% 1/2/pi is the coefficient in front of the double-layer potential
+
+laplaceDLP = zeros(geom.N,geom.nv); % Initialize to zero
+% if we only have one geom, geoms of course can not collide
+% Don't need to run this loop in this case
+if (nargin == 3 && geom.nv > 1)
+  for k1 = 1:geom.nv % geom of targets
+    K = [(1:k1-1) (k1+1:geom.nv)];
+    % Loop over all geoms except k1
+
+    for j=1:geom.N
+      dis2 = (X(1:geom.N,K) - X(j,k1)).^2 + ...
+          (X(geom.N+1:2*geom.N,K) - X(j+geom.N,k1)).^2;
+      diffxy = [X(1:geom.N,K) - X(j,k1); ...
+          X(geom.N+1:2*geom.N,K) - X(j+geom.N,k1)];
+      % distance squared and difference of source and target location
+
+      coeff = (diffxy(1:geom.N,:).*normal(1:geom.N,K) + ...
+        diffxy(geom.N+1:2*geom.N,:).*...
+        normal(geom.N+1:2*geom.N,K))./dis2;
+      % this is the kernel of the double-layer potential for
+      % laplace's equation
+      val = coeff.*den(1:geom.N,K);
+      laplaceDLP(j,k1) = sum(val(:));
+    end % j
+  end % k1
+  % Evaluate double-layer potential at geoms but oneself
+  laplaceDLP = 1/(2*pi)*laplaceDLP;
+  % 1/2/pi is the coefficient in front of the double-layer potential
+end % nargin == 3
+
+laplaceDLP = [laplaceDLP;laplaceDLP];
+
+end % exactLaplaceDL
 
 
 
