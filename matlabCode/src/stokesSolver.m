@@ -35,8 +35,10 @@ rhs = [zeros(2*innerGeom.N*innerGeom.nv,1); outerGeom.u(:)];
 
 op = poten(prams.Ninner,options.fmm);
 % object for evaluating layer potentials
-[~,NearOuter] = outerGeom.getZone(innerGeom,2);
-[~,NearInner] = innerGeom.getZone(outerGeom,2);
+[~,NearO2I] = outerGeom.getZone(innerGeom,2);
+[~,NearI2O] = innerGeom.getZone(outerGeom,2);
+NearI2O.zone{1}
+pause
 
 D = op.stokesDLmatrix(outerGeom);
 N0 = op.stokesN0matrix(outerGeom);
@@ -51,7 +53,7 @@ tic
 %    @(X) op.matVecInvBD(X,innerGeom,DLPpreco));
 [eta,flag,relres,iter,relresvec] = gmres(...
     @(X) op.matVecMultiply(X,innerGeom,outerGeom,...
-    NearInner,NearOuter),...
+    NearI2O,NearO2I),...
     rhs,[],prams.gmresTol,prams.maxIter);
 % do unpreconditioned GMRES to find density function
 om.writeStars

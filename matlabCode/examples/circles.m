@@ -5,11 +5,11 @@ load centers.dat;
 %centers = centers(433,:);
 %radii = radii(433);
 
-prams.Nouter = 1024/4;
+prams.Nouter = 1024/16;
 % number of points on outer solid wall
-prams.Ninner = 256/4;
+prams.Ninner = 256/16;
 % number of points per circle exclusion
-prams.nv = 10;
+prams.nv = 465;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
