@@ -164,7 +164,7 @@ elseif any(strcmp(options,'square'))
   a = 2.15e0; b = 9*a; order = 10;
   % parameters for the boundary
   r = (cos(t).^order + sin(t).^order).^(-1/order);
-  x = a*r.*(cos(t))+2.39e0; y = b*r.*(sin(t))+b-5;
+  x = a*r.*(cos(t))+2.39e0; y = b*r.*(sin(t))+b-2;
 
   X = [x;y];
   % rounded off square.  Increase order ot make it more square
@@ -172,6 +172,41 @@ end
 
 
 end % initConfig
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function indOut = collision(o,Xtar,geom,Near,fmm)
+% indOut = collision(o,Xtar,geom,Near,fmm)
+
+[x,y] = o.getXY(geom.X);
+[nx,ny] = o.getXY(geom.normal);
+
+f = [ones(geom.N,1);zeros(geom.N,1)];
+% Density function is constant.  Pad second half of it with zero
+op = poten(geom.N,fmm);
+% load object for doing near-singular integration and evaluating
+% laplace double-layer potential
+
+if ~fmm
+  kernel = @op.exactLaplaceDL;
+else
+  kernel = @op.exactLaplaceDLfmm;
+end
+% kernel for laplace's double layer potential.  Only difference
+% is if FMM is used or not
+
+Fdlp = op.nearSingInt(geom,f,@(X,f) 1.5*f,...
+       Near,kernel,Xtar,false,'outer');
+% take inner since we are already accounting for the jump by assiging 0
+% since the density function is 1.
+Fdlp = Fdlp(1:end/2);
+
+thresh = 9.999e-1;
+indOut = find(abs(Fdlp) < thresh);
+
+end % collision
+
+
 
 
 
