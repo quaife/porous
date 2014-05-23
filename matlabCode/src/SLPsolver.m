@@ -23,11 +23,11 @@ if 0
   preco = 'BD';
   % block-diagonal preconditioned gmres
 end
-if 0
+if 1
   preco = '2grid';
   % V(1,0) preconditioned gmres
 end
-if 1
+if 0
   preco = '2gridIter';
   % V(1,0) iterative (no gmres) 
 end

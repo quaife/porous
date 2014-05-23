@@ -5,11 +5,11 @@ load centers.dat;
 %centers = centers(433,:);
 %radii = radii(433);
 
-prams.Nouter = 1024;
+prams.Nouter = 1024/4;
 % number of points on outer solid wall
-prams.Ninner = 256;
+prams.Ninner = 256/4;
 % number of points per circle exclusion
-prams.nv = 465;
+prams.nv = 10;
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -24,9 +24,9 @@ prams.ntime = 1501;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = false;
+options.bieSolve = true;
 options.computeEuler = false;
-options.tracersSimulation = true;
+options.tracersSimulation = false;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
