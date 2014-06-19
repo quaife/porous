@@ -74,7 +74,7 @@ end
 
 xtra = []; ytra = []; time = [];
 
-if 0
+if 1
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
 % function handle that evalutes the right-hand side 
 tic

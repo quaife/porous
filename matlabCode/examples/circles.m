@@ -2,14 +2,14 @@ addpath ../src
 
 load radii.dat;
 load centers.dat;
-%centers = centers(433,:);
-%radii = radii(433);
+%centers = centers(1:50,:);
+%radii = radii(1:50);
 
-prams.Nouter = 1024/16;
+prams.Nouter = 1024;
 % number of points on outer solid wall
-prams.Ninner = 256/16;
+prams.Ninner = 256;
 % number of points per circle exclusion
-prams.nv = 465;
+prams.nv = numel(radii);
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
@@ -18,15 +18,15 @@ prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
 prams.atol = 1e-6/100;
 prams.rtol = 1e-3/100;
 % absolute and relative tolerances for ode45
-prams.T = 30;
+prams.T = 30*3;
 % time horizon for ode45
-prams.ntime = 1501;
+prams.ntime = 1500*3 + 1;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = true;
+options.bieSolve = false; 
 options.computeEuler = false;
-options.tracersSimulation = false;
+options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
@@ -66,7 +66,7 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-  [xtar,ytar] = meshgrid(linspace(1,4,200),linspace(30,30,1));
+  [xtar,ytar] = meshgrid(linspace(1,4,500),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
@@ -75,15 +75,23 @@ if options.tracersSimulation
   options.xmin = 0.25;
   options.xmax = 4.53;
   options.nx = 800;
+%  options.xmin = 0;
+%  options.xmax = 5;
+%  options.nx = 100;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
   options.ymax = 33;
   options.ny = 7200;
+%  options.ymin = 27;
+%  options.ymax = 29;
+%  options.ny = 100;
   % min, max, and number of Euler locations in y direction
   options.nparts = 5;
   % need to compute in sections otherwise seem to run out of memory
   options.ymThresh = options.ymin + 3;
   options.ypThresh = options.ymax - 2;
+%  options.ymThresh = -100;
+%  options.ypThresh = 100;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra] = tracers(X0,options,prams,fileName);

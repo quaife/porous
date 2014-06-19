@@ -118,7 +118,7 @@ function [NearSelf,NearOther] = getZone(bd1,bd2,relate)
 % contains additional target points.  The 
 % values of relate corresond to
 % relate == 1  => only require NearSelf  (ie. bd1 to bd1)
-% relate == 2  => only require NearOther (ie. bd1 to bd2)
+% relate == 2  => only requirpe NearOther (ie. bd1 to bd2)
 % relate == 3  => require both NearSelf and NearOther
 NearSelf = [];
 NearOther = [];

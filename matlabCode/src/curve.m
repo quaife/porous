@@ -190,7 +190,9 @@ op = poten(geom.N,fmm);
 if ~fmm
   kernel = @op.exactLaplaceDL;
 else
-  kernel = @op.exactLaplaceDLfmm;
+  kernel = @op.exactLaplaceDL;
+%  kernel = @op.exactLaplaceDLfmm;
+% TODO: Need to put this in
 end
 % kernel for laplace's double layer potential.  Only difference
 % is if FMM is used or not
