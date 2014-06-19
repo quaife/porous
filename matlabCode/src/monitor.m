@@ -399,7 +399,7 @@ fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 
 figure(1); clf; hold on;
 
-quiver(eulerX,eulerY,u,v,'g')
+%quiver(eulerX,eulerY,u,v,'g')
 %plot(eulerX,eulerY,'go')
 plot(xtra,ytra,'r-')
 vec1 = [Xouter(1:end/2);Xouter(1)];
@@ -425,11 +425,10 @@ fileName = [fileName(1:end-8) 'TracerPositions.bin'];
 [ntime,ntra,time,xtra,ytra] = ...
     o.loadTracerPositions(fileName);
 
-
 figure(2);
 nfile = 1;
 %for k = 1:(ntime-1)/500:ntime
-for k = 1:1:ntime
+for k = 1:5:ntime
   clf
   subplot(1,2,1)
   hold on

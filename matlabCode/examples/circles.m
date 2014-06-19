@@ -5,7 +5,7 @@ load centers.dat;
 %centers = centers(433,:);
 %radii = radii(433);
 
-prams.Nouter = 1024/16;
+prams.Nouter = 1024;
 % number of points on outer solid wall
 prams.Ninner = 256/16;
 % number of points per circle exclusion
@@ -34,7 +34,7 @@ options.axis = [-0.5 5.5 0 30];
 options.axis = [-0.1 5.1 0 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.logFile = 'output/circles.log';
 options.profile = false;
 options.saveData = true;
