@@ -565,7 +565,7 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vel = interpolateLayerPot(o,t,Xtra,...
-    eulerX,eulerY,u,v,T)
+    eulerX,eulerY,u,v,T,ythresh)
 % vel = interpolateLayerPot(t,Xtra,eulerX,eulerY,u,v,T) interpolates a
 % given velocity field (u,v) defined at the points (eulerX,eulerY)
 % at the set of points defined in Xtra.  t is the current time and T
@@ -580,22 +580,70 @@ fprintf(message);
 x = Xtra(1:end/2);
 y = Xtra(end/2+1:end);
 
-%velx = interp2(eulerX,eulerY,u,x,y,'spline');
-%vely = interp2(eulerX,eulerY,v,x,y,'spline');
-velx = interp2(eulerX,eulerY,u,x,y,'cubic');
-vely = interp2(eulerX,eulerY,v,x,y,'cubic');
+%velx = interp2FAST(eulerX,eulerY,u,x,y,'spline');
+%vely = interp2FAST(eulerX,eulerY,v,x,y,'spline');
+
+
+if y <= ythresh
+  % tracer location is below the point where simulation is stopped
+  velx = 0;
+  vely = 0;
+elseif x <= 0.24
+  % tracer location is outside of the solid wall
+  velx = 0;
+  vely = 0;
+elseif x >= 4.54
+  % tracer location is outside of the solid wall
+  velx = 0;
+  vely = 0;
+else
+  % tracer location is fine, so we do an interpolation
+  [ny,nx] = size(eulerX);
+  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.02)));
+  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.02)));
+  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.02)));
+  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.02)));
+  imaxX = max(10,imaxX);
+  iminX = min(nx-10,iminX);
+  imaxY = max(10,imaxY);
+  iminY = min(ny-10,iminY);
+%  imaxX - iminX
+%  imaxY - iminY
+%  pause
+
+
+  [velx,iflag1] = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     eulerY(iminY:imaxY,iminX:imaxX),...
+                     u(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+  [vely,iflag2] = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     eulerY(iminY:imaxY,iminX:imaxX),...
+                     v(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+end
+%velx = interp2FAST(eulerX(1:end,1:end),...
+%eulerY(1:end,1:end),...
+%u(1:end,1:end),x,y,'cubic');
+%vely = interp2FAST(eulerX(1:end,1:end),...
+%eulerY(1:end,1:end),...
+%v(1:end,1:end),x,y,'cubic');
 % use spline interpolation to compute both componenets of the velocity
+
+%if velx ~= velx
+%  velx = 1e-5;
+%end
+%if vely ~= vely
+%  vely = 1e-5;
+%end
+vel = [velx;vely];
+% stack the output appropriately
+%fprintf('\n**************************************\n')
+%disp(min(velx.^2 + vely.^2));
+%fprintf('\n**************************************\n')
+%fprintf('\n')
+
 if velx~=velx
   fprintf('\n Problem with Interpolant\n');
 %  pause
 end
-
-vel = [velx;vely];
-% stack the output appropriately
-fprintf('\n**************************************\n')
-disp(min(velx.^2 + vely.^2));
-fprintf('\n**************************************\n')
-
 
 
 end % interpolateLayerPot

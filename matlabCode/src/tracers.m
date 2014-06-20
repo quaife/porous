@@ -75,7 +75,8 @@ end
 xtra = []; ytra = []; time = [];
 
 if 1
-odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,prams.T);
+odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,...
+    prams.T,options.ymThresh);
 % function handle that evalutes the right-hand side 
 tic
 opts.RelTol = prams.rtol;
@@ -84,11 +85,20 @@ opts.AbsTol = prams.atol;
 ntra = numel(X0)/2;
 Xtra = zeros(prams.ntime,2*ntra);
 for k = 1:numel(X0)/2
+  message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
+  fprintf(message);
   x0 = X0(k);
   y0 = X0(k+numel(X0)/2);
   [time,z] = ode45(odeFun,linspace(0,prams.T,prams.ntime),[x0;y0],opts);
   Xtra(:,k) = z(:,1);
   Xtra(:,k+ntra) = z(:,2);
+
+  xtra = Xtra(:,1:end/2);
+  ytra = Xtra(:,end/2+1:end);
+  if mod(k,100) == 1
+    om.writeTracerPositions(time,xtra(:,1:k),ytra(:,1:k));
+    fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+  end
 end
 %[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0,opts);
 om.writeMessage(' ');
