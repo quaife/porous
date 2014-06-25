@@ -87,7 +87,7 @@ v_x(:,1:end-1) = (v(:,2:end) - v(:,1:end-1))/dx;
 v_y(1:end-1,:) = (v(2:end,:) - v(1:end-1,:))/dy;
 % first-order finite difference for every point except the final
 % column/row
-
+                          
 u_x(:,end) = (u(:,end) - u(:,end-1))/dx;
 v_x(:,end) = (u(:,end) - u(:,end-1))/dx;
 u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
@@ -146,8 +146,6 @@ end
 
 om.writeTracerPositions(time,xtra,ytra);
 fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
-%[ntime,ntra,time,xtra,ytra] = ...
-%    om.loadTracerPositions(fileName1);
 
 
 
