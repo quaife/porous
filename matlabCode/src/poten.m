@@ -564,11 +564,11 @@ end % exactStokesN0diag
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function vel = interpolateLayerPot(o,t,Xtra,...
-    eulerX,eulerY,u,v,T,ythresh)
-% vel = interpolateLayerPot(t,Xtra,eulerX,eulerY,u,v,T) interpolates a
+function velAndDef = interpolateLayerPot(o,t,zIn,...
+    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,ythresh)
+% vel = interpolateLayerPot(t,zIn,eulerX,eulerY,u,v,T) interpolates a
 % given velocity field (u,v) defined at the points (eulerX,eulerY)
-% at the set of points defined in Xtra.  t is the current time and T
+% at the set of points defined in zIn.  t is the current time and T
 % is the time horizion which is used to print a progress bar
 
 message = ['ode45 ' num2str(t/T*100,'%04.1f') ' %% completed '];
@@ -577,25 +577,24 @@ fprintf(repmat('\b',1,nmess));
 fprintf(message);
 % print how far along the simulation has prcoeeded
 
-x = Xtra(1:end/2);
-y = Xtra(end/2+1:end);
-
-%velx = interp2FAST(eulerX,eulerY,u,x,y,'spline');
-%vely = interp2FAST(eulerX,eulerY,v,x,y,'spline');
-
+x = zIn(1); y = zIn(2);
+z1 = zIn(3); z2 = zIn(4); z3 = zIn(5); z4 = zIn(6);
 
 if y <= ythresh
   % tracer location is below the point where simulation is stopped
   velx = 0;
   vely = 0;
+  F11 = 0; F12 = 0; F21 = 0; F22 = 0;
 elseif x <= 0.24
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
+  F11 = 0; F12 = 0; F21 = 0; F22 = 0;
 elseif x >= 4.54
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
+  F11 = 0; F12 = 0; F21 = 0; F22 = 0;
 else
   % tracer location is fine, so we do an interpolation
   [ny,nx] = size(eulerX);
@@ -607,9 +606,7 @@ else
   iminX = min(nx-10,iminX);
   imaxY = max(10,imaxY);
   iminY = min(ny-10,iminY);
-%  imaxX - iminX
-%  imaxY - iminY
-%  pause
+  % find a small window that contains the interpolation points
 
 
   [velx,iflag1] = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
@@ -618,22 +615,29 @@ else
   [vely,iflag2] = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      v(iminY:imaxY,iminX:imaxX),x,y,'cubic');
-end
-%velx = interp2FAST(eulerX(1:end,1:end),...
-%eulerY(1:end,1:end),...
-%u(1:end,1:end),x,y,'cubic');
-%vely = interp2FAST(eulerX(1:end,1:end),...
-%eulerY(1:end,1:end),...
-%v(1:end,1:end),x,y,'cubic');
-% use spline interpolation to compute both componenets of the velocity
+  % interpolate the velocity field
 
-%if velx ~= velx
-%  velx = 1e-5;
-%end
-%if vely ~= vely
-%  vely = 1e-5;
-%end
-vel = [velx;vely];
+  velx_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     eulerY(iminY:imaxY,iminX:imaxX),...
+                     u_x(iminY:imaxY,iminX:imaxX),x,y,'spline');
+  velx_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     eulerY(iminY:imaxY,iminX:imaxX),...
+                     u_y(iminY:imaxY,iminX:imaxX),x,y,'spline');
+  vely_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     eulerY(iminY:imaxY,iminX:imaxX),...
+                     v_x(iminY:imaxY,iminX:imaxX),x,y,'spline');
+  vely_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     eulerY(iminY:imaxY,iminX:imaxX),...
+                     v_y(iminY:imaxY,iminX:imaxX),x,y,'spline');
+  % interpolate the gradient of the velocity field
+
+  F11 = velx_x*z1 + velx_y*z3;
+  F12 = velx_x*z2 + velx_y*z4;
+  F21 = vely_x*z1 + vely_y*z3;
+  F22 = vely_x*z2 + vely_y*z4;
+end
+
+velAndDef = [velx;vely;F11;F12;F21;F22];
 % stack the output appropriately
 %fprintf('\n**************************************\n')
 %disp(min(velx.^2 + vely.^2));
@@ -647,6 +651,23 @@ end
 
 
 end % interpolateLayerPot
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function VelF = deformationGradientRHS(o,t,F,Jacobian)
+
+JJ = [Jacobian(1) Jacobian(2); Jacobian(3) Jacobian(4)];
+FF = [F(1) F(2); F(3) F(4)];
+VelFF = JJ*FF;
+
+VelF = zeros(4,1);
+VelF(1) = Jacobian(1)*F(1) + Jacobian(2)*F(3);
+VelF(2) = Jacobian(1)*F(2) + Jacobian(2)*F(4);
+VelF(3) = Jacobian(3)*F(1) + Jacobian(4)*F(3);
+VelF(4) = Jacobian(3)*F(2) + Jacobian(4)*F(4);
+
+
+end % deformationGradientRHS
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -714,9 +735,6 @@ for k = 1:targetPnts.N
   end
   % zero velocity at points that are above or below the thresholds 
 end
-
-
-
 
 end % layerEval
 
@@ -899,6 +917,8 @@ for k1 = 1:nvSou
           plot(XLag(1:numel(J),:),XLag(numel(J)+1:end,:),'kx')
           plot(XLag(i,:),XLag(numel(J)+i,:),'gx')
           axis equal
+          axis([Xtar(J(i),k2)-1e-0 Xtar(J(i),k2)+1e-0 ...
+                Xtar(J(i)+Ntar,k2)-1e-0 Xtar(J(i)+Ntar,k2)+1e-0]);
 %          axis([-2 7 13 17])
 %          axis([-1 6 27.5 29])
 

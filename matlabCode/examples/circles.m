@@ -66,8 +66,9 @@ end
 
 if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-  [xtar,ytar] = meshgrid(linspace(1,4,500),linspace(30,30,1));
+%  [xtar,ytar] = meshgrid(linspace(1,4,2),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
+  xtar = 2.5; ytar = 30;
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
@@ -75,16 +76,17 @@ if options.tracersSimulation
   options.xmin = 0.25;
   options.xmax = 4.53;
   options.nx = 800;
-%  options.xmin = 0;
-%  options.xmax = 5;
-%  options.nx = 100;
+%  dx = 5e-3;
+%  options.xmin = 1.5;
+%  options.xmax = 1.5 + dx;
+%  options.nx = 2;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0;
   options.ymax = 33;
   options.ny = 7200;
-%  options.ymin = 27;
-%  options.ymax = 29;
-%  options.ny = 100;
+%  options.ymin = 21.8;
+%  options.ymax = 21.8 + dx;
+%  options.ny = 2;
   % min, max, and number of Euler locations in y direction
   options.nparts = 5;
   % need to compute in sections otherwise seem to run out of memory
@@ -94,7 +96,8 @@ if options.tracersSimulation
 %  options.ypThresh = 100;
   % thresholds where velocity will be set to zero
 
-  [time,xtra,ytra] = tracers(X0,options,prams,fileName);
+  [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
+      X0,options,prams,fileName);
   % simulate tracers. Each column represents a tracer and each row
   % represents the time variable
 end

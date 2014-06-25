@@ -1,4 +1,5 @@
-function [time,xtra,ytra] = tracers(X0,options,prams,fileName)
+function [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
+    X0,options,prams,fileName)
 
 om = monitor(options,prams);
 
@@ -74,9 +75,27 @@ end
 
 xtra = []; ytra = []; time = [];
 
-if 1
-odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,u,v,...
-    prams.T,options.ymThresh);
+u_x = zeros(ny,nx);
+u_y = zeros(ny,nx);
+v_x = zeros(ny,nx);
+v_y = zeros(ny,nx);
+dx = eulerX(1,2) - eulerX(1,1);
+dy = eulerY(2,1) - eulerY(1,1);
+u_x(:,1:end-1) = (u(:,2:end) - u(:,1:end-1))/dx;
+u_y(1:end-1,:) = (u(2:end,:) - u(1:end-1,:))/dy;
+v_x(:,1:end-1) = (v(:,2:end) - v(:,1:end-1))/dx;
+v_y(1:end-1,:) = (v(2:end,:) - v(1:end-1,:))/dy;
+% first-order finite difference for every point except the final
+% column/row
+
+u_x(:,end) = (u(:,end) - u(:,end-1))/dx;
+v_x(:,end) = (u(:,end) - u(:,end-1))/dx;
+u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
+v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
+% deal with the boundaries by using a finite difference going in the
+% other direction
+odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
+    u,v,u_x,u_y,v_x,v_y,prams.T,options.ymThresh);
 % function handle that evalutes the right-hand side 
 tic
 opts.RelTol = prams.rtol;
@@ -89,9 +108,14 @@ for k = 1:numel(X0)/2
   fprintf(message);
   x0 = X0(k);
   y0 = X0(k+numel(X0)/2);
-  [time,z] = ode45(odeFun,linspace(0,prams.T,prams.ntime),[x0;y0],opts);
+  [time,z] = ode45(odeFun,linspace(0,prams.T,prams.ntime),...
+      [x0 y0 1 0 0 1],opts);
   Xtra(:,k) = z(:,1);
   Xtra(:,k+ntra) = z(:,2);
+  F11(:,k) = z(:,3);
+  F12(:,k) = z(:,4);
+  F21(:,k) = z(:,5);
+  F22(:,k) = z(:,6);
 
   xtra = Xtra(:,1:end/2);
   ytra = Xtra(:,end/2+1:end);
@@ -100,7 +124,7 @@ for k = 1:numel(X0)/2
     fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
   end
 end
-%[time,Xtra] = ode45(odeFun,linspace(0,prams.T,prams.ntime),X0,opts);
+%end
 om.writeMessage(' ');
 
 om.writeStars
@@ -125,5 +149,5 @@ fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 %[ntime,ntra,time,xtra,ytra] = ...
 %    om.loadTracerPositions(fileName1);
 
-end
+
 

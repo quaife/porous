@@ -390,8 +390,8 @@ fileName = o.dataFile;
 [Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
     o.loadGeometry(fileName);
 
-fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
-   [ny,nx,eulerX,eulerY,u,v] = o.loadEulerVelocities(fileName1);
+%fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
+%   [ny,nx,eulerX,eulerY,u,v] = o.loadEulerVelocities(fileName1);
 
 fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 [ntime,ntra,time,xtra,ytra] = ...
