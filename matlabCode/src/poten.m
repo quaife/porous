@@ -630,9 +630,9 @@ else
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      v_y(iminY:imaxY,iminX:imaxX),x,y,'linear');
   % interpolate the gradient of the velocity field
-  figure(1); clf
-  surf(v(iminY:imaxY,iminX:imaxX))
-  pause
+%  figure(1); clf
+%  surf(v(iminY:imaxY,iminX:imaxX))
+%  pause
 
   F11 = velx_x*z1 + velx_y*z3;
   F12 = velx_x*z2 + velx_y*z4;
@@ -655,21 +655,21 @@ end
 
 end % interpolateLayerPot
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function VelF = deformationGradientRHS(o,t,F,Jacobian)
-
-JJ = [Jacobian(1) Jacobian(2); Jacobian(3) Jacobian(4)];
-FF = [F(1) F(2); F(3) F(4)];
-VelFF = JJ*FF;
-
-VelF = zeros(4,1);
-VelF(1) = Jacobian(1)*F(1) + Jacobian(2)*F(3);
-VelF(2) = Jacobian(1)*F(2) + Jacobian(2)*F(4);
-VelF(3) = Jacobian(3)*F(1) + Jacobian(4)*F(3);
-VelF(4) = Jacobian(3)*F(2) + Jacobian(4)*F(4);
-
-
-end % deformationGradientRHS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%function VelF = deformationGradientRHS(o,t,F,Jacobian)
+%
+%JJ = [Jacobian(1) Jacobian(2); Jacobian(3) Jacobian(4)];
+%FF = [F(1) F(2); F(3) F(4)];
+%VelFF = JJ*FF;
+%
+%VelF = zeros(4,1);
+%VelF(1) = Jacobian(1)*F(1) + Jacobian(2)*F(3);
+%VelF(2) = Jacobian(1)*F(2) + Jacobian(2)*F(4);
+%VelF(3) = Jacobian(3)*F(1) + Jacobian(4)*F(3);
+%VelF(4) = Jacobian(3)*F(2) + Jacobian(4)*F(4);
+%
+%
+%end % deformationGradientRHS
 
 
 
@@ -931,7 +931,7 @@ for k1 = 1:nvSou
           plot((0:interpOrder-1)*beta*h(k2),...
               [vel(J(i)+Ntar,k2,k1) lagrangePts(i+numel(J),:)],'r--o')
           pause(0.01)
-          pause()
+%          pause()
         end
         % DEBUG: PASS IN A DUMMY VARIABLE INTO THIS ROUTINE AND THEN
         % YOU CAN SEE THE INTERPOLATION POINTS AND CHECK THE SMOOTHNESS

@@ -74,6 +74,7 @@ else
 end
 
 xtra = []; ytra = []; time = [];
+F11 = []; F12 = []; F21 = []; F22 = [];
 
 u_x = zeros(ny,nx);
 u_y = zeros(ny,nx);
@@ -103,6 +104,7 @@ opts.AbsTol = prams.atol;
 
 ntra = numel(X0)/2;
 Xtra = zeros(prams.ntime,2*ntra);
+if 0
 for k = 1:numel(X0)/2
   message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
   fprintf(message);
@@ -124,7 +126,7 @@ for k = 1:numel(X0)/2
     fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
   end
 end
-%end
+end
 om.writeMessage(' ');
 
 om.writeStars

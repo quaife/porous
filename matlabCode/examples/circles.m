@@ -25,9 +25,9 @@ prams.ntime = 1500*3 + 1;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.bieSolve = false; 
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
 %options.axis = [-0.5 5.5 15 30];
@@ -35,7 +35,7 @@ options.axis = [-0.5 5.5 0 30];
 options.axis = [-0.1 5.1 0 30];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.logFile = 'output/circles.log';
 options.profile = false;
 options.saveData = true;

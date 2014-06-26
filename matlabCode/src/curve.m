@@ -241,14 +241,14 @@ end
 % This is much faster than always using repmat
 
 
-if nargin == 5
-  frac = 1;
-  N = size(IK,1);
-  op = poten(N);
-  IK(abs(IK) > frac*N/2) = 0;
-  norm(o.TimeMatVec(Xn,vesicle,walls,op)-rhs,inf)/norm(rhs,inf)
-  pause
-end
+%if nargin == 5
+%  frac = 1;
+%  N = size(IK,1);
+%  op = poten(N);
+%  IK(abs(IK) > frac*N/2) = 0;
+%  norm(o.TimeMatVec(Xn,vesicle,walls,op)-rhs,inf)/norm(rhs,inf)
+%  pause
+%end
 
 df = f;
 for j=1:m
