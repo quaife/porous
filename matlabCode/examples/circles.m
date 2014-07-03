@@ -25,7 +25,7 @@ prams.rtol = 1e-3;
 %% time horizon for ode45
 %prams.ntime = 1500*3 + 1;
 %% number of time steps that ode45 will output
-prams.T = 5e-1;
+prams.T = 1e0;
 prams.ntime = 100;
 
 % Different options
@@ -74,7 +74,7 @@ if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(1,4,2),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
 %  xtar = 2.0; ytar = 30;
-  ntra = 100;
+  ntra = 1000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
