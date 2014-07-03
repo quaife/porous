@@ -598,10 +598,10 @@ elseif x >= 4.54
 else
   % tracer location is fine, so we do an interpolation
   [ny,nx] = size(eulerX);
-  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.02)));
-  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.02)));
-  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.02)));
-  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.02)));
+  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.01)));
+  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.01)));
+  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.01)));
+  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.01)));
   imaxX = max(10,imaxX);
   iminX = min(nx-10,iminX);
   imaxY = max(10,imaxY);
@@ -617,27 +617,25 @@ else
                      v(iminY:imaxY,iminX:imaxX),x,y,'cubic');
   % interpolate the velocity field
 
-  velx_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+  velx_x = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     u_x(iminY:imaxY,iminX:imaxX),x,y,'linear');
-  velx_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     u_x(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+  velx_y = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     u_y(iminY:imaxY,iminX:imaxX),x,y,'linear');
-  vely_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     u_y(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+  vely_x = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     v_x(iminY:imaxY,iminX:imaxX),x,y,'linear');
-  vely_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     v_x(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+  vely_y = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     v_y(iminY:imaxY,iminX:imaxX),x,y,'linear');
+                     v_y(iminY:imaxY,iminX:imaxX),x,y,'cubic');
   % interpolate the gradient of the velocity field
-%  figure(1); clf
-%  surf(v(iminY:imaxY,iminX:imaxX))
-%  pause
 
   F11 = velx_x*z1 + velx_y*z3;
   F12 = velx_x*z2 + velx_y*z4;
   F21 = vely_x*z1 + vely_y*z3;
   F22 = vely_x*z2 + vely_y*z4;
+
 end
 
 velAndDef = [velx;vely;F11;F12;F21;F22];
@@ -649,27 +647,10 @@ velAndDef = [velx;vely;F11;F12;F21;F22];
 
 if velx~=velx
   fprintf('\n Problem with Interpolant\n');
-%  pause
 end
 
 
 end % interpolateLayerPot
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%function VelF = deformationGradientRHS(o,t,F,Jacobian)
-%
-%JJ = [Jacobian(1) Jacobian(2); Jacobian(3) Jacobian(4)];
-%FF = [F(1) F(2); F(3) F(4)];
-%VelFF = JJ*FF;
-%
-%VelF = zeros(4,1);
-%VelF(1) = Jacobian(1)*F(1) + Jacobian(2)*F(3);
-%VelF(2) = Jacobian(1)*F(2) + Jacobian(2)*F(4);
-%VelF(3) = Jacobian(3)*F(1) + Jacobian(4)*F(3);
-%VelF(4) = Jacobian(3)*F(2) + Jacobian(4)*F(4);
-%
-%
-%end % deformationGradientRHS
 
 
 

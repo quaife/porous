@@ -226,6 +226,39 @@ fclose(fid);
 end % writeTracerPositions
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function writeDeformationGradient(o,time,F11,F12,F21,F22)
+
+[ntime,ntra] = size(F11);
+% number of time steps and number of tracers
+
+fileName = [o.dataFile(1:end-8) 'DeformationGradient.bin'];
+% take the name of the Data file, strip the word Data, and add on the
+% word DeformationGradient 
+
+fid = fopen(fileName,'w');
+fwrite(fid,[ntime;ntra],'double');
+% write the sizes
+fwrite(fid,time,'double');
+% write the time horizon
+for k = 1:ntime
+  fwrite(fid,F11(k,:)','double');
+end
+for k = 1:ntime
+  fwrite(fid,F12(k,:)','double');
+end
+for k = 1:ntime
+  fwrite(fid,F21(k,:)','double');
+end
+for k = 1:ntime
+  fwrite(fid,F22(k,:)','double');
+end
+fclose(fid);
+
+
+end % writeDeformationGradient
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
     loadGeometry(o,fileName)
 
@@ -382,6 +415,56 @@ end
 
 end % loadTracerPositions
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [ntime,ntra,time,F11,F12,F21,F22] = ...
+    loadDeformationGradient(o,fileName)
+
+fid = fopen(fileName,'r');
+val = fread(fid,'double');
+fclose(fid);
+
+ntime = val(1);
+ntra = val(2);
+val = val(3:end);
+
+F11 = zeros(ntime,ntra);
+F12 = zeros(ntime,ntra);
+F21 = zeros(ntime,ntra);
+F22 = zeros(ntime,ntra);
+
+istart = 1;
+% start of a pointer to where everything is stored in val
+
+iend = istart + ntime - 1;
+time = val(istart:iend);
+istart = iend + 1;
+
+for k = 1:ntime
+  iend = istart + ntra - 1;
+  F11(k,:) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ntime
+  iend = istart + ntra - 1;
+  F12(k,:) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ntime
+  iend = istart + ntra - 1;
+  F21(k,:) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ntime
+  iend = istart + ntra - 1;
+  F22(k,:) = val(istart:iend);
+  istart = iend + 1;
+end
+
+end % loadDeformationGradient
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function plotData(o)
@@ -398,7 +481,6 @@ fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
     o.loadTracerPositions(fileName1);
 
 figure(1); clf; hold on;
-
 %quiver(eulerX,eulerY,u,v,'g')
 %plot(eulerX,eulerY,'go')
 plot(xtra,ytra,'r-')
@@ -421,13 +503,16 @@ fileName = o.dataFile;
 [Ninner,Nouter,nv,Xinner,Xouter,sigmaInner,sigmaOuter] = ...
     o.loadGeometry(fileName);
 
-fileName = [fileName(1:end-8) 'TracerPositions.bin'];
+fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
 [ntime,ntra,time,xtra,ytra] = ...
-    o.loadTracerPositions(fileName);
+    o.loadTracerPositions(fileName1);
 
-figure(2);
+fileName1 = [fileName(1:end-8) 'DeformationGradient.bin'];
+[ntime,ntra,time,F11,F12,F21,F22] = ...
+    o.loadDeformationGradient(fileName1);
+
+figure(1);
 nfile = 1;
-%for k = 1:(ntime-1)/500:ntime
 for k = 1:5:ntime
   clf
   subplot(1,2,1)
@@ -438,7 +523,6 @@ for k = 1:5:ntime
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
   plot(xtra(k,:),ytra(k,:),'r.')
-%  plot(xtra(k,95),ytra(k,95),'r.')
   ax = o.axis;
   ax(4) = max(ytra(k,:))+2;
   ax(3) = ax(4) - 10;
@@ -454,14 +538,38 @@ for k = 1:5:ntime
   fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
 
   plot(xtra(k,:),ytra(k,:),'r.')
-%  plot(xtra(k,95),ytra(k,95),'r.')
   ax = o.axis;
   ax(3) = min(ytra(k,:))-2;
-%  ax(3) = min(ytra(k,95))-2;
   ax(4) = ax(3) + 10;
   axis equal
   axis(ax)
   set(gca,'visible','off')
+
+%  subplot(1,3,3)
+%  hold on
+%  vec1 = [Xouter(1:end/2);Xouter(1)];
+%  vec2 = [Xouter(end/2+1:end);Xouter(end/2+1)];
+%  plot(vec1,vec2,'k','linewidth',2)
+%  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
+%
+%  j = 3;
+%  F = [F11(k,j) F12(k,j); F21(k,j) F22(k,j)];
+%  [V,D] = eig(F);
+%
+%  x = xtra(k,j); y = ytra(k,j);
+%  plot(x,y,'ro')
+%  x2 = x + 1e-1*D(1,1)*V(1,1);
+%  y2 = y + 1e-1*D(1,1)*V(2,1);
+%  plot(x2,y2,'bo')
+%  ax = o.axis;
+%  ax(1) = xtra(k,j) - 1e-1;
+%  ax(2) = xtra(k,j) + 1e-1;
+%  ax(3) = ytra(k,j) - 1e-1;
+%  ax(4) = ytra(k,j) + 1e-1;
+%  axis equal
+%  axis(ax)
+%  set(gca,'visible','off')
+
 
 %  fileName = ['figs/image' num2str(nfile,'%04d')];
 %  nfile = nfile + 1;

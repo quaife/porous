@@ -25,6 +25,9 @@ op = poten(Ninner,fmm);
 xmin = options.xmin; xmax = options.xmax; nx = options.nx;
 ymin = options.ymin; ymax = options.ymax; ny = options.ny;
 nparts = options.nparts;
+% size of domain for Eulerian grid and the number of sections the
+% Eulerian grid is divided into.  If it is too large, memory becomes a
+% problem
 
 if options.computeEuler
   [eulerX,eulerY] = ...
@@ -33,6 +36,7 @@ if options.computeEuler
   % integrator
 
   cutoff = ceil(numel(eulerX)/nparts);
+  % maximum number of points to compute at once
   eX = eulerX(:); eY = eulerY(:);
 
   tic
@@ -40,10 +44,10 @@ if options.computeEuler
   for k = 1:nparts
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
-%    disp([istart iend])
     velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
         options.ymThresh,options.ypThresh,...
         innerGeom,outerGeom,sigmaInner,sigmaOuter);
+    % compute velocity at points [eX;eY]
     vel(istart:iend) = velPart(1:end/2);
     vel((istart:iend)+numel(eX)) = velPart(end/2+1:end);
   end
@@ -65,6 +69,7 @@ if options.computeEuler
 else
   fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
   [ny,nx,eulerX,eulerY,u,v] = om.loadEulerVelocities(fileName1);
+  % load velocities at Eulerian grid from a precomputed computation
   if (nx ~= options.nx || ny ~= options.ny)
     message = 'Saved Euler grid does not match input parameters';
     om.writeMessage(message);
@@ -73,59 +78,85 @@ else
   end
 end
 
-xtra = []; ytra = []; time = [];
-F11 = []; F12 = []; F21 = []; F22 = [];
-
 u_x = zeros(ny,nx);
 u_y = zeros(ny,nx);
 v_x = zeros(ny,nx);
 v_y = zeros(ny,nx);
+% allocate space for derivatives
 dx = eulerX(1,2) - eulerX(1,1);
 dy = eulerY(2,1) - eulerY(1,1);
+% spacing in x and y direction
 u_x(:,1:end-1) = (u(:,2:end) - u(:,1:end-1))/dx;
 u_y(1:end-1,:) = (u(2:end,:) - u(1:end-1,:))/dy;
 v_x(:,1:end-1) = (v(:,2:end) - v(:,1:end-1))/dx;
 v_y(1:end-1,:) = (v(2:end,:) - v(1:end-1,:))/dy;
 % first-order finite difference for every point except the final
 % column/row
-                          
 u_x(:,end) = (u(:,end) - u(:,end-1))/dx;
 v_x(:,end) = (u(:,end) - u(:,end-1))/dx;
 u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
 v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
 % deal with the boundaries by using a finite difference going in the
 % other direction
+
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
     u,v,u_x,u_y,v_x,v_y,prams.T,options.ymThresh);
-% function handle that evalutes the right-hand side 
+% function handle that evalutes the right-hand side.  Handles the
+% position and deformation gradient all at once.
+
 tic
 opts.RelTol = prams.rtol;
 opts.AbsTol = prams.atol;
+% load options for ode45
 
 ntra = numel(X0)/2;
-Xtra = zeros(prams.ntime,2*ntra);
-if 0
+xtra = zeros(prams.ntime,ntra);
+ytra = zeros(prams.ntime,ntra);
+F11 = zeros(prams.ntime,ntra);
+F12 = zeros(prams.ntime,ntra);
+F21 = zeros(prams.ntime,ntra);
+F22 = zeros(prams.ntime,ntra);
+% allocate memory for positions and deformation gradient
+
 for k = 1:numel(X0)/2
   message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
   fprintf(message);
   x0 = X0(k);
   y0 = X0(k+numel(X0)/2);
+  % initial condition of the kth tracer
+
   [time,z] = ode45(odeFun,linspace(0,prams.T,prams.ntime),...
       [x0 y0 1 0 0 1],opts);
-  Xtra(:,k) = z(:,1);
-  Xtra(:,k+ntra) = z(:,2);
+  % Solve for position and deformation gradient with ode45
+
+  xtra(:,k) = z(:,1);
+  ytra(:,k) = z(:,2);
   F11(:,k) = z(:,3);
   F12(:,k) = z(:,4);
   F21(:,k) = z(:,5);
   F22(:,k) = z(:,6);
 
-  xtra = Xtra(:,1:end/2);
-  ytra = Xtra(:,end/2+1:end);
+%  figure(1); clf;hold on
+%  plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
+%  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
+%  plot(xtra(:,1:k),ytra(:,1:k),'r-')
+%  axis equal
+%  ax = [min(xtra(:,k))-0.2 max(xtra(:,k))+0.2 ...
+%      min(ytra(:,k))-0.2 max(ytra(:,k))+0.2];
+%  axis(ax)
+%
+%  figure(2); clf; hold on
+%  plot(F11(:,k))
+%  plot(F12(:,k))
+%  plot(F21(:,k))
+%  plot(F22(:,k))
+
   if mod(k,100) == 1
     om.writeTracerPositions(time,xtra(:,1:k),ytra(:,1:k));
-    fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+    om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
+        F21(:,1:k),F22(:,1:k));
   end
-end
+  % save every 100th iteration
 end
 om.writeMessage(' ');
 
@@ -138,16 +169,14 @@ om.writeMessage(message);
 om.writeStars
 om.writeMessage(' ');
 
-xtra = Xtra(:,1:end/2);
-ytra = Xtra(:,end/2+1:end);
-
 if options.usePlot
   om.plotData;
   om.runMovie;
 end
 
 om.writeTracerPositions(time,xtra,ytra);
-fileName1 = [fileName(1:end-8) 'TracerPositions.bin'];
+om.writeDeformationGradient(time,F11,F12,F21,F22);
+% one final save at the very end
 
 
 
