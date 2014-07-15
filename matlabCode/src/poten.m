@@ -630,6 +630,9 @@ else
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      v_y(iminY:imaxY,iminX:imaxX),x,y,'cubic');
   % interpolate the gradient of the velocity field
+%  u_x(iminY:imaxY,iminX:imaxX) + v_y(iminY:imaxY,iminX:imaxX)
+%  velx_x + vely_y
+%  pause
 
   F11 = velx_x*z1 + velx_y*z3;
   F12 = velx_x*z2 + velx_y*z4;

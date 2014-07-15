@@ -16,10 +16,10 @@ prams.gmresTol = 1e-8;
 % gmres tolerance
 prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
 % maximum number of gmres iterations
-prams.atol = 1e-6;
-prams.rtol = 1e-3;
-%prams.atol = 1e-9;
-%prams.rtol = 1e-6;
+%prams.atol = 1e-6;
+%prams.rtol = 1e-3;
+prams.atol = 1e-9;
+prams.rtol = 1e-6;
 % absolute and relative tolerances for ode45
 %prams.T = 30*3;
 %% time horizon for ode45
@@ -30,7 +30,7 @@ prams.ntime = 100;
 
 % Different options
 options.bieSolve = false; 
-options.computeEuler = false;
+options.computeEuler = true;
 options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
@@ -74,33 +74,41 @@ if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(1,4,2),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
 %  xtar = 2.0; ytar = 30;
-  ntra = 1000;
+  ntra = 1;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
+  X0 = [1.7;22];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
   % file that has all the necessary density function and geometry stored
-  options.xmin = 0.25;
-  options.xmax = 4.53;
-  options.nx = 800;
-%  dx = 5e-3;
-%  options.xmin = 1.5;
-%  options.xmax = 1.5 + dx;
-%  options.nx = 2;
+%  options.xmin = 0.25;
+%  options.xmax = 4.53;
+%  options.nx = 800;
+  options.xmin = 1.6;
+  options.xmax = 1.8;
+  options.nx = 201;
+%  dx = (1.25e-2)/8;
+%  options.xmin = 1.7 - dx;
+%  options.xmax = 1.7 + dx;
+%  options.nx = 11;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 0;
-  options.ymax = 33;
-  options.ny = 7200;
-%  options.ymin = 21.8;
-%  options.ymax = 21.8 + dx;
-%  options.ny = 2;
+%  options.ymin = 0;
+%  options.ymax = 33;
+%  options.ny = 7200;
+%  options.nparts = 5;
+  options.ymin = 21.7;
+  options.ymax = 21.9;
+  options.ny = 201;
+%  options.ymin = 22 - dx;
+%  options.ymax = 22 + dx;
+%  options.ny = 11;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 5;
+  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
   options.ymThresh = options.ymin + 3;
   options.ypThresh = options.ymax - 2;
-%  options.ymThresh = -100;
-%  options.ypThresh = 100;
+  options.ymThresh = -100;
+  options.ypThresh = 100;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...

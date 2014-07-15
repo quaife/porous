@@ -98,6 +98,9 @@ u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
 v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
 % deal with the boundaries by using a finite difference going in the
 % other direction
+[dx dy]
+max(max(abs(u_x + v_y)))
+pause
 
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
     u,v,u_x,u_y,v_x,v_y,prams.T,options.ymThresh);
