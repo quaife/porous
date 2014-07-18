@@ -86,6 +86,9 @@ v_y = zeros(ny,nx);
 dx = eulerX(1,2) - eulerX(1,1);
 dy = eulerY(2,1) - eulerY(1,1);
 % spacing in x and y direction
+
+if 0
+% First-order everywhere
 u_x(:,1:end-1) = (u(:,2:end) - u(:,1:end-1))/dx;
 u_y(1:end-1,:) = (u(2:end,:) - u(1:end-1,:))/dy;
 v_x(:,1:end-1) = (v(:,2:end) - v(:,1:end-1))/dx;
@@ -98,13 +101,18 @@ u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
 v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
 % deal with the boundaries by using a finite difference going in the
 % other direction
+end
 
+if 1
+% Second-order at interior nodes
 u_x(:,2:end-1) = (u(:,3:end) - u(:,1:end-2))/2/dx;
 u_y(2:end-1,:) = (u(3:end,:) - u(1:end-2,:))/2/dy;
 v_x(:,2:end-1) = (v(:,3:end) - v(:,1:end-2))/2/dx;
 v_y(2:end-1,:) = (v(3:end,:) - v(1:end-2,:))/2/dy;
 % first-order finite difference for every point except the final
 % column/row
+
+% First-order at boundary nodes
 u_x(:,1) = (u(:,2) - u(:,1))/dx;
 u_x(:,end) = (u(:,end) - u(:,end-1))/dx;
 u_y(1,:) = (u(2,:) - u(1,:))/dy;
@@ -113,11 +121,16 @@ v_x(:,1) = (v(:,2) - v(:,1))/dx;
 v_x(:,end) = (v(:,end) - v(:,end-1))/dx;
 v_y(1,:) = (v(2,:) - v(1,:))/dy;
 v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
+end
 
-[dx dy]
-max(max(abs(u_x + v_y)))
-max(max(abs(u_x(2:end-1,2:end-1) + v_y(2:end-1,2:end-1))))
-pause
+%figure(1); clf;
+%contourf(eulerX(1:20:end,1:20:end),eulerY(1:20:end,1:20:end),log10(abs(u_x(1:20:end,1:20:end) + v_y(1:20:end,1:20:end))))
+%colorbar
+%
+%[dx dy]
+%max(max(abs(u_x + v_y)))
+%max(max(abs(u_x(2:end-1,2:end-1) + v_y(2:end-1,2:end-1))))
+%pause
 
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
     u,v,u_x,u_y,v_x,v_y,prams.T,options.ymThresh);
