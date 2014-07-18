@@ -77,7 +77,7 @@ if options.tracersSimulation
   ntra = 1000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
-%  X0 = [1.7;2.6;22;18.4];
+  X0 = [1.7;2.6;22;18.4];
   % initial tracer locations
   fileName = 'output/circlesData.bin';
   % file that has all the necessary density function and geometry stored
