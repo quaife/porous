@@ -74,7 +74,7 @@ if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(1,4,2),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
 %  xtar = 2.0; ytar = 30;
-  ntra = 10;
+  ntra = 1000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [1.7;2.6;22;18.4];
@@ -103,12 +103,12 @@ if options.tracersSimulation
 %  options.ymax = 22 + dx;
 %  options.ny = 11;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 1;
+%  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
   options.ymThresh = options.ymin + 3;
   options.ypThresh = options.ymax - 2;
-  options.ymThresh = -100;
-  options.ypThresh = 100;
+%  options.ymThresh = -100;
+%  options.ypThresh = 100;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
