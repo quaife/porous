@@ -98,8 +98,25 @@ u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
 v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
 % deal with the boundaries by using a finite difference going in the
 % other direction
+
+u_x(:,2:end-1) = (u(:,3:end) - u(:,1:end-2))/2/dx;
+u_y(2:end-1,:) = (u(3:end,:) - u(1:end-2,:))/2/dy;
+v_x(:,2:end-1) = (v(:,3:end) - v(:,1:end-2))/2/dx;
+v_y(2:end-1,:) = (v(3:end,:) - v(1:end-2,:))/2/dy;
+% first-order finite difference for every point except the final
+% column/row
+u_x(:,1) = (u(:,2) - u(:,1))/dx;
+u_x(:,end) = (u(:,end) - u(:,end-1))/dx;
+u_y(1,:) = (u(2,:) - u(1,:))/dy;
+u_y(end,:) = (u(end,:) - u(end-1,:))/dy;
+v_x(:,1) = (v(:,2) - v(:,1))/dx;
+v_x(:,end) = (v(:,end) - v(:,end-1))/dx;
+v_y(1,:) = (v(2,:) - v(1,:))/dy;
+v_y(end,:) = (v(end,:) - v(end-1,:))/dy;
+
 [dx dy]
 max(max(abs(u_x + v_y)))
+max(max(abs(u_x(2:end-1,2:end-1) + v_y(2:end-1,2:end-1))))
 pause
 
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...

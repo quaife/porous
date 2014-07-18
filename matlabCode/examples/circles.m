@@ -30,7 +30,7 @@ prams.ntime = 100;
 
 % Different options
 options.bieSolve = false; 
-options.computeEuler = true;
+options.computeEuler = false;
 options.tracersSimulation = true;
 options.axis = [-0.5 5.5 0 30];
 %options.axis = [3.65 3.8 23.95 24.15];
@@ -81,24 +81,24 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = 'output/circlesData.bin';
   % file that has all the necessary density function and geometry stored
-%  options.xmin = 0.25;
-%  options.xmax = 4.53;
-%  options.nx = 800;
-  options.xmin = 1.6;
-  options.xmax = 1.8;
-  options.nx = 201;
+  options.xmin = 0.25;
+  options.xmax = 4.53;
+  options.nx = 800;
+%  options.xmin = 1.6;
+%  options.xmax = 1.8;
+%  options.nx = 201;
 %  dx = (1.25e-2)/8;
 %  options.xmin = 1.7 - dx;
 %  options.xmax = 1.7 + dx;
 %  options.nx = 11;
   % min, max, and number of Euler locations in x direction
-%  options.ymin = 0;
-%  options.ymax = 33;
-%  options.ny = 7200;
-%  options.nparts = 5;
-  options.ymin = 21.7;
-  options.ymax = 21.9;
-  options.ny = 201;
+  options.ymin = 0;
+  options.ymax = 33;
+  options.ny = 7200;
+  options.nparts = 5;
+%  options.ymin = 21.7;
+%  options.ymax = 21.9;
+%  options.ny = 201;
 %  options.ymin = 22 - dx;
 %  options.ymax = 22 + dx;
 %  options.ny = 11;
