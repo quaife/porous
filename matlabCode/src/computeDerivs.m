@@ -100,12 +100,11 @@ if order == 2
 
 
   % Fix points that border a pore (ie. cut cells)
-  % Allocate space for finding points whose stencil may cut through a
-  % pore
+  % Space for finding points whose stencil may cut through a pore
   extPtsX = [];
   extPtsY = [];
   for k = 1:numel(radii)
-%  for k = 1:1
+    disp(numel(radii) - k + 1)
     dist2 = (eX - centers(k,1)).^2 + (eY - centers(k,2)).^2;
     intPts = find(dist2 > (radii(k)-max(dx,dy))^2 & dist2 <= radii(k)^2);
     u_x(intPts) = 0;

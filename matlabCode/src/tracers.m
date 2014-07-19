@@ -146,7 +146,8 @@ for k = 1:numel(X0)/2
 %  plot(F21(:,k))
 %  plot(F22(:,k))
 
-  if mod(k,100) == 1
+%  if mod(k,10) == 1
+  if mod(k,1000) == 1
     om.writeTracerPositions(time,xtra(:,1:k),ytra(:,1:k));
     om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
         F21(:,1:k),F22(:,1:k));
