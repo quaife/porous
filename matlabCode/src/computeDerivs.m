@@ -205,7 +205,7 @@ if order == 4
   extPtsY = [];
   for k = 1:numel(radii)
 %  for k = 1:1
-disp(k)
+    disp(k)
     dist2 = (eX - centers(k,1)).^2 + (eY - centers(k,2)).^2;
     intPts = find(dist2 > (radii(k)-2*max(dx,dy))^2 & dist2 <= radii(k)^2);
     u_x(intPts) = 0;
