@@ -205,7 +205,7 @@ if order == 4
   extPtsY = [];
   for k = 1:numel(radii)
 %  for k = 1:1
-    disp(k)
+%    disp(k)
     dist2 = (eX - centers(k,1)).^2 + (eY - centers(k,2)).^2;
     intPts = find(dist2 > (radii(k)-2*max(dx,dy))^2 & dist2 <= radii(k)^2);
     u_x(intPts) = 0;
@@ -226,9 +226,6 @@ if order == 4
     % points whose second right neighbor to the right is inside a pore
     if any(((eX(j,i+2) - centers(:,1)).^2 + ...
           (eY(j,i) - centers(:,2)).^2) < radii.^2)
-      if (k == 102)
-        disp('here')
-      end
       u_x(j,i) = -(-1/4*u(j,i-4) + 4/3*u(j,i-3) - 3*u(j,i-2) + ...
           4*u(j,i-1) - 25/12*u(j,i))/dx;
       v_x(j,i) = -(-1/4*v(j,i-4) + 4/3*v(j,i-3) - 3*v(j,i-2) + ...

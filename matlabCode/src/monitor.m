@@ -201,6 +201,38 @@ fclose(fid);
 end % writeEulerVelocities
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function writeEulerDerivs(o,ux,uy,vx,vy)
+% writeEulerDerivs(eulerX,eulerY,ux,uy,vs,vy) writes the x and y
+% coordinates of the derivative of the velocity field on the Eulerian
+% grid that is fixed and the x and y coordinates of the velocity at
+% these points
+
+[nx,ny] = size(ux);
+% size of the output
+fileName = [o.dataFile(1:end-8) 'EulerDerivs.bin'];
+% take the name of the Data file, strip the word Data, and add on the
+% word Tracers
+
+fid = fopen(fileName,'w');
+fwrite(fid,[nx;ny],'double');
+% write the sizes
+
+for k = 1:ny
+  fwrite(fid,ux(1:nx,k),'double');
+end
+for k = 1:ny
+  fwrite(fid,uy(1:nx,k),'double');
+end
+for k = 1:ny
+  fwrite(fid,vx(1:nx,k),'double');
+end
+for k = 1:ny
+  fwrite(fid,vy(1:nx,k),'double');
+end
+fclose(fid);
+
+end % writeEulerDerivs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function writeTracerPositions(o,time,xtra,ytra)
 
 [ntime,ntra] = size(xtra);
@@ -377,6 +409,53 @@ for k = 1:ny
 end
 
 end % loadEulerVelocities
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [nx,ny,ux,uy,vx,vy] = loadEulerDerivs(o,fileName)
+
+fid = fopen(fileName,'r');
+val = fread(fid,'double');
+fclose(fid);
+
+nx = val(1);
+ny = val(2);
+val = val(3:end);
+
+ux = zeros(nx,ny);
+uy = zeros(nx,ny);
+vx = zeros(nx,ny);
+vy = zeros(nx,ny);
+
+istart = 1;
+% start of a pointer to where everything is stored in val
+
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  ux(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  uy(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  vx(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+for k = 1:ny
+  iend = istart + nx - 1;
+  vy(1:nx,k) = val(istart:iend);
+  istart = iend + 1;
+end
+
+end % loadEulerDerivs
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [ntime,ntra,time,xtra,ytra] = ...

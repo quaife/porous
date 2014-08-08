@@ -66,6 +66,12 @@ if options.computeEuler
   % put velocity field in format that works well for interp2
   om.writeEulerVelocities(eulerX,eulerY,u,v);
   % save the velocity field so we don't have to keep recomputing it
+  [u_x,u_y,v_x,v_y] = computeDerivs(eulerX,eulerY,u,v);
+  % find gradient of velocity field using finite differences.  Want to
+  % use one-sided derivatives on the boundary and when the stencil is
+  % cut by a pore
+  om.writeEulerDerivs(u_x,u_y,v_x,v_y);
+  % save the gradient of the velocity field
 else
   fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
   [ny,nx,eulerX,eulerY,u,v] = om.loadEulerVelocities(fileName1);
@@ -76,13 +82,18 @@ else
     message = 'Just an FYI';
     om.writeMessage(message);
   end
+  fileName1 = [fileName(1:end-8) 'EulerDerivs.bin'];
+  [ny,nx,u_x,u_y,v_x,v_y] = om.loadEulerDerivs(fileName1);
+  % load gradient of velocity on Eulerian grid
+  if (nx ~= options.nx || ny ~= options.ny)
+    message = 'Saved Euler grid does not match input parameters';
+    om.writeMessage(message);
+    message = 'Just an FYI';
+    om.writeMessage(message);
+  end
 end
 
 
-[u_x,u_y,v_x,v_y] = computeDerivs(eulerX,eulerY,u,v);
-% find gradient of velocity field using finite differences.  Want to use
-% one-sided derivatives on the boundary and when the stencil is cut by a
-% pore
 
 
 %figure(1); clf;
@@ -114,8 +125,8 @@ F22 = zeros(prams.ntime,ntra);
 % allocate memory for positions and deformation gradient
 
 for k = 1:numel(X0)/2
-  message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
-  fprintf(message);
+%  message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
+%  fprintf(message);
   x0 = X0(k);
   y0 = X0(k+numel(X0)/2);
   % initial condition of the kth tracer
@@ -130,21 +141,6 @@ for k = 1:numel(X0)/2
   F12(:,k) = z(:,4);
   F21(:,k) = z(:,5);
   F22(:,k) = z(:,6);
-
-%  figure(1); clf;hold on
-%  plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
-%  fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k')
-%  plot(xtra(:,1:k),ytra(:,1:k),'r-')
-%  axis equal
-%  ax = [min(xtra(:,k))-0.2 max(xtra(:,k))+0.2 ...
-%      min(ytra(:,k))-0.2 max(ytra(:,k))+0.2];
-%  axis(ax)
-%
-%  figure(2); clf; hold on
-%  plot(F11(:,k))
-%  plot(F12(:,k))
-%  plot(F21(:,k))
-%  plot(F22(:,k))
 
   if mod(k,1000) == 1
     om.writeTracerPositions(time,xtra(:,1:k),ytra(:,1:k));

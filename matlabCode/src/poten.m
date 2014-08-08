@@ -571,11 +571,11 @@ function velAndDef = interpolateLayerPot(o,t,zIn,...
 % at the set of points defined in zIn.  t is the current time and T
 % is the time horizion which is used to print a progress bar
 
-message = ['ode45 ' num2str(t/T*100,'%04.1f') ' %% completed '];
-nmess = numel(message);
-fprintf(repmat('\b',1,nmess));
-fprintf(message);
-% print how far along the simulation has prcoeeded
+%message = ['ode45 ' num2str(t/T*100,'%04.1f') ' %% completed '];
+%nmess = numel(message);
+%fprintf(repmat('\b',1,nmess));
+%fprintf(message);
+%% print how far along the simulation has prcoeeded
 
 x = zIn(1); y = zIn(2);
 z1 = zIn(3); z2 = zIn(4); z3 = zIn(5); z4 = zIn(6);
@@ -608,31 +608,27 @@ else
   iminY = min(ny-10,iminY);
   % find a small window that contains the interpolation points
 
-
-  [velx,iflag1] = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+  velx = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     u(iminY:imaxY,iminX:imaxX),x,y,'cubic');
-  [vely,iflag2] = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                     u(iminY:imaxY,iminX:imaxX),x,y);
+  vely = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     v(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+                     v(iminY:imaxY,iminX:imaxX),x,y);
   % interpolate the velocity field
 
-  velx_x = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+  velx_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     u_x(iminY:imaxY,iminX:imaxX),x,y,'cubic');
-  velx_y = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+                     u_x(iminY:imaxY,iminX:imaxX),x,y);
+  velx_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     u_y(iminY:imaxY,iminX:imaxX),x,y,'cubic');
-  vely_x = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+                     u_y(iminY:imaxY,iminX:imaxX),x,y);
+  vely_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     v_x(iminY:imaxY,iminX:imaxX),x,y,'cubic');
-  vely_y = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+                     v_x(iminY:imaxY,iminX:imaxX),x,y);
+  vely_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
-                     v_y(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+                     v_y(iminY:imaxY,iminX:imaxX),x,y);
   % interpolate the gradient of the velocity field
-%  u_x(iminY:imaxY,iminX:imaxX) + v_y(iminY:imaxY,iminX:imaxX)
-%  velx_x + vely_y
-%  pause
 
   F11 = velx_x*z1 + velx_y*z3;
   F12 = velx_x*z2 + velx_y*z4;
@@ -643,10 +639,6 @@ end
 
 velAndDef = [velx;vely;F11;F12;F21;F22];
 % stack the output appropriately
-%fprintf('\n**************************************\n')
-%disp(min(velx.^2 + vely.^2));
-%fprintf('\n**************************************\n')
-%fprintf('\n')
 
 if velx~=velx
   fprintf('\n Problem with Interpolant\n');
