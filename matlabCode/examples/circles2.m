@@ -31,9 +31,9 @@ prams.T = 1e0;
 prams.ntime = 100;
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.bieSolve = false; 
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circles2Data.bin';
 options.farField = 'circles';
@@ -51,7 +51,7 @@ Xouter = oc.initConfig(prams.Nouter,'square2');
 %          'nv',prams.nv, ...
 %          'center',centers2, ...
 %          'radii',radii2);
-Xinner3 = oc.initConfig(prams.Ninner,'circles', ...
+Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
           'center',centers3, ...
           'radii',radii2);
@@ -74,7 +74,7 @@ end
 
 if options.tracersSimulation
   ntra = 1;
-  [xtar,ytar] = initialTracers(radii,centers,ntra);
+  [xtar,ytar] = initialTracers(radii2,centers3,ntra);
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circles2Data.bin';
