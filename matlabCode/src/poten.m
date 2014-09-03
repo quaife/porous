@@ -360,7 +360,6 @@ function Gf = matVecMultiply(o,f,innerGeom,outerGeom,...
 % NearO2I are near-singular integration structures required to do
 % inner to outer (I2O) and outer to inner (O2I) interactions
 
-disp('here')
 Ninner = innerGeom.N;
 nv = innerGeom.nv;
 Nouter = outerGeom.N;
@@ -828,6 +827,7 @@ nearField = zeros(2*Ntar,nvTar);
 beta = 1.1;
 % small buffer to make sure Lagrange interpolation points are
 % not in the near zone
+
 for k1 = 1:nvSou
   if tEqualS % sources == targets
     K = [(1:k1-1) (k1+1:nvTar)];
@@ -855,9 +855,9 @@ for k1 = 1:nvSou
             dist{k1}(J(i),k2);
 
         XLag(i,:) = nearest{k1}(J(i),k2) + ...
-            beta*h(k2)*nx*(1:interpOrder-1);
+            beta*h(k1)*nx*(1:interpOrder-1);
         XLag(i+numel(J),:) = nearest{k1}(J(i)+Ntar,k2) + ...
-            beta*h(k2)*ny*(1:interpOrder-1);
+            beta*h(k1)*ny*(1:interpOrder-1);
         % Lagrange interpolation points coming off of curve k1
         % All points are behind Xtar(J(i),k2) and are sufficiently
         % far from curve k1 so that the Nup-trapezoid rule gives
@@ -876,7 +876,7 @@ for k1 = 1:nvSou
         % Build polynomial interpolant along the one-dimensional
         % points coming out of the curve 
         dscaled = full(dist{k1}(J(i),k2)/...
-            (beta*h(k2)*(interpOrder-1)));
+            (beta*h(k1)*(interpOrder-1)));
         % Point where interpolant needs to be evaluated
 
         v = filter(1,[1 -dscaled],Px);

@@ -28,13 +28,13 @@ prams.T = 1e0;
 prams.ntime = 100;
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.bieSolve = false; 
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circles2Data.bin';
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.logFile = 'output/circles2.log';
 options.profile = false;
 options.saveData = true;
@@ -63,21 +63,21 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1000;
+  ntra = 1;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
   % initial tracer locations
   fileName = 'output/circles2Data.bin';
   % file that has all the necessary density function and geometry stored
-  options.xmin = 0.25;
-  options.xmax = 4.53;
-  options.nx = 800;
+  options.xmin = 0;
+  options.xmax = 35;
+  options.nx = 20;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 0;
-  options.ymax = 33;
-  options.ny = 7200;
+  options.ymin = 0.2;
+  options.ymax = 5;
+  options.ny = 20;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 5;
+  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
   options.ymThresh = options.ymin + 3;
   options.ypThresh = options.ymax - 2;
