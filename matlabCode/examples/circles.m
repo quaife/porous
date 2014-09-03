@@ -72,7 +72,7 @@ if options.tracersSimulation
 %  [xtar,ytar] = meshgrid(linspace(1,4,2),linspace(30,30,1));
 %  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
 %  xtar = 2.0; ytar = 30;
-  ntra = 1000;
+  ntra = 100000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [1.7;2.6;22;18.4];

@@ -147,7 +147,7 @@ for k = 1:numel(X0)/2
     om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
         F21(:,1:k),F22(:,1:k));
   end
-  % save every 100th iteration
+  % save every 1000th iteration
 end
 om.writeMessage(' ');
 
