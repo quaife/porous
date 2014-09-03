@@ -45,11 +45,13 @@ if options.computeEuler
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
     velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
-        options.ymThresh,options.ypThresh,...
+        options.xmThresh,options.xpThresh,...
         innerGeom,outerGeom,sigmaInner,sigmaOuter);
     % compute velocity at points [eX;eY]
     vel(istart:iend) = velPart(1:end/2);
     vel((istart:iend)+numel(eX)) = velPart(end/2+1:end);
+%    vel(istart:iend) = eX(istart:iend);
+%    vel((istart:iend) + numel(eX)) = eY(istart:iend);
   end
   % evalute velocity on an Eulerian grid
   om.writeStars
@@ -66,12 +68,16 @@ if options.computeEuler
   % put velocity field in format that works well for interp2
   om.writeEulerVelocities(eulerX,eulerY,u,v);
   % save the velocity field so we don't have to keep recomputing it
-  [u_x,u_y,v_x,v_y] = computeDerivs(eulerX,eulerY,u,v);
-  % find gradient of velocity field using finite differences.  Want to
-  % use one-sided derivatives on the boundary and when the stencil is
-  % cut by a pore
-  om.writeEulerDerivs(u_x,u_y,v_x,v_y);
-  % save the gradient of the velocity field
+  if options.defGradient
+    [u_x,u_y,v_x,v_y] = computeDerivs(eulerX,eulerY,u,v);
+    % find gradient of velocity field using finite differences.  Want to
+    % use one-sided derivatives on the boundary and when the stencil is
+    % cut by a pore
+    om.writeEulerDerivs(u_x,u_y,v_x,v_y);
+    % save the gradient of the velocity field
+  else
+    u_x = []; u_y = []; v_x = []; v_y = [];
+  end
 else
   fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
   [ny,nx,eulerX,eulerY,u,v] = om.loadEulerVelocities(fileName1);
@@ -82,31 +88,23 @@ else
     message = 'Just an FYI';
     om.writeMessage(message);
   end
-  fileName1 = [fileName(1:end-8) 'EulerDerivs.bin'];
-  [ny,nx,u_x,u_y,v_x,v_y] = om.loadEulerDerivs(fileName1);
-  % load gradient of velocity on Eulerian grid
-  if (nx ~= options.nx || ny ~= options.ny)
-    message = 'Saved Euler grid does not match input parameters';
-    om.writeMessage(message);
-    message = 'Just an FYI';
-    om.writeMessage(message);
+  if options.defGradient
+    fileName1 = [fileName(1:end-8) 'EulerDerivs.bin'];
+    [ny,nx,u_x,u_y,v_x,v_y] = om.loadEulerDerivs(fileName1);
+    % load gradient of velocity on Eulerian grid
+    if (nx ~= options.nx || ny ~= options.ny)
+      message = 'Saved Euler grid does not match input parameters';
+      om.writeMessage(message);
+      message = 'Just an FYI';
+      om.writeMessage(message);
+    end
+  else
+    u_x = []; u_y = []; v_x = []; v_y = [];
   end
 end
 
-
-
-
-%figure(1); clf;
-%contourf(eulerX(1:20:end,1:20:end),eulerY(1:20:end,1:20:end),log10(abs(u_x(1:20:end,1:20:end) + v_y(1:20:end,1:20:end))))
-%colorbar
-%
-%[dx dy]
-%max(max(abs(u_x + v_y)))
-%max(max(abs(u_x(2:end-1,2:end-1) + v_y(2:end-1,2:end-1))))
-%pause
-
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
-    u,v,u_x,u_y,v_x,v_y,prams.T,options.ymThresh);
+    u,v,u_x,u_y,v_x,v_y,prams.T,options.xmThresh,options.defGradient);
 % function handle that evalutes the right-hand side.  Handles the
 % position and deformation gradient all at once.
 

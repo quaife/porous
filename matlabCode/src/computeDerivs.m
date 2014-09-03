@@ -4,8 +4,10 @@ function [u_x,u_y,v_x,v_y] = computeDerivs(eX,eY,u,v);
 % pore
 
 order = 4;
-load radii.dat;
-load centers.dat;
+load radii2.dat;
+load centers3.dat;
+radii = radii2(1:end);
+centers = centers3(1:end,:);
 [ny,nx] = size(eX);
 
 u_x = zeros(ny,nx);
@@ -204,8 +206,6 @@ if order == 4
   extPtsX = [];
   extPtsY = [];
   for k = 1:numel(radii)
-%  for k = 1:1
-%    disp(k)
     dist2 = (eX - centers(k,1)).^2 + (eY - centers(k,2)).^2;
     intPts = find(dist2 > (radii(k)-2*max(dx,dy))^2 & dist2 <= radii(k)^2);
     u_x(intPts) = 0;
@@ -219,10 +219,15 @@ if order == 4
     extPtsX = [extPtsX; newPtsX]; 
     extPtsY = [extPtsY; newPtsY]; 
   end
+%  figure(1)
+%  plot(eX,eY,'rx')
 
   for k = 1:numel(extPtsX)
     j = extPtsY(k);
     i = extPtsX(k);
+%    plot(eX(j,i),eY(j,i),'g.')
+%    disp([eX(j,i) eY(j,i)])
+%    pause
     % points whose second right neighbor to the right is inside a pore
     if any(((eX(j,i+2) - centers(:,1)).^2 + ...
           (eY(j,i) - centers(:,2)).^2) < radii.^2)

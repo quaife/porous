@@ -565,7 +565,7 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function velAndDef = interpolateLayerPot(o,t,zIn,...
-    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,ythresh)
+    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,ythresh,defGradient)
 % vel = interpolateLayerPot(t,zIn,eulerX,eulerY,u,v,T) interpolates a
 % given velocity field (u,v) defined at the points (eulerX,eulerY)
 % at the set of points defined in zIn.  t is the current time and T
@@ -616,18 +616,23 @@ else
                      v(iminY:imaxY,iminX:imaxX),x,y);
   % interpolate the velocity field
 
-  velx_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
-                     eulerY(iminY:imaxY,iminX:imaxX),...
-                     u_x(iminY:imaxY,iminX:imaxX),x,y);
-  velx_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
-                     eulerY(iminY:imaxY,iminX:imaxX),...
-                     u_y(iminY:imaxY,iminX:imaxX),x,y);
-  vely_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
-                     eulerY(iminY:imaxY,iminX:imaxX),...
-                     v_x(iminY:imaxY,iminX:imaxX),x,y);
-  vely_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
-                     eulerY(iminY:imaxY,iminX:imaxX),...
-                     v_y(iminY:imaxY,iminX:imaxX),x,y);
+  if defGradient
+    velx_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                       eulerY(iminY:imaxY,iminX:imaxX),...
+                       u_x(iminY:imaxY,iminX:imaxX),x,y);
+    velx_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                       eulerY(iminY:imaxY,iminX:imaxX),...
+                       u_y(iminY:imaxY,iminX:imaxX),x,y);
+    vely_x = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                       eulerY(iminY:imaxY,iminX:imaxX),...
+                       v_x(iminY:imaxY,iminX:imaxX),x,y);
+    vely_y = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+                       eulerY(iminY:imaxY,iminX:imaxX),...
+                       v_y(iminY:imaxY,iminX:imaxX),x,y);
+  else
+    velx_x = 0; velx_y = 0;
+    vely_x = 0; vely_y = 0;
+  end
   % interpolate the gradient of the velocity field
 
   F11 = velx_x*z1 + velx_y*z3;
@@ -650,15 +655,15 @@ end % interpolateLayerPot
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function vel = layerEval(o,t,Xtar,ymThresh,ypThresh,...
+function vel = layerEval(o,t,Xtar,xmThresh,xpThresh,...
     innerGeom,outerGeom,sigmaInner,sigmaOuter)
-% vel = layerEval(t,Xtar,ymThresh,ypThresh,innerGeom,outerGeom,
+% vel = layerEval(t,Xtar,xmThresh,xpThresh,innerGeom,outerGeom,
 % sigmaInner,sigmaOuter) computes the velocity due to the inner and
 % outer boundaries at a set of fixed Eulerian points.  t is the
 % current time (not needed), Xtar is the set of target points,
-% ymThresh and ypThresh are upper and lower bounds on the y
+% xmThresh and xpThresh are upper and lower bounds on the y
 % componenet.  Target points whose y component lies outside the window
-% [ymThresh,ypThresh] is automatically assigned a velocity of 0
+% [xmThresh,xpThresh] is automatically assigned a velocity of 0
 
 targetPnts = capsules(Xtar,'targets');
 % Build an object for the target points
@@ -704,11 +709,11 @@ for k = 1:targetPnts.N
   end
   % zero velocity at points that are inside one of the exlucisions
 
-  if targetPnts.X(k+targetPnts.N) < ymThresh
+  if targetPnts.X(k) < xmThresh
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
-  if targetPnts.X(k+targetPnts.N) > ypThresh 
+  if targetPnts.X(k) > xpThresh 
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end

@@ -1,3 +1,4 @@
+clear all
 addpath ../src
 
 load radii2.dat;
@@ -6,7 +7,7 @@ load centers3.dat;
 
 radii2 = radii2(1:10);
 %centers2 = centers2(1:10,:);
-centers3 = centers3(1:10,:);
+%centers3 = centers3(1:10,:);
 
 prams.Nouter = 1024;
 % number of points on outer solid wall
@@ -34,10 +35,11 @@ prams.ntime = 100;
 options.bieSolve = false; 
 options.computeEuler = true;
 options.tracersSimulation = true;
+options.defGradient = false;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circles2Data.bin';
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.logFile = 'output/circles2.log';
 options.profile = false;
 options.saveData = true;
@@ -60,6 +62,11 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
 
+figure(1); clf; hold on
+plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
+axis equal;
+fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
+
 if options.profile
   profile off; profile on;
 end
@@ -76,21 +83,22 @@ if options.tracersSimulation
   ntra = 1;
   [xtar,ytar] = initialTracers(radii2,centers3,ntra);
   X0 = [xtar(:);ytar(:)];
+%  X0 = [];
   % initial tracer locations
   fileName = 'output/circles2Data.bin';
   % file that has all the necessary density function and geometry stored
   options.xmin = 0;
   options.xmax = 35;
-  options.nx = 20;
+  options.nx = 9000/10;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 0.2;
-  options.ymax = 5;
-  options.ny = 20;
+  options.ymin = 0.001;
+  options.ymax = 5.199;
+  options.ny = 1000/10;
   % min, max, and number of Euler locations in y direction
   options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
-  options.ymThresh = options.ymin + 3;
-  options.ypThresh = options.ymax - 2;
+  options.xmThresh = options.xmin + 0;
+  options.xpThresh = options.xmax - 0;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
