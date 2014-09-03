@@ -360,6 +360,7 @@ function Gf = matVecMultiply(o,f,innerGeom,outerGeom,...
 % NearO2I are near-singular integration structures required to do
 % inner to outer (I2O) and outer to inner (O2I) interactions
 
+disp('here')
 Ninner = innerGeom.N;
 nv = innerGeom.nv;
 Nouter = outerGeom.N;

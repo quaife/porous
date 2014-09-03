@@ -124,7 +124,7 @@ function [X,nv] = initConfig(o,N,varargin)
 %   'circles'     - circle of given radius and center
 %                   position, 
 %   'square'      - returns a rounded square domain 
-%
+%   'square2'     - returns a different rounded square domain 
 
 options = varargin;
 
@@ -160,11 +160,30 @@ if any(strcmp(options,'circles'))
   end
   % paramterization of the circular exclusions
 
+elseif any(strcmp(options,'circles2'))
+  for k = 1:nv
+    X(:,k) = [center(k,2) + radii(k)*cos(t); ...
+              center(k,1) + radii(k)*sin(t)];
+  end
+  X(1:end/2,:) = 45 - X(1:end/2,:)-7.7;
+  X(end/2+1:end,:) = 5.2 - X(end/2+1:end,:);
+  % paramterization of the circular exclusions
+
 elseif any(strcmp(options,'square'))
   a = 2.15e0; b = 9*a; order = 10;
   % parameters for the boundary
   r = (cos(t).^order + sin(t).^order).^(-1/order);
   x = a*r.*(cos(t))+2.39e0; y = b*r.*(sin(t))+b-2;
+
+  X = [x;y];
+  % rounded off square.  Increase order ot make it more square
+
+elseif any(strcmp(options,'square2'))
+  a = 22.51; b = 2.6e0; order = 10;
+  % parameters for the boundary
+  r = (cos(t).^order + sin(t).^order).^(-1/order);
+  x = a*r.*(cos(t))+a; y = b*r.*(sin(t))+b;
+  x = x - 7.7;
 
   X = [x;y];
   % rounded off square.  Increase order ot make it more square

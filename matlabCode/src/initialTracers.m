@@ -8,6 +8,7 @@ xmin = 0.5; xmax = 4.3; dx = xmax - xmin;
 ymin = 5; ymax = 30; dy = ymax - ymin;
 xtar = [];
 ytar = [];
+rng('shuffle');
 
 
 while numel(xtar) < ntra

@@ -64,44 +64,26 @@ nv = size(X,2);
 
 if strcmp(side,'inner')
   u = zeros(2*N,nv);
-%  [x,y] = oc.getXY(X);
-%  rx = x - 3.9;
-%  ry = y - 24.1;
-%  rho2 = rx.^2 + ry.^2;
-%  u = [-0.5*log(rho2) + (rx+ry)./rho2.*rx; ...
-%       -0.5*log(rho2) + (rx+ry)./rho2.*ry];
-%  u = [-(x-2.5);(y-14)];
 elseif strcmp(side,'outer')
   order = 10;
   % controls how smooth the boundary data is
   [x,y] = oc.getXY(X);
   % Separate out x and y coordinates
-  vx = zeros(N,1);
-%  vy = zeros(N,1);
-%  ind = y>35;
-%  vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
-%  % typical mollifer so that velocity decays smoothly to 0
+%  vx = zeros(N,1);
+%  vy = -exp(1./(((x-2.39)/max(x-2.39)).^2-1))/exp(-1);
+%  vy(abs(vy)==Inf) = 0;
+%  % fix points where we divided by 0.  Limiting value is 0
 %
-%  ind = y<-6;
-%  vy(ind) = -exp(1./(((x(ind)-2.5)/max(x-2.5)).^2-1))/exp(-1);
-%  % typical mollifer so that velocity decays smoothly to 0
-  vy = -exp(1./(((x-2.39)/max(x-2.39)).^2-1))/exp(-1);
-  vy(abs(vy)==Inf) = 0;
-  % fix points where we divided by 0.  Limiting value is 0
+%  vy = sign(vy).*abs(vy).^(1/order);
+%  % smooth out boundary
 
-  vy = sign(vy).*abs(vy).^(1/order);
-  % smooth out boundary
+  vx = exp(1./(((y-2.6)/max(y-2.6)).^2-1))/exp(-1);
+  vx(abs(vx)==Inf) = 0;
+  vx = sign(vx).*abs(vx).^(1/order);
+  vy = zeros(N,1);
 
-%  clf; hold on
-%  plot(vy,'b-o')
-%  pause
+
   u = [vx;vy];
-%  rx = x - 3.9;
-%  ry = y - 24.1;
-%  rho2 = rx.^2 + ry.^2;
-%  u = [-0.5*log(rho2) + (rx+ry)./rho2.*rx; ...
-%       -0.5*log(rho2) + (rx+ry)./rho2.*ry];
-%  u = [-(x-2.5);(y-14)];
 else
   u = [];
 end
