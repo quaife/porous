@@ -1,0 +1,101 @@
+addpath ../src
+
+load radii2.dat;
+load centers2.dat;
+centers2 = centers2(1:10,:);
+radii2 = radii2(1:10);
+
+prams.Nouter = 1024;
+% number of points on outer solid wall
+prams.Ninner = 256;
+% number of points per circle exclusion
+prams.nv = numel(radii2);
+% number of exclusions
+prams.gmresTol = 1e-8;
+% gmres tolerance
+prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
+% maximum number of gmres iterations
+%prams.atol = 1e-6;
+%prams.rtol = 1e-3;
+prams.atol = 1e-9;
+prams.rtol = 1e-6;
+% absolute and relative tolerances for ode45
+%prams.T = 30*3;
+%% time horizon for ode45
+%prams.ntime = 1500*3 + 1;
+%% number of time steps that ode45 will output
+prams.T = 1e0;
+prams.ntime = 100;
+
+% Different options
+options.bieSolve = true; 
+options.computeEuler = false;
+options.tracersSimulation = false;
+options.axis = [-8 38 -0.1 5.3];
+options.dataFile = 'output/circles2Data.bin';
+options.farField = 'circles';
+options.fmm = false;
+options.logFile = 'output/circles2.log';
+options.profile = false;
+options.saveData = true;
+options.usePlot = false;
+options.verbose = true;
+
+oc = curve;
+Xouter = oc.initConfig(prams.Nouter,'square2');
+% outer most boundary
+Xinner = oc.initConfig(prams.Ninner,'circles2', ...
+          'nv',prams.nv, ...
+          'center',centers2, ...
+          'radii',radii2);
+% circular exclusions
+
+if options.profile
+  profile off; profile on;
+end
+
+if options.bieSolve
+  stokesSolver(Xinner,Xouter,options,prams);
+end
+% solve density function and write to .bin files.  It this calculation
+% has already ben done, everything can be loaded in tracers to do the
+% Lagrange tracker simulation.
+
+
+if options.tracersSimulation
+  ntra = 1000;
+  [xtar,ytar] = initialTracers(radii,centers,ntra);
+  X0 = [xtar(:);ytar(:)];
+  % initial tracer locations
+  fileName = 'output/circles2Data.bin';
+  % file that has all the necessary density function and geometry stored
+  options.xmin = 0.25;
+  options.xmax = 4.53;
+  options.nx = 800;
+  % min, max, and number of Euler locations in x direction
+  options.ymin = 0;
+  options.ymax = 33;
+  options.ny = 7200;
+  % min, max, and number of Euler locations in y direction
+  options.nparts = 5;
+  % need to compute in sections otherwise seem to run out of memory
+  options.ymThresh = options.ymin + 3;
+  options.ypThresh = options.ymax - 2;
+  % thresholds where velocity will be set to zero
+
+  [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
+      X0,options,prams,fileName);
+  % simulate tracers. Each column represents a tracer and each row
+  % represents the time variable
+end
+
+
+if options.profile
+  profile viewer;
+  profile off;
+  filename = [options.logFile(1:end-4) 'Profile'];
+  profsave(profile('info'),filename);
+end
+% save the profile
+
+
