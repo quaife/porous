@@ -1,9 +1,12 @@
 addpath ../src
 
 load radii2.dat;
-load centers2.dat;
-centers2 = centers2(1:10,:);
+%load centers2.dat;
+load centers3.dat;
+
 radii2 = radii2(1:10);
+%centers2 = centers2(1:10,:);
+centers3 = centers3(1:10,:);
 
 prams.Nouter = 1024;
 % number of points on outer solid wall
@@ -28,7 +31,7 @@ prams.T = 1e0;
 prams.ntime = 100;
 
 % Different options
-options.bieSolve = true; 
+options.bieSolve = false; 
 options.computeEuler = false;
 options.tracersSimulation = false;
 options.axis = [-8 38 -0.1 5.3];
@@ -44,10 +47,17 @@ options.verbose = true;
 oc = curve;
 Xouter = oc.initConfig(prams.Nouter,'square2');
 % outer most boundary
-Xinner = oc.initConfig(prams.Ninner,'circles2', ...
+%Xinner = oc.initConfig(prams.Ninner,'circles2', ...
+%          'nv',prams.nv, ...
+%          'center',centers2, ...
+%          'radii',radii2);
+Xinner3 = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
-          'center',centers2, ...
+          'center',centers3, ...
           'radii',radii2);
+% built centers3 from centers2 where I did the shifting flipping of the
+% centers rather than the geometry.  Then, can do quick checks for
+% determing interior and exterior points when computing Eulerian grid
 % circular exclusions
 
 if options.profile
