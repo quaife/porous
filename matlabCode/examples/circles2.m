@@ -1,12 +1,19 @@
 clear all
 addpath ../src
 
+ind = [10 21 29 70 96 105 221 228 231 255 258 261 264 ...
+    265 330 332 339 348 389 413 415 419 428 431 443 453];
+
 load radii2.dat;
 %load centers2.dat;
 load centers3.dat;
 
-radii2 = radii2(1:3);
-centers3 = centers3(1:3,:);
+radii2 = radii2(ind);
+centers3 = centers3(ind,:);
+%radii2 = [radii2(1:4); radii2(410:413)];
+%centers3 = [centers3(1:4,:); centers3(410:413,:)];
+%radii2 = radii2(1:3);
+%centers3 = centers3(1:3,:);
 
 prams.Nouter = 1024;
 % number of points on outer solid wall
