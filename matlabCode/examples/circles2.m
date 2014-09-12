@@ -5,9 +5,8 @@ load radii2.dat;
 %load centers2.dat;
 load centers3.dat;
 
-radii2 = radii2(1:10);
-%centers2 = centers2(1:10,:);
-%centers3 = centers3(1:10,:);
+radii2 = radii2(1:3);
+centers3 = centers3(1:3,:);
 
 prams.Nouter = 1024;
 % number of points on outer solid wall
@@ -17,7 +16,7 @@ prams.nv = numel(radii2);
 % number of exclusions
 prams.gmresTol = 1e-8;
 % gmres tolerance
-prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
+prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),500);
 % maximum number of gmres iterations
 %prams.atol = 1e-6;
 %prams.rtol = 1e-3;
@@ -32,14 +31,14 @@ prams.T = 1e0;
 prams.ntime = 100;
 
 % Different options
-options.bieSolve = false; 
-options.computeEuler = true;
-options.tracersSimulation = true;
+options.bieSolve = true; 
+options.computeEuler = false;
+options.tracersSimulation = false;
 options.defGradient = false;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circles2Data.bin';
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.logFile = 'output/circles2.log';
 options.profile = false;
 options.saveData = true;
@@ -49,10 +48,6 @@ options.verbose = true;
 oc = curve;
 Xouter = oc.initConfig(prams.Nouter,'square2');
 % outer most boundary
-%Xinner = oc.initConfig(prams.Ninner,'circles2', ...
-%          'nv',prams.nv, ...
-%          'center',centers2, ...
-%          'radii',radii2);
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
           'center',centers3, ...
@@ -80,10 +75,11 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1;
+  ntra = 1000;
   [xtar,ytar] = initialTracers(radii2,centers3,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
+% X0 = [30;4.5];
   % initial tracer locations
   fileName = 'output/circles2Data.bin';
   % file that has all the necessary density function and geometry stored

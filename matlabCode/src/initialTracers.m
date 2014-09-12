@@ -4,8 +4,8 @@ function [xtar,ytar] = initialTracers(radii,centers,ntra)
 % keep xtar between 0.5 and 4.3
 % keep ytar between 5 and 30
 
-xmin = 0.5; xmax = 4.3; dx = xmax - xmin;
-ymin = 5; ymax = 30; dy = ymax - ymin;
+xmin = 1.1; xmax = 33.9; dx = xmax - xmin;
+ymin = 1.1; ymax = 4.1; dy = ymax - ymin;
 xtar = [];
 ytar = [];
 rng('shuffle');
@@ -13,7 +13,7 @@ rng('shuffle');
 
 while numel(xtar) < ntra
   xtarPot = dx*rand(ceil(1.1*(ntra-numel(xtar))),1) + xmin;
-  ytarPot = dy*rand(ceil(1.1*(ntra-numel(ytar))),1) + xmax;
+  ytarPot = dy*rand(ceil(1.1*(ntra-numel(ytar))),1) + ymin;
 
   ncount = 0;
   nv = numel(radii);

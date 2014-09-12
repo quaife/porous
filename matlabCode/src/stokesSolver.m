@@ -11,6 +11,8 @@ function stokesSolver(Xinner,Xouter,options,prams)
 % OUTPUTS:
 % none 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+global iteration
+iteration = 0;
 om = monitor(options,prams);
 % object for doing I/O
 om.welcomeMessage(options,prams);

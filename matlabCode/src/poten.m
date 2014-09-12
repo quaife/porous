@@ -332,7 +332,6 @@ for k = 1:innerGeom.nv
   % put in the 1 and -1 modes which are not diagonal; they communicate
   % with one another
 
-
   invGf(istart:iend) = ...
       [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
   % move back to physical space
@@ -344,8 +343,8 @@ invGf(istart:iend) = DLPpreco * f(istart:iend);
 % use precomputed matrix DLPpreco to precondition the outer boundary
 % density function
 
-
 invGf = real(invGf);
+
 
 
 end % matVecInvBD
@@ -359,6 +358,9 @@ function Gf = matVecMultiply(o,f,innerGeom,outerGeom,...
 % to the inner and outer boundaries, respectively, and NearI2O and
 % NearO2I are near-singular integration structures required to do
 % inner to outer (I2O) and outer to inner (O2I) interactions
+global iteration
+iteration = iteration + 1;
+fprintf('Iteration number is %d\n',iteration);
 
 Ninner = innerGeom.N;
 nv = innerGeom.nv;
@@ -413,12 +415,12 @@ else
       NearO2I,@o.exactStokesDLfmm,innerGeom,0,'outer');
 end
 
-Gfinner = Gfinner + stokesSLP;
+Gfinner = Gfinner + 1*stokesSLP;
 % add in contribution from all other exclusions
-Gfouter = Gfouter + stokesSLPtar;
+Gfouter = Gfouter + 1*stokesSLPtar;
 % add in contribution from all exclusions to outer boundary
 
-Gfinner = Gfinner + stokesDLPtar;
+Gfinner = Gfinner + 1*stokesDLPtar;
 % add in contribution from the outer boundary to all the exclusions
 %Gfouter = outerEta;
 
@@ -565,7 +567,7 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function velAndDef = interpolateLayerPot(o,t,zIn,...
-    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,ythresh,defGradient)
+    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,xthresh,defGradient)
 % vel = interpolateLayerPot(t,zIn,eulerX,eulerY,u,v,T) interpolates a
 % given velocity field (u,v) defined at the points (eulerX,eulerY)
 % at the set of points defined in zIn.  t is the current time and T
@@ -580,17 +582,17 @@ function velAndDef = interpolateLayerPot(o,t,zIn,...
 x = zIn(1); y = zIn(2);
 z1 = zIn(3); z2 = zIn(4); z3 = zIn(5); z4 = zIn(6);
 
-if y <= ythresh
+if x <= xthresh
   % tracer location is below the point where simulation is stopped
   velx = 0;
   vely = 0;
   F11 = 0; F12 = 0; F21 = 0; F22 = 0;
-elseif x <= 0.24
+elseif y <= 0.01
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
   F11 = 0; F12 = 0; F21 = 0; F22 = 0;
-elseif x >= 4.54
+elseif y >= 5.19
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
@@ -598,10 +600,10 @@ elseif x >= 4.54
 else
   % tracer location is fine, so we do an interpolation
   [ny,nx] = size(eulerX);
-  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.01)));
-  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.01)));
-  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.01)));
-  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.01)));
+  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.1)));
+  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.1)));
+  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.1)));
+  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.1)));
   imaxX = max(10,imaxX);
   iminX = min(nx-10,iminX);
   imaxY = max(10,imaxY);
