@@ -705,7 +705,7 @@ nv = size(sigmaInner,2);
 for k = 1:targetPnts.N
   if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
       (targetPnts.X(k+targetPnts.N) - centers(1:nv,2)).^2 < ...
-          radii(1:nv).^2))
+          radii2(1:nv).^2))
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end
@@ -754,7 +754,8 @@ nvTar = size(Xtar,2); % number of target curves
 
 h = souPts.length/Nsou; % arclength term
 
-Nup = Nsou*2^ceil(1/2*log2(Nsou));
+%Nup = Nsou*2^ceil(1/2*log2(Nsou));
+Nup = Nsou*ceil(sqrt(Nsou));
 % upsample to N^(3/2).  
 % only want to add on powers of 2 so that ffts are simple
 % Nup at least has to be a multiple of N
@@ -822,7 +823,13 @@ if tEqualS % sources == targets
   % evaluate layer potential at all targets except ignore the
   % diagonal term
 else % sources ~= targets
+%  disp(kernel)
+%  size(souUpPts.X)
+%  size(Xtar)
+%  tic
   [~,farField] = kernel(souUpPts,fup,Xtar,1:nvSou);
+%  toc
+%  pause
   % evaluate layer potential due to all curves at all points
   % in Xtar;
 end

@@ -4,10 +4,8 @@ function [u_x,u_y,v_x,v_y] = computeDerivs(eX,eY,u,v);
 % pore
 
 order = 4;
-load radii2.dat;
-load centers3.dat;
-radii = radii2(1:end);
-centers = centers3(1:end,:);
+load radii.dat;
+load centers.dat;
 [ny,nx] = size(eX);
 
 u_x = zeros(ny,nx);

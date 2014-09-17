@@ -1,20 +1,28 @@
+clear all
 addpath ../src
+
+ind = [10 21 29 70 96 105 221 228 231 255 258 261 264 ...
+    265 330 332 339 348 389 413 415 419 428 431 443 453];
 
 load radii.dat;
 load centers.dat;
-%centers = centers(1:50,:);
-%radii = radii(1:50);
 
-prams.Nouter = 1024;
+%radii = radii(ind);
+%centers = centers(ind,:);
+%radii = [radii(1:4); radii(410:413)];
+%centers = [centers(1:4,:); centers(410:413,:)];
+%radii = radii(1:3);
+%centers = centers(1:3,:);
+
+prams.Nouter = 2048;
 % number of points on outer solid wall
 prams.Ninner = 256;
 % number of points per circle exclusion
 prams.nv = numel(radii);
-%prams.nv = 1;
 % number of exclusions
-prams.gmresTol = 1e-8;
+prams.gmresTol = 1e-6;
 % gmres tolerance
-prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),1500);
+prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),5000);
 % maximum number of gmres iterations
 %prams.atol = 1e-6;
 %prams.rtol = 1e-3;
@@ -30,13 +38,10 @@ prams.ntime = 100;
 
 % Different options
 options.bieSolve = false; 
-options.computeEuler = false;
+options.computeEuler = true;
 options.tracersSimulation = true;
-options.axis = [-0.5 5.5 0 30];
-%options.axis = [3.65 3.8 23.95 24.15];
-%options.axis = [-0.5 5.5 15 30];
-%options.axis = [3.5 4.5 23.8 24.5];
-options.axis = [-0.1 5.1 0 30];
+options.defGradient = false;
+options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
 options.fmm = true;
@@ -47,13 +52,21 @@ options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square');
+Xouter = oc.initConfig(prams.Nouter,'square2');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
           'center',centers, ...
           'radii',radii);
+% built centers3 from centers2 where I did the shifting flipping of the
+% centers rather than the geometry.  Then, can do quick checks for
+% determing interior and exterior points when computing Eulerian grid
 % circular exclusions
+
+figure(1); clf; hold on
+plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
+axis equal;
+fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 
 if options.profile
   profile off; profile on;
@@ -68,45 +81,26 @@ end
 
 
 if options.tracersSimulation
-%  [xtar,ytar] = meshgrid(linspace(0.2,4.8,200),linspace(30,30,1));
-%  [xtar,ytar] = meshgrid(linspace(1,4,2),linspace(30,30,1));
-%  [xtar,ytar] = meshgrid(linspace(2.3,2.3,1),linspace(30,30,1));
-%  xtar = 2.0; ytar = 30;
-  ntra = 100000;
+  ntra = 1;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
-%  X0 = [1.7;2.6;22;18.4];
+%  X0 = [];
+% X0 = [30;4.5];
   % initial tracer locations
-  fileName = 'output/circlesData.bin';
+  fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = 0.25;
-  options.xmax = 4.53;
-  options.nx = 800;
-%  options.xmin = 1.6;
-%  options.xmax = 1.8;
-%  options.nx = 201;
-%  dx = (1.25e-2)/8;
-%  options.xmin = 1.7 - dx;
-%  options.xmax = 1.7 + dx;
-%  options.nx = 11;
+  options.xmin = 0;
+  options.xmax = 35;
+  options.nx = 9000;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 0;
-  options.ymax = 33;
-  options.ny = 7200;
-  options.nparts = 5;
-%  options.ymin = 21.7;
-%  options.ymax = 21.9;
-%  options.ny = 201;
-%  options.ymin = 22 - dx;
-%  options.ymax = 22 + dx;
-%  options.ny = 11;
+  options.ymin = 0.001;
+  options.ymax = 5.199;
+  options.ny = 1000;
   % min, max, and number of Euler locations in y direction
-%  options.nparts = 1;
+  options.nparts = 10;
   % need to compute in sections otherwise seem to run out of memory
-  options.ymThresh = options.ymin + 3;
-  options.ypThresh = options.ymax - 2;
-%  options.ymThresh = -100;
-%  options.ypThresh = 100;
+  options.xmThresh = options.xmin + 0;
+  options.xpThresh = options.xmax - 0;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...

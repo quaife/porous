@@ -62,9 +62,14 @@ message = ['****     GMRES took ' num2str(toc,'%4.2e') ...
 om.writeMessage(message,'%s\n');
 if (flag ~= 0)
   message = 'GMRES HAD A PROBLEM';
+  om.writeMessage(message,'%s\n');
+  disp(flag)
+  disp(relres)
+  disp(iter)
 else
   message = ['****     GMRES required ' num2str(iter(2),'%3d'),...
       ' iterations    ****'];
+  om.writeMessage(message,'%s\n');
 end
 om.writeMessage(message,'%s\n');
 om.writeStars
