@@ -85,7 +85,7 @@ if order == 2
   u_y(2:end-1,:) = (u(3:end,:) - u(1:end-2,:))/2/dy;
   v_x(:,2:end-1) = (v(:,3:end) - v(:,1:end-2))/2/dx;
   v_y(2:end-1,:) = (v(3:end,:) - v(1:end-2,:))/2/dy;
-  % first-order finite difference for every point except the final
+  % second-order finite difference for every point except the final
   % columns/rows
 
   % Second-order at boundary nodes
@@ -160,7 +160,7 @@ if order == 4
       2/3*v(:,2:end-3) + 1/12*v(:,1:end-4))/dx;
   v_y(3:end-2,:) = (-1/12*v(5:end,:) + 2/3*v(4:end-1,:) - ...
       2/3*v(2:end-3,:) + 1/12*v(1:end-4,:))/dy;
-  % first-order finite difference for every point except the final
+  % fourth-order finite difference for every point except the final
   % columns/rows
 
 %  % Fourth-order at boundary nodes

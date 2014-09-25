@@ -42,6 +42,7 @@ if options.computeEuler
   tic
   vel = zeros(2*numel(eX),1);
   for k = 1:nparts
+    disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
     velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
@@ -123,8 +124,8 @@ F22 = zeros(prams.ntime,ntra);
 % allocate memory for positions and deformation gradient
 
 for k = 1:numel(X0)/2
-%  message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
-%  fprintf(message);
+  message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
+  fprintf(message);
   x0 = X0(k);
   y0 = X0(k+numel(X0)/2);
   % initial condition of the kth tracer

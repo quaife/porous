@@ -705,7 +705,7 @@ nv = size(sigmaInner,2);
 for k = 1:targetPnts.N
   if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
       (targetPnts.X(k+targetPnts.N) - centers(1:nv,2)).^2 < ...
-          radii2(1:nv).^2))
+          radii(1:nv).^2))
     vel(k) = 0;
     vel(k+targetPnts.N) = 0;
   end

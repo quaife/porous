@@ -34,13 +34,13 @@ prams.rtol = 1e-6;
 %prams.ntime = 1500*3 + 1;
 %% number of time steps that ode45 will output
 prams.T = 1e0;
-prams.ntime = 100;
+prams.ntime = 220;
 
 % Different options
 options.bieSolve = false; 
-options.computeEuler = true;
+options.computeEuler = false;
 options.tracersSimulation = true;
-options.defGradient = false;
+options.defGradient = true;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
@@ -81,7 +81,7 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1;
+  ntra = 10000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
