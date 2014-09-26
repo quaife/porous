@@ -52,7 +52,7 @@ options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square2');
+Xouter = oc.initConfig(prams.Nouter,'square');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...

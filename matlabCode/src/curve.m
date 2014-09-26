@@ -124,7 +124,6 @@ function [X,nv] = initConfig(o,N,varargin)
 %   'circles'     - circle of given radius and center
 %                   position, 
 %   'square'      - returns a rounded square domain 
-%   'square2'     - returns a different rounded square domain 
 
 options = varargin;
 
@@ -149,6 +148,20 @@ else
 end
 % centers of the boundary curve
 
+if(any(strcmp(options,'radiiBeans')))
+  radiiBeans = options{find(strcmp(options,'radiiBeans'))+1};
+else
+  radiiBeans = [];
+end
+% radii of posts cut out to form beans
+
+if(any(strcmp(options,'centerBeans')))
+  centerBeans = options{find(strcmp(options,'centerBeans'))+1};
+else
+  centerBeans = [];
+end
+% centers of posts cut out to form beans
+
 t = (0:N-1)'*2*pi/N;
 % Discretization in parameter space
 X = zeros(2*N,nv);
@@ -160,25 +173,51 @@ if any(strcmp(options,'circles'))
   end
   % paramterization of the circular exclusions
 
-elseif any(strcmp(options,'circles2'))
-  for k = 1:nv
-    X(:,k) = [center(k,2) + radii(k)*cos(t); ...
-              center(k,1) + radii(k)*sin(t)];
+elseif any(strcmp(options,'beans'))
+  indCutGrains = [360 139 403 195 116 253 323 398 263 364 362 223 306 ...
+      349 431 179 1 396 109 315 418 277 295 374 310 183 260 ...
+      289 447 185 313 338 143 404 307 128 280 347 324 406 420 316 ...
+      287 416 434 370 436 312 432 402 415 384 369 405 408 333 417 ...
+      410 373 351 443 371 353 279 321 298 411 422 392 388 231 424 ...
+      345 445 452 236 429 217 400 401 439 379 234 380 309 412 461 ...
+      361 302 433 464 221 346 435 459 414 419 391 423 383 442 219 ...
+      428 437 375 465 305 451 457 441 462 395 440 367 463 430 444 ...
+      448 446 427 449 460 409 454 450 421]; % 421];
+  indFullGrains = setdiff((1:465),indCutGrains);
+  for k = 1:numel(indFullGrains)
+    kk = indFullGrains(k);
+    X(:,k) = [center(kk,1) + radii(kk)*cos(t); ...
+              center(kk,2) + radii(kk)*sin(t)];
   end
-  X(1:end/2,:) = 45 - X(1:end/2,:)-7.7;
-  X(end/2+1:end,:) = 5.2 - X(end/2+1:end,:);
-  % paramterization of the circular exclusions
+%  unIndCutGrains = unique(indCutGrains);
+%  % 421 is a double since it has two grains cut out of it (it looks like
+%  % an apple core)
+%  for k = 1:numel(unIndCutGrains)
+%    kk = unIndCutGrains(k);
+%    X(:,k+numel(indFullGrains)) = [center(kk,1) + radii(kk)*cos(t); ...
+%              center(kk,2) + radii(kk)*sin(t)];
+%  end
+
+  for k = 1:numel(indCutGrains);
+    kk = indCutGrains(k);
+    z = intersectingCircles(N,radii(kk),center(kk,1),center(kk,2),...
+        radiiBeans(k),centerBeans(k,1),centerBeans(k,2));
+    X(:,k+numel(indFullGrains)) = [real(z);imag(z)];
+  end
+
+%  for k = 1:numel(radiiBeans)
+%    X(:,k+465) = [centerBeans(k,1) + radiiBeans(k)*cos(t); ...
+%              centerBeans(k,2) + radiiBeans(k)*sin(t)];
+%  end
+
+
+
+
+  % index of grains/posts that are cut by a grain in
+  % radiiBeans/centersBeans.  Order is so that bean(k) cuts through
+  % grain indCutGrains(k)
 
 elseif any(strcmp(options,'square'))
-  a = 2.15e0; b = 9*a; order = 10;
-  % parameters for the boundary
-  r = (cos(t).^order + sin(t).^order).^(-1/order);
-  x = a*r.*(cos(t))+2.39e0; y = b*r.*(sin(t))+b-2;
-
-  X = [x;y];
-  % rounded off square.  Increase order ot make it more square
-
-elseif any(strcmp(options,'square2'))
   a = 22.51; b = 2.6e0; order = 10;
   % parameters for the boundary
   r = (cos(t).^order + sin(t).^order).^(-1/order);
