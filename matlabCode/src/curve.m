@@ -182,21 +182,13 @@ elseif any(strcmp(options,'beans'))
       345 445 452 236 429 217 400 401 439 379 234 380 309 412 461 ...
       361 302 433 464 221 346 435 459 414 419 391 423 383 442 219 ...
       428 437 375 465 305 451 457 441 462 395 440 367 463 430 444 ...
-      448 446 427 449 460 409 454 450 421]; % 421];
-  indFullGrains = setdiff((1:465),indCutGrains);
+      448 446 427 449 460 409 454 450]; % 421 421];
+  indFullGrains = setdiff((1:465),[indCutGrains 421]);
   for k = 1:numel(indFullGrains)
     kk = indFullGrains(k);
     X(:,k) = [center(kk,1) + radii(kk)*cos(t); ...
               center(kk,2) + radii(kk)*sin(t)];
   end
-%  unIndCutGrains = unique(indCutGrains);
-%  % 421 is a double since it has two grains cut out of it (it looks like
-%  % an apple core)
-%  for k = 1:numel(unIndCutGrains)
-%    kk = unIndCutGrains(k);
-%    X(:,k+numel(indFullGrains)) = [center(kk,1) + radii(kk)*cos(t); ...
-%              center(kk,2) + radii(kk)*sin(t)];
-%  end
 
   for k = 1:numel(indCutGrains);
     kk = indCutGrains(k);
@@ -204,6 +196,14 @@ elseif any(strcmp(options,'beans'))
         radiiBeans(k),centerBeans(k,1),centerBeans(k,2));
     X(:,k+numel(indFullGrains)) = [real(z);imag(z)];
   end
+
+  kk = 421;
+  k1 = 126;
+  k2 = 127;
+  z = appleGeom(N,radii(kk),center(kk,1),center(kk,2),...
+      radiiBeans(k1),centerBeans(k1,1),centerBeans(k1,2),...
+      radiiBeans(k2),centerBeans(k2,1),centerBeans(k2,2));
+  X(:,465) = [real(z);imag(z)];
 
 %  for k = 1:numel(radiiBeans)
 %    X(:,k+465) = [centerBeans(k,1) + radiiBeans(k)*cos(t); ...
