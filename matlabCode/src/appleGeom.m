@@ -54,10 +54,10 @@ thetaInner(4) = angle((rB*cos(thetaOuter(4))+xB - x2) + ...
 
 %plot(x1,y1,'k.')
 %plot(x2,y2,'k.')
-plot(rB*cos(thetaOuter(1)) + xB,rB*sin(thetaOuter(1)) + yB,'g.')
-plot(rB*cos(thetaOuter(2)) + xB,rB*sin(thetaOuter(2)) + yB,'r.')
-plot(rB*cos(thetaOuter(3)) + xB,rB*sin(thetaOuter(3)) + yB,'m.')
-plot(rB*cos(thetaOuter(4)) + xB,rB*sin(thetaOuter(4)) + yB,'b.')
+%plot(rB*cos(thetaOuter(1)) + xB,rB*sin(thetaOuter(1)) + yB,'g.')
+%plot(rB*cos(thetaOuter(2)) + xB,rB*sin(thetaOuter(2)) + yB,'r.')
+%plot(rB*cos(thetaOuter(3)) + xB,rB*sin(thetaOuter(3)) + yB,'m.')
+%plot(rB*cos(thetaOuter(4)) + xB,rB*sin(thetaOuter(4)) + yB,'b.')
 
 if thetaOuter(1) < 0
   thetaOuter(1) = thetaOuter(1) + 2*pi;
