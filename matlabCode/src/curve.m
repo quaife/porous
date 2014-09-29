@@ -207,6 +207,10 @@ elseif any(strcmp(options,'beans'))
   z = appleGeom(N,radii(kk),center(kk,1),center(kk,2),...
       radiiBeans(k1),centerBeans(k1,1),centerBeans(k1,2),...
       radiiBeans(k2),centerBeans(k2,1),centerBeans(k2,2));
+  modes = (-N/2:N/2-1)';
+  zh = fftshift(fft(z));
+  zh(abs(modes) > 20) = 0;
+  z = ifft(ifftshift(zh));
   X(:,465) = [real(z);imag(z)];
 
 %  for k = 1:numel(radiiBeans)
@@ -243,7 +247,7 @@ function indOut = collision(o,Xtar,geom,Near,fmm)
 [x,y] = o.getXY(geom.X);
 [nx,ny] = o.getXY(geom.normal);
 
-f = [ones(geom.N,1);zeros(geom.N,1)];
+f = [ones(geom.N,geom.nv);zeros(geom.N,geom.nv)];
 % Density function is constant.  Pad second half of it with zero
 op = poten(geom,fmm);
 % load object for doing near-singular integration and evaluating

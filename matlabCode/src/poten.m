@@ -82,7 +82,7 @@ if ~o.fmm
 %  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
   stokesSLP = o.nearSingInt(...
       innerGeom,innerEta,@o.exactStokesSLdiag,...
-      NearI2I,@o.exactStokesSL,innerGeom,1,'inner','trash');
+      NearI2I,@o.exactStokesSL,innerGeom,1,'inner');
 else
 %  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
   stokesSLP = o.nearSingInt(...
@@ -691,6 +691,7 @@ targetPnts = capsules(Xtar,'targets');
 % near singular integration structures due to the inner exclusions and
 % the outer geometry
 
+if 1
 if ~o.fmm
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
       NearI2T,@o.exactStokesSL,targetPnts,0,'inner');
@@ -709,6 +710,9 @@ end
 
 vel = vel1 + vel2;
 % add velocity due to the two components
+else
+  vel = ones(size(Xtar));
+end
 
 
 oc = curve;
@@ -947,7 +951,7 @@ for k1 = 1:nvSou
           plot((0:interpOrder-1)*beta*h(k1),...
               [vel(J(i)+Ntar,k2,k1) lagrangePts(i+numel(J),:)],'r--o')
           pause(0.01)
-          pause()
+%          pause()
         end
         % DEBUG: PASS IN A DUMMY VARIABLE INTO THIS ROUTINE AND THEN
         % YOU CAN SEE THE INTERPOLATION POINTS AND CHECK THE SMOOTHNESS
@@ -1029,11 +1033,6 @@ for k2 = 1:ncol % loop over columns of target points
     val = rdotf.*diffxy(geom.N+1:2*geom.N,:);
     stokesSLPtar(j+Ntar,k2) = stokesSLPtar(j+Ntar,k2) + sum(val(:));
     % r \otimes r term of the stokes single-layer potential
-%    if ncol == 6
-%      stokesSLPtar(j,k2)
-%      stokesSLPtar(j+Ntar,k2)
-%      pause
-%    end
   end % j
 
 end % k2

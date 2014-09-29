@@ -6,9 +6,9 @@ load centers.dat;
 load radiiBeans.dat;
 load centersBeans.dat;
 
-prams.Nouter = 2048/16;
+prams.Nouter = 2048;
 % number of points on outer solid wall
-prams.Ninner = 256/4;
+prams.Ninner = 256;
 % number of points per circle exclusion
 prams.nv = numel(radii);
 % number of exclusions
@@ -26,11 +26,11 @@ prams.ntime = 220;
 
 % Different options
 options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-8 38 -0.1 5.3];
-options.dataFile = 'output/BeansData.bin';
+options.dataFile = 'output/beansData.bin';
 options.farField = 'circles';
 options.fmm = true;
 options.logFile = 'output/beans.log';
@@ -52,9 +52,8 @@ Xinner = oc.initConfig(prams.Ninner,'beans', ...
 % the centers rather than the geometry.  Then, can do quick checks for
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
-%Xinner = [Xinner(:,326:326)];
+Xinner = [ Xinner(:,462:465)];
 prams.nv = size(Xinner,2);
-size(Xinner)
 
 %figure(2); clf; hold on
 %plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
@@ -79,7 +78,7 @@ end
 
 
 if options.tracersSimulation
-  ntra = 10000;
+  ntra = 1;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
@@ -87,15 +86,15 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = 0;
-  options.xmax = 35;
-  options.nx = 9000;
+  options.xmin = 26;
+  options.xmax = 32;
+  options.nx = 100;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;
   options.ymax = 5.199;
-  options.ny = 1000;
+  options.ny = 100;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 10;
+  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
   options.xmThresh = options.xmin + 0;
   options.xpThresh = options.xmax - 0;
