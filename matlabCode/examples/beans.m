@@ -52,7 +52,7 @@ Xinner = oc.initConfig(prams.Ninner,'beans', ...
 % the centers rather than the geometry.  Then, can do quick checks for
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
-Xinner = [Xinner(:,326:326)];
+%Xinner = [Xinner(:,326:326)];
 prams.nv = size(Xinner,2);
 size(Xinner)
 

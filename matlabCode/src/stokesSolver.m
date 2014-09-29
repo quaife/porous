@@ -35,7 +35,7 @@ clear Xouter
 rhs = [zeros(2*innerGeom.N*innerGeom.nv,1); outerGeom.u(:)];
 % right-hand side which corresponds to no-slip on the solid walls
 
-op = poten(prams.Ninner,options.fmm);
+op = poten(innerGeom,options.fmm);
 % object for evaluating layer potentials
 [~,NearO2I] = outerGeom.getZone(innerGeom,2);
 [NearI2I,NearI2O] = innerGeom.getZone(outerGeom,3);
@@ -98,6 +98,7 @@ message = '****         written to bin file         ****';
 om.writeMessage(message);
 om.writeStars
 om.writeMessage(' ');
+
 
 
 

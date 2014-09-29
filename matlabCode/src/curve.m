@@ -194,6 +194,10 @@ elseif any(strcmp(options,'beans'))
     kk = indCutGrains(k);
     z = intersectingCircles(N,radii(kk),center(kk,1),center(kk,2),...
         radiiBeans(k),centerBeans(k,1),centerBeans(k,2));
+    modes = (-N/2:N/2-1)';
+    zh = fftshift(fft(z));
+    zh(abs(modes) > 20) = 0;
+    z = ifft(ifftshift(zh));
     X(:,k+numel(indFullGrains)) = [real(z);imag(z)];
   end
 
@@ -241,7 +245,7 @@ function indOut = collision(o,Xtar,geom,Near,fmm)
 
 f = [ones(geom.N,1);zeros(geom.N,1)];
 % Density function is constant.  Pad second half of it with zero
-op = poten(geom.N,fmm);
+op = poten(geom,fmm);
 % load object for doing near-singular integration and evaluating
 % laplace double-layer potential
 

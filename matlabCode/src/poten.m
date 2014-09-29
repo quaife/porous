@@ -18,6 +18,8 @@ properties
   interpMat;  
   % interpolation matrix used for near-singular integration
   % This matrix replaces the need to use polyfit
+  G
+  % single-layer potential matricies for each grain
   fmm
   % use the fmm or not
 end % properties
@@ -25,7 +27,7 @@ end % properties
 methods 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function o = poten(N,fmm)
+function o = poten(geom,fmm)
 % o = poten(N,fmm): constructor; N is the number of points per curve.
 % initialize class.
 
@@ -34,8 +36,12 @@ o.interpMat = o.lagrangeInterp;
 % with 7 interpolation points.  This is required for the near-singular
 % interation scheme
 accuracyOrder = 8;
-o.fmm = fmm;
+o.qw = o.quadratureS(accuracyOrder,geom.N);
+o.qp = o.qw(:,2:end);
+o.qw = o.qw(:,1);
+o.G = o.stokesSLmatrix(geom);
 
+o.fmm = fmm;
 end % poten: constructor
   
 
@@ -76,7 +82,7 @@ if ~o.fmm
 %  stokesSLP = exactStokesSL(o,innerGeom,innerEta);
   stokesSLP = o.nearSingInt(...
       innerGeom,innerEta,@o.exactStokesSLdiag,...
-      NearI2I,@o.exactStokesSL,innerGeom,1,'inner');
+      NearI2I,@o.exactStokesSL,innerGeom,1,'inner','trash');
 else
 %  stokesSLP = exactStokesSLfmm(o,innerGeom,innerEta);
   stokesSLP = o.nearSingInt(...
@@ -280,62 +286,68 @@ invGf = f;
 sigmah = zeros(2*innerGeom.N,1);
 modes = [(0:innerGeom.N/2-1) (-innerGeom.N/2:-1)]';
 for k = 1:innerGeom.nv
-  rad = innerGeom.length(k)/2/pi;
-  % radius of a geometry of the same length
-  istart = (k-1)*2*innerGeom.N+1;
-  iend = istart + 2*innerGeom.N - 1;
-  sigma = f(istart:iend);
-  sigmah(1:end/2) = fft(sigma(1:end/2));
-  sigmah(end/2+1:end) = fft(sigma(end/2+1:end));
-  for j = 1:innerGeom.N
-    if abs(modes(j)) > 1
-      % these terms are all diagonal in Fourier space
-      const = rad/(4*abs(modes(j)));
-      sigmah(j) = sigmah(j)/const;
-      sigmah(j+innerGeom.N) = sigmah(j+innerGeom.N)/const;
-    elseif abs(modes(j)) == 1
-      % the -1 and 1 modes communicate, so save these to
-      % compute preconditioner a bit later
-      if modes(j) == -1
-        fm1 = [sigmah(j);sigmah(j+innerGeom.N)];
+  if 0
+    rad = innerGeom.length(k)/2/pi;
+    % radius of a geometry of the same length
+    istart = (k-1)*2*innerGeom.N+1;
+    iend = istart + 2*innerGeom.N - 1;
+    sigma = f(istart:iend);
+    sigmah(1:end/2) = fft(sigma(1:end/2));
+    sigmah(end/2+1:end) = fft(sigma(end/2+1:end));
+    for j = 1:innerGeom.N
+      if abs(modes(j)) > 1
+        % these terms are all diagonal in Fourier space
+        const = rad/(4*abs(modes(j)));
+        sigmah(j) = sigmah(j)/const;
+        sigmah(j+innerGeom.N) = sigmah(j+innerGeom.N)/const;
+      elseif abs(modes(j)) == 1
+        % the -1 and 1 modes communicate, so save these to
+        % compute preconditioner a bit later
+        if modes(j) == -1
+          fm1 = [sigmah(j);sigmah(j+innerGeom.N)];
+        else
+          fp1 = [sigmah(j);sigmah(j+innerGeom.N)];
+        end
       else
-        fp1 = [sigmah(j);sigmah(j+innerGeom.N)];
+        % 0 mode is diagonal in Fourier space
+        const = -rad*log(rad)/2+rad/4;
+        sigmah(j) = sigmah(j)/const;
+        sigmah(j+innerGeom.N) = sigmah(j+innerGeom.N)/const;
       end
-    else
-      % 0 mode is diagonal in Fourier space
-      const = -rad*log(rad)/2+rad/4;
-      sigmah(j) = sigmah(j)/const;
-      sigmah(j+innerGeom.N) = sigmah(j+innerGeom.N)/const;
+
     end
 
+    A = 1/2/rad*[7 0 1 0; 0 7 0 -1; 1 0 7 0; 0 -1 0 7] + ...
+       1i/2/rad*[0 1 0 1; -1 0 1 0; 0 -1 0 -1; -1 0 1 0];
+  % inverse of the matrix does the following four mappings for functions
+  % that only contain 1 and -1 modes
+  %    [sin(theta);0]           -> r/8*[3*sin(theta);-cos(theta)] 
+  %    [0;cos(theta)]           -> r/8*[-sin(theta);3*cos(theta)]
+  %    [cos(theta);-sin(theta)] -> r/4*[cos(theta);-sin(theta)]
+  %    [cos(theta);sin(theta)]  -> r/4*[cos(theta);sin(theta)]
+  % The image of [cos(theta);sin(theta)] under the SLP is in fact 0, but
+  % we do the above mapping to make the preconditioner invertible and to
+  % keep this mode consistent with the [cos(theta);-sin(theta)] mapping
+
+    g = A*[fm1;fp1]; 
+    j = innerGeom.N;
+    sigmah(j) = g(1);
+    sigmah(j+innerGeom.N) = g(2);
+    j = 2;
+    sigmah(j) = g(3);
+    sigmah(j+innerGeom.N) = g(4);
+    % put in the 1 and -1 modes which are not diagonal; they communicate
+    % with one another
+
+    invGf(istart:iend) = ...
+        [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
+    % move back to physical space
   end
-
-  A = 1/2/rad*[7 0 1 0; 0 7 0 -1; 1 0 7 0; 0 -1 0 7] + ...
-     1i/2/rad*[0 1 0 1; -1 0 1 0; 0 -1 0 -1; -1 0 1 0];
-% inverse of the matrix does the following four mappings for functions
-% that only contain 1 and -1 modes
-%    [sin(theta);0]           -> r/8*[3*sin(theta);-cos(theta)] 
-%    [0;cos(theta)]           -> r/8*[-sin(theta);3*cos(theta)]
-%    [cos(theta);-sin(theta)] -> r/4*[cos(theta);-sin(theta)]
-%    [cos(theta);sin(theta)]  -> r/4*[cos(theta);sin(theta)]
-% The image of [cos(theta);sin(theta)] under the SLP is in fact 0, but
-% we do the above mapping to make the preconditioner invertible and to
-% keep this mode consistent with the [cos(theta);-sin(theta)] mapping
-
-  g = A*[fm1;fp1]; 
-  j = innerGeom.N;
-  sigmah(j) = g(1);
-  sigmah(j+innerGeom.N) = g(2);
-  j = 2;
-  sigmah(j) = g(3);
-  sigmah(j+innerGeom.N) = g(4);
-  % put in the 1 and -1 modes which are not diagonal; they communicate
-  % with one another
-
-  invGf(istart:iend) = ...
-      [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
-  % move back to physical space
-
+  if 1
+    istart = (k-1)*2*innerGeom.N+1;
+    iend = istart + 2*innerGeom.N - 1;
+    invGF(istart:iend) = pinv(o.G(:,:,k))*f(istart:iend);
+  end
 end % k = exclusions
 istart = iend + 1;
 iend = numel(f);
@@ -344,7 +356,6 @@ invGf(istart:iend) = DLPpreco * f(istart:iend);
 % density function
 
 invGf = real(invGf);
-
 
 
 end % matVecInvBD
@@ -382,7 +393,6 @@ outerEta = f(istart:iend);
 % unstack f so that it is one x-coordinate and one y-coordinate per
 % column
 
-%Gfinner = innerEta;
 Gfinner = Gfinner + o.exactStokesSLdiag(innerGeom,innerEta);
 % diagonal term from exclusions
 
@@ -446,6 +456,7 @@ function Gf = exactStokesSLdiag(o,geom,f)
 % incorrect.  This is much faster than using Alpert
 
 Gf = zeros(2*geom.N,geom.nv);
+if 0
 sigmah = zeros(2*geom.N,1);
 modes = [(0:geom.N/2-1) (-geom.N/2:-1)]';
 for k = 1:geom.nv
@@ -493,11 +504,13 @@ for k = 1:geom.nv
   sigmah(2*geom.N) = sigmam1(2);
   sigmah(geom.N+2) = sigmap1(2);
 
-
   Gf(:,k) = [ifft(sigmah(1:end/2));ifft(sigmah(end/2+1:end))];
-
 end % k = exclusions
+end
 
+for k = 1:geom.nv
+  Gf(:,k) = o.G(:,:,k) * f(:,k);
+end % k = exclusions
 
 end % exactStokesSLdiag
 
@@ -667,6 +680,9 @@ function vel = layerEval(o,t,Xtar,xmThresh,xpThresh,...
 % componenet.  Target points whose y component lies outside the window
 % [xmThresh,xpThresh] is automatically assigned a velocity of 0
 
+%theta = (0:innerGeom.N-1)'*2*pi/innerGeom.N;
+%sigmaInner(:,1) = [cos(1*theta);sin(1*theta)];
+%
 targetPnts = capsules(Xtar,'targets');
 % Build an object for the target points
 
@@ -674,9 +690,6 @@ targetPnts = capsules(Xtar,'targets');
 [~,NearO2T] = outerGeom.getZone(targetPnts,2);
 % near singular integration structures due to the inner exclusions and
 % the outer geometry
-
-oc = curve;
-indOut = oc.collision(targetPnts,outerGeom,NearO2T,o.fmm);
 
 if ~o.fmm
   vel1 = o.nearSingInt(innerGeom,sigmaInner,@o.exactStokesSLdiag,...
@@ -696,30 +709,45 @@ end
 
 vel = vel1 + vel2;
 % add velocity due to the two components
+
+
+oc = curve;
+indOut = oc.collision(targetPnts,outerGeom,NearO2T,o.fmm);
+indIn = oc.collision(targetPnts,innerGeom,NearI2T,o.fmm);
+indIn = setdiff((1:targetPnts.N),indIn);
+
 vel(indOut) = 0;
 vel(indOut + targetPnts.N) = 0;
 
-load ../examples/radii.dat
-load ../examples/centers.dat
-nv = size(sigmaInner,2);
-for k = 1:targetPnts.N
-  if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
-      (targetPnts.X(k+targetPnts.N) - centers(1:nv,2)).^2 < ...
-          radii(1:nv).^2))
-    vel(k) = 0;
-    vel(k+targetPnts.N) = 0;
-  end
-  % zero velocity at points that are inside one of the exlucisions
+vel(indIn) = 0;
+vel(indIn + targetPnts.N) = 0;
 
-  if targetPnts.X(k) < xmThresh
-    vel(k) = 0;
-    vel(k+targetPnts.N) = 0;
+
+if 0
+  % can use this for circular geometries, but it isn't set up for the
+  % beans yet
+  load ../examples/radii.dat
+  load ../examples/centers.dat
+  nv = size(sigmaInner,2);
+  for k = 1:targetPnts.N
+    if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
+        (targetPnts.X(k+targetPnts.N) - centers(1:nv,2)).^2 < ...
+            radii(1:nv).^2))
+      vel(k) = 0;
+      vel(k+targetPnts.N) = 0;
+    end
+    % zero velocity at points that are inside one of the exlucisions
+
+    if targetPnts.X(k) < xmThresh
+      vel(k) = 0;
+      vel(k+targetPnts.N) = 0;
+    end
+    if targetPnts.X(k) > xpThresh 
+      vel(k) = 0;
+      vel(k+targetPnts.N) = 0;
+    end
+    % zero velocity at points that are above or below the thresholds 
   end
-  if targetPnts.X(k) > xpThresh 
-    vel(k) = 0;
-    vel(k+targetPnts.N) = 0;
-  end
-  % zero velocity at points that are above or below the thresholds 
 end
 
 end % layerEval
@@ -823,9 +851,6 @@ if tEqualS % sources == targets
   % evaluate layer potential at all targets except ignore the
   % diagonal term
 else % sources ~= targets
-%  disp(kernel)
-%  size(souUpPts.X)
-%  size(Xtar)
 %  tic
   [~,farField] = kernel(souUpPts,fup,Xtar,1:nvSou);
 %  toc
@@ -911,8 +936,8 @@ for k1 = 1:nvSou
           plot(XLag(1:numel(J),:),XLag(numel(J)+1:end,:),'kx')
           plot(XLag(i,:),XLag(numel(J)+i,:),'gx')
           axis equal
-          axis([Xtar(J(i),k2)-1e-0 Xtar(J(i),k2)+1e-0 ...
-                Xtar(J(i)+Ntar,k2)-1e-0 Xtar(J(i)+Ntar,k2)+1e-0]);
+          axis([Xtar(J(i),k2)-1e-1 Xtar(J(i),k2)+1e-1 ...
+                Xtar(J(i)+Ntar,k2)-1e-1 Xtar(J(i)+Ntar,k2)+1e-1]);
 %          axis([-2 7 13 17])
 %          axis([-1 6 27.5 29])
 
@@ -922,7 +947,7 @@ for k1 = 1:nvSou
           plot((0:interpOrder-1)*beta*h(k1),...
               [vel(J(i)+Ntar,k2,k1) lagrangePts(i+numel(J),:)],'r--o')
           pause(0.01)
-%          pause()
+          pause()
         end
         % DEBUG: PASS IN A DUMMY VARIABLE INTO THIS ROUTINE AND THEN
         % YOU CAN SEE THE INTERPOLATION POINTS AND CHECK THE SMOOTHNESS
@@ -1004,6 +1029,11 @@ for k2 = 1:ncol % loop over columns of target points
     val = rdotf.*diffxy(geom.N+1:2*geom.N,:);
     stokesSLPtar(j+Ntar,k2) = stokesSLPtar(j+Ntar,k2) + sum(val(:));
     % r \otimes r term of the stokes single-layer potential
+%    if ncol == 6
+%      stokesSLPtar(j,k2)
+%      stokesSLPtar(j+Ntar,k2)
+%      pause
+%    end
   end % j
 
 end % k2
@@ -1672,6 +1702,157 @@ Gf = Gfinner(:);
 
 
 end % SLPmatVecMultiplyGalerkin
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function G = stokesSLmatrix(o,vesicle)
+% G = stokesSLmatrix(vesicle) generate single layer potential for
+% Stokes vesicle is a data structure defined as in the curve class
+% G is (2N,2N,nv) array where N is the number of points per curve
+% and nv is the number of curves in X 
+
+oc = curve;
+[x,y] = oc.getXY(vesicle.X);
+% seperate x and y coordinates of vesicle
+
+G = zeros(2*vesicle.N,2*vesicle.N,vesicle.nv);
+% initalize single-layer potential to zero
+for k=1:vesicle.nv  % Loop over curves
+  for j=1:vesicle.N % Loop over targets
+    ind = 1 + mod(j-1 + (0:vesicle.N-1),vesicle.N);
+    xin = o.qp*x(ind,k);
+    yin = o.qp*y(ind,k);
+
+    rho = (xin-x(j,k)).^2 + (yin-y(j,k)).^2;
+    br = 1./rho;
+
+    logpart = -1/2 * o.qw .* log(rho);
+    
+    G(j,ind,k) = (logpart+...
+        (o.qw.*( ( x(j,k) - xin).^2 .* br)))'*o.qp;
+    G(j, vesicle.N+ind, k) = ...
+        (o.qw.*(x(j,k)-xin).*(y(j,k)-yin) .* br)'*o.qp;
+    G(j+vesicle.N, 1:vesicle.N ,k) = G(j,vesicle.N+1:2*vesicle.N,k);
+    G(j+vesicle.N,vesicle.N+ind,k) = (logpart+...
+        (o.qw.*( ( y(j,k) - yin).^2 .* br)))'*o.qp;
+  end % j
+  sak = repmat(vesicle.sa(:,k)',2*vesicle.N,2);
+  % 2 copies of Jacobian
+  
+  G(:,:,k) = G(:,:,k).*sak;
+  % multiply both components of G by the Jacobian
+  % don't need to divide by 4*pi as it is stored in o.qw
+end % k
+
+end % stokesSLmatrix
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function qw = quadratureS(o,q,N);
+% qw = quadratureS(q) generates the quadrature rules for a function
+% with o.N/2 points and a logarithmic singularity at the origin.  q
+% controls the accuracy.  All rules are from Alpert 1999.
+
+[v,u,a] = o.getWeights(q,2);
+[x,w] = o.regularWeights(a);
+
+m = N/2;
+n = m-2*a+1;
+h = 1/m;
+
+evalpots1 = v*h;
+evalpots3 = 1-x*h;
+
+ys = pi*[evalpots1;evalpots3];
+wt = pi*h*[u;w];
+
+wt = [wt; flipud(wt)]; ys = [ys; 2*pi-flipud(ys)];
+of = fft1;
+A = of.sinterpS(2*m, ys); 
+h = pi/m; 
+yt = [a*h:h:(m - a)*h]';
+%regular points away from singularity
+wt = [wt; h*ones(2*length(yt),1)]/4/pi;
+%quadrature weights at regular points away from singularity
+lyt = 2*length(yt); 
+B = sparse(lyt, 2*m); 
+pos = 1+[(a:m-a)'; (m+a:2*m-a)'];
+
+for k = 1:lyt
+  B(k, pos(k)) = 1;
+end
+A = [sparse(A); B];
+qw = [wt, A];
+
+
+
+end % quadratureS
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [v,u,a] = getWeights(o,q,ker)
+% [v,u,a] = getWeights(q,ker) loads quadrature rules for 
+% different types of singularities.  All rules come from 
+% Bradley Alpert's papers.  We are interested in nodesLogx.dat;
+
+switch ker
+case 0
+  xp = load('nodesr.dat');
+  lenth = [2;4;8];
+  par = [2;4;7];
+case 1
+  xp = load('nodes_sqrtx.dat');
+  lenth = [4;8;16];
+  par = [3;5;10];
+case 2
+  xp = load('nodesLog.dat');
+  lenth = [3;7;15];
+  par = [2;5;10];
+end
+
+switch q
+case 4
+  v = xp(1:lenth(1), 1);
+  u = xp(1:lenth(1), 2);
+  a = par(1);
+case 8
+  v = xp(1+lenth(1):lenth(1)+lenth(2),1);
+  u = xp(1+lenth(1):lenth(1)+lenth(2),2);
+  a = par(2);
+case 16
+  v = xp(1+lenth(2)+lenth(1):sum(lenth),1);
+  u = xp(1+lenth(2)+lenth(1):sum(lenth),2);
+  a = par(3);
+end
+
+
+end % getWeights
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [x,w] = regularWeights(o,a)
+% [x,w] = regularWeights(a) gets quadrature rules
+% for regular functions (Alpert's quadrature rules).  These are
+% needed for integrating away from singularities
+
+par = [2;3;4;5;7;10];
+for i = 1:length(par)
+  if par(i)==a
+    key = i;
+  end
+end
+
+lenth = [2;3;4;6;8;12];
+xp = load('nodesRegular.dat');
+if key==1
+  starting = 1;
+else
+  starting = sum(lenth(1:key-1))+1; 
+end
+
+x = xp( starting:starting+lenth(key)-1,1);
+w = xp(starting:starting+lenth(key)-1,2);
+
+end % regularWeights
 
 end % methods
 
