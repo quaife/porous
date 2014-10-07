@@ -8,7 +8,7 @@ load centersBeans.dat;
 
 prams.Nouter = 2048;
 % number of points on outer solid wall
-prams.Ninner = 256;
+prams.Ninner = 32;
 % number of points per circle exclusion
 prams.nv = numel(radii);
 % number of exclusions
@@ -52,8 +52,8 @@ Xinner = oc.initConfig(prams.Ninner,'beans', ...
 % the centers rather than the geometry.  Then, can do quick checks for
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
-Xinner = [ Xinner(:,462:465)];
-prams.nv = size(Xinner,2);
+%Xinner = [ Xinner(:,462:465)];
+%prams.nv = size(Xinner,2);
 
 %figure(2); clf; hold on
 %plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')

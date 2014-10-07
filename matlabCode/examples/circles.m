@@ -17,6 +17,7 @@ load centers.dat;
 prams.Nouter = 2048/4;
 % number of points on outer solid wall
 prams.Ninner = 256/4;
+prams.Ninner = 32;
 % number of points per circle exclusion
 prams.nv = numel(radii);
 % number of exclusions

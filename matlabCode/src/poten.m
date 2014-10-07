@@ -951,7 +951,7 @@ for k1 = 1:nvSou
           plot((0:interpOrder-1)*beta*h(k1),...
               [vel(J(i)+Ntar,k2,k1) lagrangePts(i+numel(J),:)],'r--o')
           pause(0.01)
-%          pause()
+          pause()
         end
         % DEBUG: PASS IN A DUMMY VARIABLE INTO THIS ROUTINE AND THEN
         % YOU CAN SEE THE INTERPOLATION POINTS AND CHECK THE SMOOTHNESS

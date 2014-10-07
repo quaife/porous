@@ -1,0 +1,179 @@
+\documentclass[twocolumn,showpacs,pre,preprintnumbers,floatfix]{revtex4-1}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{natbib}
+\usepackage{tikz,pgfplots}
+
+\newcommand{\todo}[1]{ \fbox{{\bf TODO:} \color{red} #1}}
+\newcommand{\ff}{{\mathbf{f}}}
+\newcommand{\nn}{{\mathbf{n}}}
+\newcommand{\rr}{{\mathbf{r}}}
+\newcommand{\ssigma}{{\boldsymbol{\sigma}}}
+\newcommand{\uu}{{\mathbf{u}}}
+\newcommand{\xx}{{\mathbf{x}}}
+\newcommand{\yy}{{\mathbf{y}}}
+\newcommand{\grad}{{\triangledown}}
+\newcommand{\bigO}{{\mathcal{O}}}
+\renewcommand{\SS}{{\mathcal{S}}}
+\newcommand{\DD}{{\mathcal{D}}}
+
+\newif\ifTikz
+\Tikztrue
+%\Tikzfalse
+% use these to not build the tikz images.  They take a while for the
+% compiler to build
+
+\begin{document}
+
+\title{A comparative study of numerical and experimental viscous flow
+in porous media}
+
+\author{Pietro de Anna}
+\email[E-mail: ]{pietrodeanna@gmail.com}
+\affiliation{Massachusetts Institute of Technology}
+\author{Bryan Quaife}
+\email[E-mail: ]{quaife@ices.utexas.edu}
+\affiliation{University of Texas}
+\author{George Biros}
+\affiliation{University of Texas}
+\author{Ruben Juanes}
+\affiliation{Massachusetts Institute of Technology}
+
+\begin{abstract}
+abstract
+\end{abstract}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Introduction.}---We study things about porous flow.  Need to
+discuss
+\begin{itemize}
+  \item Stokes assumption (small Reynold's number)
+  \item 2D assumption
+  \item Working with primitive variable instead of a homogenization such
+  as Darcy's Law.
+  \item Lagrangian coherent structures.
+\end{itemize}
+\begin{figure}[htps]
+\ifTikz
+\input{beanGrains.tikz}
+\fi
+\caption{\label{f:beans} The bean geometry ...}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Experimental setup.}---Pietro discuses the
+\begin{itemize}
+  \item Experimental design
+  \item Paramters and main variables
+  \item Experimental methodologies
+  \item PIV
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Numerical solution.}---We are interested in solving Stokes
+equations
+\begin{align}
+  \Delta \uu  = \grad p, \qquad \grad \cdot \uu = 0,
+  \label{e:stokes}
+\end{align}
+with the no-slip boundary condition $\uu = \ff$.  We use an boundary
+integral equation since they: 1. Naturally handle complex geometries;
+2. Do not suffer from ill-conditioning that results from a direct
+discretization of~\eqref{e:stokes}; 3. Achieve high-order accuracy by
+using appropriate quadrature formulae; 4. Analytically satisfy the
+incompressibility condition; and 5. Can be efficiently solved
+iteratively by using the fast multipole method (FMM).  Given a domain
+$\Omega$ bounded by $\Gamma$, we define the standard single and
+double-layer potentials for Stokes equations~\cite{poz1992}
+\begin{align}
+  \SS[\ssigma](\xx) &= \frac{1}{4\pi\mu}\int_{\Gamma} \left(
+  -\log\rho I + \frac{\rr \otimes\rr}{\rho^{2}} 
+  \right)\ssigma(\yy)ds_{\yy},  \\
+  \DD[\ssigma](\xx) &= \frac{1}{\pi}\int_{\Gamma} 
+  \frac{\rr \cdot \nn}{\rho^{2}}\frac{\rr \otimes \rr}{\rho^{2}}
+  \ssigma(\yy)ds_{\yy},
+\end{align}
+where $\xx$ is a point inside $\Omega$, $\rr = \xx - \yy$, $\rho =
+\|\rr\|$, and $\nn$ is the unit outward normal to $\Gamma$.  In our
+porous geometry with outer boundary $\Gamma_{0}$ and inner boundaries
+$\{\Gamma_{k}\}_{k=1}^{M}$, we choose to write $\uu$ as
+\begin{align}
+  \uu(\xx) = \sum_{k=1}^{M} \SS[\ssigma_{k}](\xx) + 
+    \DD[\ssigma_{0}](\xx).
+  \label{e:integralRep}
+\end{align}
+The no-slip boundary conditions are satisfied by solving 
+\begin{align}
+  \ff(\xx) = \sum_{k=1}^{M} \SS[\ssigma_{k}](\xx) + 
+    \DD[\ssigma_{0}](\xx) + 
+    \left\{
+    \begin{array}{cl}
+      \frac{\ssigma(\xx)}{2} & \xx \in \Gamma_{0}, \\
+      0 & \xx \in \Gamma \backslash \Gamma_{0}.
+    \end{array}
+    \right.
+    \label{e:integralEqn}
+\end{align}
+for the function $\ssigma$.
+
+We apply the Nystr\"{o}m to~\eqref{e:integralEqn} where Alpert's
+quadrature formulae~\cite{alp1999} are applied to $\SS$, and the
+trapezoid rule to $\DD$.  The resulting linear system is solved
+iteratively with GMRES~\cite{saa:sch1986}, and the necessary
+matrix-vector multiplication is accelerated with the
+FMM~\cite{cmcl2012}.  We apply a block-diagonal preconditioner to reduce
+the required number of GMRES iterations.  For the geometry with circular
+exclusions, the single-layer potentials are known analytically and can
+be applied efficiently in $\bigO(N \log N)$ time by using the Fast
+Fourier Transform (FFT).
+
+Once~\eqref{e:integralEqn} is solved, the velocity $\uu$ can be computed
+at any point $\xx \in \Omega$ by apply the trapezoid rule to the
+representation formula~\eqref{e:integralRep}.  However, the quality of
+the quadrature rule degrades as $\xx$ approaches $\Gamma$.  We use a
+near-singular integrations strategy first outlined
+in~\cite{bir:yin:zor2004} that guarantees a uniform quadrature error
+across $\Omega$.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Results.}---We compare the flows in the two geometries.
+Quantities of interest include (but are not limited to):
+\begin{itemize}
+  \item Point values of velocity field
+  \item PDF of velocity in both directions
+  \item Incompressibility
+  \item Correlations of velocities
+\end{itemize}
+
+Now can use numerical solution to understand LCS
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Conclusions.}---Experimental and numerical results are in decent
+agreement.  Incompressibility is satisfied to an acceptable level.  3D
+effects are not important
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\acknowledgements
+This work was supported by DiaMonD.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{refs}
+
+%\begin{thebibliography}{10}%
+%\end{thebibliography}%
+% copy everything from bbl file to here at the end
+
+
+\end{document}
