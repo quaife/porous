@@ -14,9 +14,9 @@ load centers.dat;
 %radii = radii(1:3);
 %centers = centers(1:3,:);
 
-prams.Nouter = 2048/4;
+prams.Nouter = 2048;
 % number of points on outer solid wall
-prams.Ninner = 256/4;
+prams.Ninner = 256;
 % number of points per circle exclusion
 prams.nv = numel(radii);
 % number of exclusions
@@ -37,10 +37,10 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = false; 
+options.bieSolve = true; 
 options.computeEuler = false;
-options.tracersSimulation = true;
-options.defGradient = true;
+options.tracersSimulation = false;
+options.defGradient = false;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circlesData.bin';
 options.farField = 'circles';
@@ -81,7 +81,7 @@ end
 
 
 if options.tracersSimulation
-  ntra = 10000;
+  ntra = 1000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];

@@ -20,6 +20,8 @@ properties
   % This matrix replaces the need to use polyfit
   G
   % single-layer potential matricies for each grain
+  invG
+  % pseudo-inverse of G
   fmm
   % use the fmm or not
 end % properties
@@ -40,6 +42,10 @@ o.qw = o.quadratureS(accuracyOrder,geom.N);
 o.qp = o.qw(:,2:end);
 o.qw = o.qw(:,1);
 o.G = o.stokesSLmatrix(geom);
+o.invG = zeros(size(o.G));
+for k = 1:geom.nv
+  o.invG(:,:,k) = pinv(o.G(:,:,k));
+end
 
 o.fmm = fmm;
 end % poten: constructor
@@ -346,7 +352,7 @@ for k = 1:innerGeom.nv
   if 1
     istart = (k-1)*2*innerGeom.N+1;
     iend = istart + 2*innerGeom.N - 1;
-    invGF(istart:iend) = pinv(o.G(:,:,k))*f(istart:iend);
+    invGF(istart:iend) = o.invG(:,:,k)*f(istart:iend);
   end
 end % k = exclusions
 istart = iend + 1;

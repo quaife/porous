@@ -63,15 +63,18 @@ om.writeMessage(message,'%s\n');
 if (flag ~= 0)
   message = 'GMRES HAD A PROBLEM';
   om.writeMessage(message,'%s\n');
-  disp(flag)
-  disp(relres)
-  disp(iter)
+  message = ['flag = ' num2str(flag)];
+  om.writeMessage(message,'%s\n');
+  message = ['Relative residual = ' num2str(relres,'%4.2e')];
+  om.writeMessage(message,'%s\n');
+  message = ['Inner iterations = ' num2str(iter(2))];
+  om.writeMessage(message,'%s\n');
 else
   message = ['****     GMRES required ' num2str(iter(2),'%3d'),...
       ' iterations    ****'];
   om.writeMessage(message,'%s\n');
 end
-om.writeMessage(message,'%s\n');
+%om.writeMessage(message,'%s\n');
 om.writeStars
 om.writeMessage(' ');
 

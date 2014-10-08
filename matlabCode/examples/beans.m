@@ -14,7 +14,7 @@ prams.nv = numel(radii);
 % number of exclusions
 prams.gmresTol = 1e-6;
 % gmres tolerance
-prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),500);
+prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),5000);
 % maximum number of gmres iterations
 prams.atol = 1e-9;
 prams.rtol = 1e-6;
@@ -25,8 +25,8 @@ prams.ntime = 220;
 % number of time steps that ode45 will output
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = true;
+options.bieSolve = false; 
+options.computeEuler = false;
 options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-8 38 -0.1 5.3];
@@ -52,7 +52,7 @@ Xinner = oc.initConfig(prams.Ninner,'beans', ...
 % the centers rather than the geometry.  Then, can do quick checks for
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
-Xinner = [ Xinner(:,462:465)];
+Xinner = [ Xinner(:,400:465)];
 prams.nv = size(Xinner,2);
 
 %figure(2); clf; hold on
@@ -78,7 +78,7 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1;
+  ntra = 50000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
@@ -86,15 +86,15 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = 26;
-  options.xmax = 32;
-  options.nx = 100;
+  options.xmin = 0;
+  options.xmax = 35;
+  options.nx = 9000/5;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;
   options.ymax = 5.199;
-  options.ny = 100;
+  options.ny = 1000/5;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 1;
+  options.nparts = 10;
   % need to compute in sections otherwise seem to run out of memory
   options.xmThresh = options.xmin + 0;
   options.xpThresh = options.xmax - 0;
@@ -108,7 +108,7 @@ end
 
 
 if options.profile
-  profile viewer;
+%  profile viewer;
   profile off;
   filename = [options.logFile(1:end-4) 'Profile'];
   profsave(profile('info'),filename);

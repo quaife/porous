@@ -4,29 +4,32 @@ function [xtar,ytar] = initialTracers(radii,centers,ntra)
 % keep xtar between 0.5 and 4.3
 % keep ytar between 5 and 30
 
-xmin = 0; xmax = 32; dx = xmax - xmin;
-ymin = 0.1; ymax = 5.1; dy = ymax - ymin;
+xmin = 0; xmax = 8; dx = xmax - xmin;
+ymin = 0.1; ymax = 4.9; dy = ymax - ymin;
 xtar = [];
 ytar = [];
 rng('shuffle');
 
 
-while numel(xtar) < ntra
-  xtarPot = dx*rand(ceil(1.1*(ntra-numel(xtar))),1) + xmin;
-  ytarPot = dy*rand(ceil(1.1*(ntra-numel(ytar))),1) + ymin;
+%while numel(xtar) < ntra
+%  xtarPot = dx*rand(ceil(1.1*(ntra-numel(xtar))),1) + xmin;
+%  ytarPot = dy*rand(ceil(1.1*(ntra-numel(ytar))),1) + ymin;
+%
+%  ncount = 0;
+%  nv = numel(radii);
+%  for k = 1:numel(xtarPot)
+%    if(~any((xtarPot(k) - centers(1:nv,1)).^2 + ...
+%          (ytarPot(k) - centers(1:nv,2)).^2 < radii(1:nv).^2))
+%      xtar = [xtar xtarPot(k)]; 
+%      ytar = [ytar ytarPot(k)]; 
+%    end
+%  end
+%end
+%xtar = xtar(1:ntra);
+%ytar = ytar(1:ntra);
 
-  ncount = 0;
-  nv = numel(radii);
-  for k = 1:numel(xtarPot)
-    if(~any((xtarPot(k) - centers(1:nv,1)).^2 + ...
-          (ytarPot(k) - centers(1:nv,2)).^2 < radii(1:nv).^2))
-      xtar = [xtar xtarPot(k)]; 
-      ytar = [ytar ytarPot(k)]; 
-    end
-  end
-end
+xtar = dx*rand((ntra-numel(xtar)),1) + xmin;
+ytar = dy*rand((ntra-numel(ytar)),1) + ymin;
 
-xtar = xtar(1:ntra);
-ytar = ytar(1:ntra);
 
 

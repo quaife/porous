@@ -51,8 +51,14 @@ if options.computeEuler
     % compute velocity at points [eX;eY]
     vel(istart:iend) = velPart(1:end/2);
     vel((istart:iend)+numel(eX)) = velPart(end/2+1:end);
-%    vel(istart:iend) = eX(istart:iend);
-%    vel((istart:iend) + numel(eX)) = eY(istart:iend);
+
+    u = reshape(vel(1:end/2),size(eulerX));
+    v = reshape(vel(end/2+1:end),size(eulerY));
+    % put velocity field in format that works well for interp2
+    om.writeEulerVelocities(eulerX,eulerY,u,v);
+    % save the velocity field so we don't have to keep recomputing it
+
+
   end
   % evalute velocity on an Eulerian grid
   om.writeStars
