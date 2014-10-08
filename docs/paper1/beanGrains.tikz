@@ -1,4 +1,7 @@
-\begin{tikzpicture}[scale=0.8]
+\begin{tikzpicture}[
+scale=0.8,
+%spy using outlines={rectangle,lens={scale=4}, size=0.4in, connect spies}
+]
 
 \begin{axis}[
   scale only axis,
@@ -6,7 +9,7 @@
   xmin = 0,
   xmax = 34,
   ymin = -0.2,
-  ymax = 5.2,
+  ymax = 5.4,
   hide axis,
   ]
 
@@ -15840,6 +15843,9 @@
 2.9170e+01 2.0407e+00
 2.9172e+01 2.1184e+00
 }; 
+
+%\spy on (0.4,0.5) in node [left] at (-0.4,0.7);
+
 
 \end{axis}
 \end{tikzpicture}
