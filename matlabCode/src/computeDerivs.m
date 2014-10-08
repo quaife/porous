@@ -3,7 +3,7 @@ function [u_x,u_y,v_x,v_y] = computeDerivs(eX,eY,u,v);
 % one-sided derivatives on the boundary and when the stencil is cut by a
 % pore
 
-order = 4;
+order = 1;
 load radii.dat;
 load centers.dat;
 [ny,nx] = size(eX);
@@ -34,7 +34,6 @@ if order == 1
   extPtsX = [];
   extPtsY = [];
   for k = 1:numel(radii)
-%  for k = 1:1
     dist2 = (eX - centers(k,1)).^2 + (eY - centers(k,2)).^2;
     intPts = find(dist2 > (radii(k)-max(dx,dy))^2 & dist2 <= radii(k)^2);
     u_x(intPts) = 0;
@@ -104,7 +103,7 @@ if order == 2
   extPtsX = [];
   extPtsY = [];
   for k = 1:numel(radii)
-    disp(numel(radii) - k + 1)
+%    disp(numel(radii) - k + 1)
     dist2 = (eX - centers(k,1)).^2 + (eY - centers(k,2)).^2;
     intPts = find(dist2 > (radii(k)-max(dx,dy))^2 & dist2 <= radii(k)^2);
     u_x(intPts) = 0;

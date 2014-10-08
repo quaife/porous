@@ -1,0 +1,204 @@
+\documentclass[twocolumn,showpacs,pre,preprintnumbers,floatfix]{revtex4-1}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{natbib}
+\usepackage{tikz,pgfplots}
+\usetikzlibrary{spy}
+
+\newcommand{\todo}[1]{ \fbox{{\bf TODO:} \color{red} #1}}
+\newcommand{\ff}{{\mathbf{f}}}
+\newcommand{\nn}{{\mathbf{n}}}
+\newcommand{\rr}{{\mathbf{r}}}
+\newcommand{\ssigma}{{\boldsymbol{\sigma}}}
+\newcommand{\uu}{{\mathbf{u}}}
+\newcommand{\xx}{{\mathbf{x}}}
+\newcommand{\yy}{{\mathbf{y}}}
+\newcommand{\grad}{{\triangledown}}
+\newcommand{\bigO}{{\mathcal{O}}}
+\renewcommand{\SS}{{\mathcal{S}}}
+\newcommand{\DD}{{\mathcal{D}}}
+
+\newif\ifTikz
+\Tikztrue
+%\Tikzfalse
+% use these to not build the tikz images.  They take a while for the
+% compiler to build.  If not using tikz, then it will use
+% includegraphics with the pdf copy of the tikz.  These files will need
+% updated as the tikz pictures are updated.  See how to use
+% tikzexternalize below
+
+%\usepgfplotslibrary{external}
+%\tikzexternalize
+% for turning tikz into pdf uncomment and run pdflatex -shell-escape
+% 2dcomparison.tex
+
+
+\begin{document}
+
+\title{A comparative study of numerical and experimental viscous flow
+in porous media}
+
+\author{Pietro de Anna}
+\email[E-mail: ]{pietrodeanna@gmail.com}
+\affiliation{Massachusetts Institute of Technology}
+\author{Bryan Quaife}
+\email[E-mail: ]{quaife@ices.utexas.edu}
+\affiliation{University of Texas}
+\author{George Biros}
+\affiliation{University of Texas}
+\author{Ruben Juanes}
+\affiliation{Massachusetts Institute of Technology}
+
+\begin{abstract}
+abstract
+\end{abstract}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Introduction.}---We study things about porous flow.  Need to
+discuss
+\begin{itemize}
+  \item Stokes assumption (small Reynold's number)
+  \item 2D assumption
+  \item Working with primitive variable instead of a homogenization such
+  as Darcy's Law.
+  \item Lagrangian coherent structures.
+\end{itemize}
+\begin{figure}[htps]
+\ifTikz
+  \input{circleGrains.tikz}
+\else
+  \includegraphics{circleGrains.pdf}
+\fi
+\caption{\label{f:beans} This geometry, which we call the {\em circle
+geometry}, consists of 465 circular exclusions and has a porosity (the
+ratio of the region that contains the fluid) of 0.46.  The outer wall
+is denoted by $\Gamma_{0}$, and the boundary of the inner exclusions by
+$\Gamma_{k}$, $k=1,\ldots,465$.}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Experimental setup.}---Pietro discuses the
+\begin{itemize}
+  \item Experimental design
+  \item Paramters and main variables
+  \item Experimental methodologies
+  \item PIV
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Numerical solution.}---We are interested in solving Stokes
+equations
+\begin{align}
+  \mu \Delta \uu  = \grad p, \qquad \grad \cdot \uu = 0,
+  \label{e:stokes}
+\end{align}
+with the no-slip boundary condition $\uu = \ff$.  We use a boundary
+integral equation since they naturally handle complex geometries, do
+not suffer from ill-conditioning associated with direct discretizations
+of~\eqref{e:stokes}, achieve high-order accuracy by using appropriate
+quadrature formulae, analytically satisfy the incompressibility
+condition, and can be efficiently solved iteratively by using the fast
+multipole method (FMM).  Given a domain $\Omega$ with boundary
+$\Gamma$, and a target point $\xx \in \Omega \backslash \Gamma$, the
+single- and double-layer potentials for Stokes equations
+are~\cite{poz1992}
+\begin{align}
+  \SS[\ssigma](\xx) &= \frac{1}{4\pi\mu}\int_{\Gamma} \left(
+  -\log\rho I + \frac{\rr \otimes\rr}{\rho^{2}} 
+  \right)\ssigma(\yy)ds_{\yy},  \\
+  \DD[\ssigma](\xx) &= \frac{1}{\pi}\int_{\Gamma} 
+  \frac{\rr \cdot \nn}{\rho^{2}}\frac{\rr \otimes \rr}{\rho^{2}}
+  \ssigma(\yy)ds_{\yy},
+\end{align}
+where $\rr = \xx - \yy$, $\rho = \|\rr\|$, and $\nn$ is the unit outward
+normal of $\Gamma$.  In our porous geometry, we write $\uu$ as
+\begin{align}
+  \uu(\xx) = \sum_{k=1}^{M} \SS[\ssigma_{k}](\xx) + 
+    \DD[\ssigma_{0}](\xx).
+  \label{e:integralRep}
+\end{align}
+The no-slip boundary conditions are satisfied by solving 
+\begin{align}
+  \ff(\xx) = \sum_{k=1}^{M} \SS[\ssigma_{k}](\xx) + 
+    \DD[\ssigma_{0}](\xx) + 
+    \left\{
+    \begin{array}{cl}
+      \frac{\ssigma(\xx)}{2} & \xx \in \Gamma_{0}, \\
+      0 & \xx \in \Gamma \backslash \Gamma_{0},
+    \end{array}
+    \right.
+    \label{e:integralEqn}
+\end{align}
+for $\ssigma$.
+
+We use the Nystr\"{o}m method to discretize~\eqref{e:integralEqn}.  That
+is, the density function is discretized at a set of collocation points,
+and the integral for each target point is approximated by quadrature
+rules.  Alpert's quadrature formulae~\cite{alp1999} are applied to
+$\SS$, and the trapezoid rule to $\DD$.  The resulting linear system is
+solved iteratively with GMRES~\cite{saa:sch1986}, and the matrix-vector
+multiplication is computed with $\bigO(N)$ operations by using the
+FMM~\cite{cmcl2012}.  We use a block-diagonal preconditioner, where each
+$\Gamma_{k}$, $k=0,\ldots,M$ corresponds to a block.  For the circular
+exclusions, the single-layer potential is known analytically and can be
+applied efficiently with $\bigO(N \log N)$ operations with the Fast Fourier
+Transform (FFT).  The single-layer potential for the bean-shaped
+exclusions is precomputed and factorized as a dense matrix.
+
+Once~\eqref{e:integralEqn} is solved, the velocity $\uu$ can be computed
+at any point $\xx \in \Omega$ by apply the trapezoid rule to the
+representation formula~\eqref{e:integralRep}.  However, the quality of
+the quadrature rule degrades as $\xx$ approaches $\Gamma$.  We use a
+near-singular integrations strategy first outlined
+in~\cite{bir:yin:zor2004} that guarantees a uniform quadrature error
+across $\Omega$.
+
+We iteratively solve~\eqref{e:integralEqn} with unpreconditioned GMRES
+and a tolerance of $10^{-6}$ which requires 675 iterations for the
+circular geometry, and 1,703 iterations for the bean geometry.  In both
+cases, the outer boundary is discretized with $N = 2,048$ points, and
+each inner geometry is discretized with $N = 256$ points.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Results.}---We compare the flows in the two geometries.
+Quantities of interest include (but are not limited to):
+\begin{itemize}
+  \item Point values of velocity field
+  \item PDF of velocity in both directions
+  \item Incompressibility
+  \item Correlations of velocities
+\end{itemize}
+
+Now can use numerical solution to understand LCS
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\em Conclusions.}---Experimental and numerical results are in decent
+agreement.  Incompressibility is satisfied to an acceptable level.  3D
+effects are not important
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\acknowledgements
+This work was supported by DiaMonD.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{refs}
+
+%\begin{thebibliography}{10}%
+%\end{thebibliography}%
+% copy everything from bbl file to here at the end
+
+
+\end{document}

@@ -264,7 +264,7 @@ end
 % is if FMM is used or not
 
 Fdlp = op.nearSingInt(geom,f,@(X,f) 1.5*f,...
-       Near,kernel,Xtar,false,'outer');
+       Near,kernel,Xtar,false,'outer','trash');
 % take inner since we are already accounting for the jump by assiging 0
 % since the density function is 1.
 Fdlp = Fdlp(1:end/2);
