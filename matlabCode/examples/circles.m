@@ -37,9 +37,9 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = true; 
+options.bieSolve = false; 
 options.computeEuler = false;
-options.tracersSimulation = false;
+options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-8 38 -0.1 5.3];
 options.dataFile = 'output/circlesData.bin';
@@ -81,7 +81,7 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1000;
+  ntra = 10000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];

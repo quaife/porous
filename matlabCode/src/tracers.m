@@ -41,7 +41,8 @@ if options.computeEuler
 
   tic
   vel = zeros(2*numel(eX),1);
-  for k = 1:nparts
+%  for k = 1:nparts
+  for k = 253:nparts
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
