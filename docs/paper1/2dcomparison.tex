@@ -23,8 +23,8 @@
 \newcommand{\DD}{{\mathcal{D}}}
 
 \newif\ifTikz
-\Tikztrue
-%\Tikzfalse
+%\Tikztrue
+\Tikzfalse
 % use these to not build the tikz images.  They take a while for the
 % compiler to build.  If not using tikz, then it will use
 % includegraphics with the pdf copy of the tikz.  These files will need
@@ -71,9 +71,12 @@ discuss
 \end{itemize}
 \begin{figure}[htps]
 \ifTikz
+\centering
   \input{circleGrains.tikz}
+  \input{beanGrains.tikz}
 \else
   \includegraphics{circleGrains.pdf}
+  \includegraphics{beanGrains.pdf}
 \fi
 \caption{\label{f:beans} This geometry, which we call the {\em circle
 geometry}, consists of 465 circular exclusions and has a porosity (the
@@ -93,8 +96,8 @@ $\Gamma_{k}$, $k=1,\ldots,465$.}
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-{\em Numerical solution.}---We are interested in solving Stokes
-equations
+{\em Numerical solution.}---Here we discuss are method for numerically
+solving the Stokes equations
 \begin{align}
   \mu \Delta \uu  = \grad p, \qquad \grad \cdot \uu = 0,
   \label{e:stokes}
@@ -104,33 +107,34 @@ integral equation since they naturally handle complex geometries, do
 not suffer from ill-conditioning associated with direct discretizations
 of~\eqref{e:stokes}, achieve high-order accuracy by using appropriate
 quadrature formulae, analytically satisfy the incompressibility
-condition, and can be efficiently solved iteratively by using the fast
-multipole method (FMM).  Given a domain $\Omega$ with boundary
-$\Gamma$, and a target point $\xx \in \Omega \backslash \Gamma$, the
-single- and double-layer potentials for Stokes equations
+condition, and are solved in linear time by coupling an iterative
+solver and the fast multipole method (FMM).  Given a domain $\Omega$
+with boundary $\Gamma$, and a target point $\xx \in \Omega \backslash
+\Gamma$, the single- and double-layer potentials for Stokes equations
 are~\cite{poz1992}
-\begin{align}
+\begin{align*}
   \SS[\ssigma](\xx) &= \frac{1}{4\pi\mu}\int_{\Gamma} \left(
   -\log\rho I + \frac{\rr \otimes\rr}{\rho^{2}} 
   \right)\ssigma(\yy)ds_{\yy},  \\
   \DD[\ssigma](\xx) &= \frac{1}{\pi}\int_{\Gamma} 
   \frac{\rr \cdot \nn}{\rho^{2}}\frac{\rr \otimes \rr}{\rho^{2}}
   \ssigma(\yy)ds_{\yy},
-\end{align}
+\end{align*}
 where $\rr = \xx - \yy$, $\rho = \|\rr\|$, and $\nn$ is the unit outward
-normal of $\Gamma$.  In our porous geometry, we write $\uu$ as
+normal of $\Gamma$.  In our porous geometry, we write $\uu$ as a
+combination of single- and double-layer potentials
 \begin{align}
   \uu(\xx) = \sum_{k=1}^{M} \SS[\ssigma_{k}](\xx) + 
     \DD[\ssigma_{0}](\xx).
   \label{e:integralRep}
 \end{align}
-The no-slip boundary conditions are satisfied by solving 
+The no-slip boundary condition is satisfied by solving 
 \begin{align}
   \ff(\xx) = \sum_{k=1}^{M} \SS[\ssigma_{k}](\xx) + 
     \DD[\ssigma_{0}](\xx) + 
-    \left\{
+    \frac{1}{2}\left\{
     \begin{array}{cl}
-      \frac{\ssigma(\xx)}{2} & \xx \in \Gamma_{0}, \\
+      \ssigma(\xx) & \xx \in \Gamma_{0}, \\
       0 & \xx \in \Gamma \backslash \Gamma_{0},
     \end{array}
     \right.
@@ -138,33 +142,34 @@ The no-slip boundary conditions are satisfied by solving
 \end{align}
 for $\ssigma$.
 
-We use the Nystr\"{o}m method to discretize~\eqref{e:integralEqn}.  That
-is, the density function is discretized at a set of collocation points,
-and the integral for each target point is approximated by quadrature
-rules.  Alpert's quadrature formulae~\cite{alp1999} are applied to
-$\SS$, and the trapezoid rule to $\DD$.  The resulting linear system is
-solved iteratively with GMRES~\cite{saa:sch1986}, and the matrix-vector
-multiplication is computed with $\bigO(N)$ operations by using the
-FMM~\cite{cmcl2012}.  We use a block-diagonal preconditioner, where each
-$\Gamma_{k}$, $k=0,\ldots,M$ corresponds to a block.  For the circular
-exclusions, the single-layer potential is known analytically and can be
-applied efficiently with $\bigO(N \log N)$ operations with the Fast Fourier
-Transform (FFT).  The single-layer potential for the bean-shaped
-exclusions is precomputed and factorized as a dense matrix.
-
-Once~\eqref{e:integralEqn} is solved, the velocity $\uu$ can be computed
-at any point $\xx \in \Omega$ by apply the trapezoid rule to the
-representation formula~\eqref{e:integralRep}.  However, the quality of
-the quadrature rule degrades as $\xx$ approaches $\Gamma$.  We use a
-near-singular integrations strategy first outlined
-in~\cite{bir:yin:zor2004} that guarantees a uniform quadrature error
-across $\Omega$.
+We use a Nystr\"{o}m method to discretize~\eqref{e:integralEqn}.  The
+density function is discretized at a set of collocation points, and the
+integrals are approximated with suitable quadrature rules.  A
+high-order Gauss-Trapezoid rule~\cite{alp1999} discretizes $\SS$, and,
+since the kernel of $\DD$ is smooth, the trapezoid rule is used to
+discretize $\DD$.  The resulting linear system is solved iteratively
+with GMRES~\cite{saa:sch1986}, and the matrix-vector multiplication is
+computed with $\bigO(N)$ operations by using the FMM~\cite{cmcl2012}.
+We use a block-diagonal preconditioner, where each $\Gamma_{k}$,
+$k=0,\ldots,M$ corresponds to a block of the full linear system.  For
+the circle geometry, the single-layer potential is known analytically
+and can be applied efficiently with $\bigO(N \log N)$ operations with
+the Fast Fourier Transform (FFT).  The single-layer potential for the
+bean geometry is precomputed and factorized as a dense matrix.
 
 We iteratively solve~\eqref{e:integralEqn} with unpreconditioned GMRES
 and a tolerance of $10^{-6}$ which requires 675 iterations for the
 circular geometry, and 1,703 iterations for the bean geometry.  In both
 cases, the outer boundary is discretized with $N = 2,048$ points, and
 each inner geometry is discretized with $N = 256$ points.
+Once~\eqref{e:integralEqn} is solved, the velocity $\uu$ can be
+computed at any point $\xx \in \Omega$ by applying the trapezoid rule
+to the representation formula~\eqref{e:integralRep}.  However, the
+quality of the quadrature rule degrades as $\xx$ approaches $\Gamma$.
+We use a near-singular integration strategy, first outlined
+in~\cite{bir:yin:zor2004}, that guarantees a uniform quadrature error
+across $\Omega$.
+
 
 
 
