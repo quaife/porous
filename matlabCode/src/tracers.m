@@ -148,7 +148,7 @@ for k = 1:numel(X0)/2
   F21(:,k) = z(:,5);
   F22(:,k) = z(:,6);
 
-  if mod(k,1000) == 1
+  if mod(k,100) == 1
     om.writeTracerPositions(time,xtra(:,1:k),ytra(:,1:k));
     om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
         F21(:,1:k),F22(:,1:k));
