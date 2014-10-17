@@ -8,7 +8,7 @@ load centersBeans.dat;
 
 prams.Nouter = 2048;
 % number of points on outer solid wall
-prams.Ninner = 32;
+prams.Ninner = 256;
 % number of points per circle exclusion
 prams.nv = numel(radii);
 % number of exclusions

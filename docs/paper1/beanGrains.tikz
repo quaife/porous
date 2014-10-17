@@ -724,7 +724,6 @@
 \filldraw[line width=0pt,black] (13.291079mm,3.2793578mm) circle (0.28938832mm);
 \filldraw[line width=0pt,black] (15.709568mm,4.3614989mm) circle (0.29309839mm);
 \filldraw[line width=0pt,black] (3.204252mm,4.8506075mm) circle (0.27976181mm);
-\filldraw[line width=0pt,black] (29.249521mm,1.9010266mm) circle (0.29022486mm);
 \filldraw[line width=0pt,black] (16.265575mm,4.7955098mm) circle (0.28747191mm);
 \filldraw[line width=0pt,black] (12.690258mm,0.8388729mm) circle (0.29091339mm);
 \filldraw[line width=0pt,black] (12.079982mm,3.2798108mm) circle (0.33097683mm);
@@ -732,8 +731,8 @@
 \filldraw[line width=0pt,black] (12.883138mm,4.6710712mm) circle (0.33125419mm);
 \filldraw[line width=0pt,black] (18.843142mm,1.9161669mm) circle (0.33117956mm);
 \filldraw[line width=0pt,black] (18.379338mm,3.2594754mm) circle (0.33286547mm);
-\draw[line width=0.2mm] (0mm,-0.1mm) -- (34mm,-0.1mm);
-\draw[line width=0.2mm] (0mm,5.3mm) -- (34mm,5.3mm);
+\draw[line width=0.4mm] (0mm,-0.2mm) -- (34mm,-0.2mm);
+\draw[line width=0.4mm] (0mm,5.4mm) -- (34mm,5.4mm);
 % outer walls
 
 

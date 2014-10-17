@@ -474,6 +474,7 @@
 \filldraw[line width=0pt] (16.113202mm,1.2731645mm) circle (0.37358791mm);
 \filldraw[line width=0pt] (30.648525mm,0.9706596mm) circle (0.373598mm);
 \filldraw[line width=0pt] (14.807191mm,3.9209061mm) circle (0.37385774mm);
+\filldraw[line width=0pt] (31.026645mm,3.3045794mm) circle (0.37371137mm);
 \draw[line width=0.2mm] (0mm,-0.1mm) -- (34mm,-0.1mm);
 \draw[line width=0.2mm] (0mm,5.3mm) -- (34mm,5.3mm);
 % outer walls
