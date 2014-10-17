@@ -19,9 +19,10 @@ prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),5000);
 prams.atol = 1e-9;
 prams.rtol = 1e-6;
 % absolute and relative tolerances for ode45
-prams.T = 1e0;
+prams.T = 1e0*5;
 % time horizon for ode45
-prams.ntime = 220;
+prams.ntime = 1000;
+%prams.ntime = 220;
 % number of time steps that ode45 will output
 
 % Different options
@@ -76,8 +77,8 @@ end
 
 
 if options.tracersSimulation
-  ntra = 50000;
-  [xtar,ytar] = initialTracers(radii,centers,ntra);
+  ntra = 10000;
+  [xtar,ytar] = initialTracers(radii,centers,ntra,'beans',radiiBeans,centersBeans);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
 % X0 = [30;4.5];
@@ -86,11 +87,11 @@ if options.tracersSimulation
   % file that has all the necessary density function and geometry stored
   options.xmin = 0;
   options.xmax = 35;
-  options.nx = 9000/5;
+  options.nx = 9000;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;
   options.ymax = 5.199;
-  options.ny = 1000/5;
+  options.ny = 1000;
   % min, max, and number of Euler locations in y direction
   options.nparts = 10;
   % need to compute in sections otherwise seem to run out of memory
