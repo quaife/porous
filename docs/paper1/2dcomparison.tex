@@ -104,13 +104,13 @@ solving the Stokes equations
   \label{e:stokes}
 \end{align}
 with the no-slip boundary condition $\uu = \ff$.  We use a boundary
-integral equation because they naturally handle complex geometries, do
+integral equation because it naturally handles complex geometries, does
 not suffer from ill-conditioning associated with direct discretizations
-of~\eqref{e:stokes}, achieve high-order accuracy by using appropriate
-quadrature formulae, analytically satisfy the incompressibility
-condition, and are solved in linear time by coupling an iterative
-solver and the fast multipole method (FMM).  Given a domain $\Omega$
-with boundary $\Gamma$, and a target point $\xx \in \Omega \backslash
+of~\eqref{e:stokes}, achieves high-order accuracy by using appropriate
+quadrature formulae, analytically satisfies the incompressibility
+condition, and is solved in linear time by coupling an iterative solver
+and the fast multipole method (FMM).  Given a domain $\Omega$ with
+boundary $\Gamma$, and a target point $\xx \in \Omega \backslash
 \Gamma$, the single- and double-layer potentials for the Stokes
 equations are~\cite{poz1992}
 \begin{align*}
@@ -141,8 +141,8 @@ the integral equation defined only on $\Gamma$
     \right. 
     \label{e:integralEqn}
 \end{align}
-Solutions of~\eqref{e:integralEqn} are guaranteed to exist if as long as
-the no flux condition $\int_{\Gamma} \ff \cdot \nn=0$ is
+Solutions of~\eqref{e:integralEqn} are guaranteed to exist whenever the
+no flux condition $\int_{\Gamma} \ff \cdot \nn=0$ is
 satisfied~\cite{poz1992}.
 
 We discretize~\eqref{e:integralEqn} with a Nystr\"{o}m method.  The
