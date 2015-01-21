@@ -33,8 +33,9 @@ prams.rtol = 1e-6;
 %% time horizon for ode45
 %prams.ntime = 1500*3 + 1;
 %% number of time steps that ode45 will output
-prams.T = 1e0;
-prams.ntime = 220;
+prams.T = 50;
+% time horizon for ode45
+prams.ntime = 5001;
 
 % Different options
 options.bieSolve = false; 
@@ -82,7 +83,9 @@ end
 
 if options.tracersSimulation
   ntra = 10000;
-  [xtar,ytar] = initialTracers(radii,centers,ntra);
+%  [xtar,ytar] = initialTracers(radii,centers,ntra);
+  xtar = 0.5*ones(ntra,1);
+  ytar = linspace(0.1,5.1,ntra)';
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
 % X0 = [30;4.5];
@@ -100,7 +103,7 @@ if options.tracersSimulation
   options.nparts = 10;
   % need to compute in sections otherwise seem to run out of memory
   options.xmThresh = options.xmin + 0;
-  options.xpThresh = options.xmax - 0;
+  options.xpThresh = options.xmax - 2;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...

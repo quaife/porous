@@ -6,8 +6,8 @@ load centers40.dat;
 radii = radii40;
 centers = centers40;
 
-%radii = radii(1:3);
-%centers = centers(1:3,:);
+radii = radii(1:100);
+centers = centers(1:100,:);
 
 prams.Nouter = 2048;
 % number of points on outer solid wall
@@ -39,7 +39,7 @@ options.defGradient = false;
 options.axis = [-6.8 33 -0.2 5.4];
 options.dataFile = 'output/circles40Data.bin';
 options.farField = 'circles';
-options.fmm = false;
+options.fmm = true;
 options.logFile = 'output/circles40.log';
 options.profile = false;
 options.saveData = true;
@@ -63,7 +63,6 @@ plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
 axis equal;
 fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 axis(options.axis)
-%pause
 
 if options.profile
   profile off; profile on;
@@ -108,7 +107,7 @@ end
 
 
 if options.profile
-  profile viewer;
+%  profile viewer;
   profile off;
   filename = [options.logFile(1:end-4) 'Profile'];
   profsave(profile('info'),filename);

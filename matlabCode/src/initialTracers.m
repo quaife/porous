@@ -10,14 +10,13 @@ if nargin == 3
 end
 
 
-%xmin = 2; xmax = 7; dx = xmax - xmin;
-%ymin = 0.1; ymax = 4.9; dy = ymax - ymin;
-xmin = 5; xmax = 7; dx = xmax - xmin;
+xmin = 2; xmax = 25; dx = xmax - xmin;
 ymin = 0.1; ymax = 4.9; dy = ymax - ymin;
+%xmin = 8.0; xmax = 8.30; dx = xmax - xmin;
+%ymin = 2.1; ymax = 2.5; dy = ymax - ymin;
 xtar = [];
 ytar = [];
 rng('shuffle');
-
 
 if strcmp(geom(1:5),'circl')
   while numel(xtar) < ntra
@@ -76,9 +75,11 @@ if strcmp(geom(1:5),'beans')
   ytar = ytar(1:ntra);
 
 
+%  xtar = [];
+%  ytar = [];
 %  xtar = dx*rand((ntra-numel(xtar)),1) + xmin;
 %  ytar = dy*rand((ntra-numel(ytar)),1) + ymin;
-
+%
 end
 
 

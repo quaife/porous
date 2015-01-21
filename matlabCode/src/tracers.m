@@ -42,7 +42,7 @@ if options.computeEuler
   tic
   vel = zeros(2*numel(eX),1);
 %  for k = 1:nparts
-  for k = 253:nparts
+  for k = 1:nparts
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
@@ -89,6 +89,11 @@ if options.computeEuler
 else
   fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
   [ny,nx,eulerX,eulerY,u,v] = om.loadEulerVelocities(fileName1);
+%  u(900,8900)
+%  v(900,8900)
+%  eulerX(900,8900)
+%  eulerY(900,8900)
+%  pause
   % load velocities at Eulerian grid from a precomputed computation
   if (nx ~= options.nx || ny ~= options.ny)
     message = 'Saved Euler grid does not match input parameters';
@@ -112,7 +117,8 @@ else
 end
 
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
-    u,v,u_x,u_y,v_x,v_y,prams.T,options.xmThresh,options.defGradient);
+    u,v,u_x,u_y,v_x,v_y,prams.T,options.xmThresh,options.xpThresh,...
+    options.defGradient);
 % function handle that evalutes the right-hand side.  Handles the
 % position and deformation gradient all at once.
 
@@ -128,8 +134,10 @@ F11 = zeros(prams.ntime,ntra);
 F12 = zeros(prams.ntime,ntra);
 F21 = zeros(prams.ntime,ntra);
 F22 = zeros(prams.ntime,ntra);
+time = [];
 % allocate memory for positions and deformation gradient
 
+if 1
 for k = 1:numel(X0)/2
   message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
   fprintf(message);
@@ -156,6 +164,7 @@ for k = 1:numel(X0)/2
   % save every 1000th iteration
 end
 om.writeMessage(' ');
+end
 
 om.writeStars
 message = '****       Tracer locations found        ****';

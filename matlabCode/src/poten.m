@@ -586,7 +586,7 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function velAndDef = interpolateLayerPot(o,t,zIn,...
-    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,xthresh,defGradient)
+    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,xmthresh,xpthresh,defGradient)
 % vel = interpolateLayerPot(t,zIn,eulerX,eulerY,u,v,T) interpolates a
 % given velocity field (u,v) defined at the points (eulerX,eulerY)
 % at the set of points defined in zIn.  t is the current time and T
@@ -601,17 +601,22 @@ function velAndDef = interpolateLayerPot(o,t,zIn,...
 x = zIn(1); y = zIn(2);
 z1 = zIn(3); z2 = zIn(4); z3 = zIn(5); z4 = zIn(6);
 
-if x <= xthresh
-  % tracer location is below the point where simulation is stopped
+if x <= xmthresh
+  % tracer location is before the point where simulation is stopped
   velx = 0;
   vely = 0;
   F11 = 0; F12 = 0; F21 = 0; F22 = 0;
-elseif y <= 0.01
+elseif x >= xpthresh
+  % tracer location is past the point where simulation is stopped
+  velx = 0;
+  vely = 0;
+  F11 = 0; F12 = 0; F21 = 0; F22 = 0;
+elseif y <= 0.001
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
   F11 = 0; F12 = 0; F21 = 0; F22 = 0;
-elseif y >= 5.19
+elseif y >= 5.199
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
@@ -629,10 +634,16 @@ else
   iminY = min(ny-10,iminY);
   % find a small window that contains the interpolation points
 
-  velx = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+%  velx = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+%                     eulerY(iminY:imaxY,iminX:imaxX),...
+%                     u(iminY:imaxY,iminX:imaxX),x,y);
+%  vely = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+%                     eulerY(iminY:imaxY,iminX:imaxX),...
+%                     v(iminY:imaxY,iminX:imaxX),x,y);
+  velx = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      u(iminY:imaxY,iminX:imaxX),x,y);
-  vely = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
+  vely = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      v(iminY:imaxY,iminX:imaxX),x,y);
   % interpolate the velocity field
@@ -792,8 +803,8 @@ nvTar = size(Xtar,2); % number of target curves
 
 h = souPts.length/Nsou; % arclength term
 
-%Nup = Nsou*2^ceil(1/2*log2(Nsou));
-Nup = Nsou*ceil(sqrt(Nsou));
+%Nup = Nsou*ceil(sqrt(Nsou));
+Nup = Nsou*ceil(Nsou^(1/8));
 % upsample to N^(3/2).  
 % only want to add on powers of 2 so that ffts are simple
 % Nup at least has to be a multiple of N

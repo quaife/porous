@@ -19,9 +19,9 @@ prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),5000);
 prams.atol = 1e-9;
 prams.rtol = 1e-6;
 % absolute and relative tolerances for ode45
-prams.T = 1e0*5;
+prams.T = 50;
 % time horizon for ode45
-prams.ntime = 1000;
+prams.ntime = 5001;
 %prams.ntime = 220;
 % number of time steps that ode45 will output
 
@@ -37,7 +37,7 @@ options.fmm = true;
 options.logFile = 'output/beans.log';
 options.profile = false;
 options.saveData = true;
-options.usePlot = true;
+options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
@@ -78,7 +78,9 @@ end
 
 if options.tracersSimulation
   ntra = 10000;
-  [xtar,ytar] = initialTracers(radii,centers,ntra,'beans',radiiBeans,centersBeans);
+%  [xtar,ytar] = initialTracers(radii,centers,ntra,'beans',radiiBeans,centersBeans);
+  xtar = 0.5*ones(ntra,1);
+  ytar = linspace(0.1,5.1,ntra)';
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
 % X0 = [30;4.5];
@@ -90,17 +92,22 @@ if options.tracersSimulation
   options.nx = 9000;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;
-  options.ymax = 5.199;
+  options.ymax = 5.299;
   options.ny = 1000;
   % min, max, and number of Euler locations in y direction
   options.nparts = 10;
   % need to compute in sections otherwise seem to run out of memory
   options.xmThresh = options.xmin + 0;
-  options.xpThresh = options.xmax - 0;
+  options.xpThresh = options.xmax - 2;
   % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
       X0,options,prams,fileName);
+
+%  X0 = [7.9;2.3];
+%  [time,xtra,ytra] = tracersPietro(...
+%      X0,Xinner,options,prams);
+
   % simulate tracers. Each column represents a tracer and each row
   % represents the time variable
 end
