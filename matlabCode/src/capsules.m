@@ -82,7 +82,6 @@ elseif strcmp(side,'outer')
   vx = sign(vx).*abs(vx).^(1/order);
   vy = zeros(N,1);
 
-
   u = [vx;vy];
 else
   u = [];
