@@ -804,10 +804,10 @@ nvTar = size(Xtar,2); % number of target curves
 h = souPts.length/Nsou; % arclength term
 
 %Nup = Nsou*ceil(sqrt(Nsou));
-Nup = Nsou*ceil(Nsou^(1/8));
-% upsample to N^(3/2).  
-% only want to add on powers of 2 so that ffts are simple
-% Nup at least has to be a multiple of N
+Nup = Nsou*ceil(Nsou^(1/4));
+% think that upsample by N^{1/4} gives good enough results for
+% circles40 upsample to N^(1+\alpha) where a good value of \alpha is up
+% in the air.  Nup has to be a multiple of N
 
 vself = diagLP(souPts,f);
 % Compute velocity due to each curve independent of others.
