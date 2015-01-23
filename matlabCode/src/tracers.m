@@ -58,8 +58,6 @@ if options.computeEuler
     % put velocity field in format that works well for interp2
     om.writeEulerVelocities(eulerX,eulerY,u,v);
     % save the velocity field so we don't have to keep recomputing it
-
-
   end
   % evalute velocity on an Eulerian grid
   om.writeStars
