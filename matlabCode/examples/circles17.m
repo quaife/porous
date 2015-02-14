@@ -1,10 +1,10 @@
 clear all
 addpath ../src
 
-load radii45.dat;
-load centers45.dat;
-radii = radii45;
-centers = centers45;
+load radii17.dat;
+load centers17.dat;
+radii = radii17;
+centers = centers17;
 
 %radii = radii(1:300);
 %centers = centers(1:300,:);
@@ -37,17 +37,17 @@ options.computeEuler = false;
 options.tracersSimulation = false;
 options.defGradient = false;
 options.axis = [-6.8 33 -0.2 5.4];
-options.dataFile = 'output/circles45Data.bin';
+options.dataFile = 'output/circles17Data.bin';
 options.farField = 'circles';
 options.fmm = true;
-options.logFile = 'output/circles45.log';
+options.logFile = 'output/circles17.log';
 options.profile = false;
 options.saveData = true;
 options.usePlot = true;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square45');
+Xouter = oc.initConfig(prams.Nouter,'square17');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
@@ -63,8 +63,6 @@ plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
 axis equal;
 fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 axis(options.axis)
-disp('here')
-pause
 
 if options.profile
   profile off; profile on;
