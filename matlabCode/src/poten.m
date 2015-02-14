@@ -43,9 +43,9 @@ o.qp = o.qw(:,2:end);
 o.qw = o.qw(:,1);
 o.G = o.stokesSLmatrix(geom);
 o.invG = zeros(size(o.G));
-for k = 1:geom.nv
-  o.invG(:,:,k) = pinv(o.G(:,:,k));
-end
+%for k = 1:geom.nv
+%  o.invG(:,:,k) = pinv(o.G(:,:,k));
+%end
 
 o.fmm = fmm;
 end % poten: constructor
@@ -732,6 +732,7 @@ else
 end
 
 
+if 0
 oc = curve;
 indOut = oc.collision(targetPnts,outerGeom,NearO2T,o.fmm);
 indIn = oc.collision(targetPnts,innerGeom,NearI2T,o.fmm);
@@ -742,13 +743,16 @@ vel(indOut + targetPnts.N) = 0;
 
 vel(indIn) = 0;
 vel(indIn + targetPnts.N) = 0;
+end
 
 
-if 0
+if 1
   % can use this for circular geometries, but it isn't set up for the
   % beans yet
-  load ../examples/radii.dat
-  load ../examples/centers.dat
+  load ../examples/radii45.dat
+  load ../examples/centers45.dat
+  radii = radii45;
+  centers = centers45;
   nv = size(sigmaInner,2);
   for k = 1:targetPnts.N
     if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
