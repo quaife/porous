@@ -32,9 +32,9 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.bieSolve = false; 
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-5 25 -0.2 5.4];
 options.dataFile = 'output/circles46Data.bin';
@@ -58,12 +58,12 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
 
-figure(1); clf; hold on
-plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
-axis equal;
-fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
-axis(options.axis)
-pause
+%figure(1); clf; hold on
+%plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
+%axis equal;
+%fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
+%axis(options.axis)
+%pause
 
 if options.profile
   profile off; profile on;
@@ -86,9 +86,9 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = -1;
-  options.xmax = 38;
-  options.nx = 10000;
+  options.xmin = -2;
+  options.xmax = 22;
+  options.nx = 5000;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;
   options.ymax = 5.199;

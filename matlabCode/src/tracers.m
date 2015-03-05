@@ -39,13 +39,23 @@ if options.computeEuler
   % maximum number of points to compute at once
   eX = eulerX(:); eY = eulerY(:);
 
-  tic
   vel = zeros(2*numel(eX),1);
-%  for k = 1:nparts
+%  [nx,ny,eulerX,eulerY,u,v] = om.loadEulerVelocities('output/circles12EulerVelocities.bin');
+%  eX = eulerX(:); eY = eulerY(:);
+%  vel = [u(:);v(:)];
+% can be used to restart a simulation part way through
+
+  tic
   for k = 1:nparts
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
+    istart
+    iend
+    size(eulerX)
+    size(eulerY)
+    size(vel)
+    pause
     velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
         options.xmThresh,options.xpThresh,...
         innerGeom,outerGeom,sigmaInner,sigmaOuter);
@@ -87,11 +97,6 @@ if options.computeEuler
 else
   fileName1 = [fileName(1:end-8) 'EulerVelocities.bin'];
   [ny,nx,eulerX,eulerY,u,v] = om.loadEulerVelocities(fileName1);
-%  u(900,8900)
-%  v(900,8900)
-%  eulerX(900,8900)
-%  eulerY(900,8900)
-%  pause
   % load velocities at Eulerian grid from a precomputed computation
   if (nx ~= options.nx || ny ~= options.ny)
     message = 'Saved Euler grid does not match input parameters';

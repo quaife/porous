@@ -32,10 +32,10 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
-options.defGradient = false;
+options.bieSolve = false; 
+options.computeEuler = true;
+options.tracersSimulation = true;
+options.defGradient = true;
 options.axis = [-8.0 44 -0.2 5.4];
 options.dataFile = 'output/circles12Data.bin';
 options.farField = 'circles';
@@ -63,8 +63,6 @@ plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
 axis equal;
 fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 axis(options.axis)
-disp('here')
-pause
 
 if options.profile
   profile off; profile on;
