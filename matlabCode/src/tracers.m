@@ -50,12 +50,7 @@ if options.computeEuler
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
-    istart
-    iend
-    size(eulerX)
-    size(eulerY)
-    size(vel)
-    pause
+
     velPart = op.layerEval(0,[eX(istart:iend);eY(istart:iend)],...
         options.xmThresh,options.xpThresh,...
         innerGeom,outerGeom,sigmaInner,sigmaOuter);
