@@ -1,10 +1,10 @@
-clear all
+%clear all
 addpath ../src
 
-load radii45.dat;
-load centers45.dat;
-radii = radii45;
-centers = centers45;
+load radii31.dat;
+load centers31.dat;
+radii = radii31;
+centers = centers31;
 
 %radii = radii(1:300);
 %centers = centers(1:300,:);
@@ -32,22 +32,22 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = false; 
-options.computeEuler = true;
-options.tracersSimulation = true;
+options.bieSolve = true; 
+options.computeEuler = false;
+options.tracersSimulation = false;
 options.defGradient = false;
-options.axis = [-6.8 33 -0.2 5.4];
-options.dataFile = 'output/circles45Data.bin';
+options.axis = [-6.4 36.7 -0.2 5.4];
+options.dataFile = 'output/circles31Data.bin';
 options.farField = 'circles';
 options.fmm = true;
-options.logFile = 'output/circles45.log';
+options.logFile = 'output/circles31.log';
 options.profile = false;
 options.saveData = true;
 options.usePlot = true;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square45');
+Xouter = oc.initConfig(prams.Nouter,'square31');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
@@ -63,6 +63,7 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 %axis equal;
 %fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 %axis(options.axis)
+%disp('here')
 %pause
 
 if options.profile
@@ -86,8 +87,8 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = -1;
-  options.xmax = 38;
+  options.xmin = -2;
+  options.xmax = 34;
   options.nx = 10000;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;

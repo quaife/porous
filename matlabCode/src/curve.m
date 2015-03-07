@@ -265,6 +265,16 @@ elseif any(strcmp(options,'square20'))
   X = [x;y];
   % rounded off square.  Increase order ot make it more square
 
+elseif any(strcmp(options,'square31'))
+  a = 21.55; b = 2.6e0; order = 10;
+  % parameters for the boundary
+  r = (cos(t).^order + sin(t).^order).^(-1/order);
+  x = a*r.*(cos(t))+a; y = b*r.*(sin(t))+b;
+  x = x - 6.4;
+
+  X = [x;y];
+  % rounded off square.  Increase order ot make it more square
+
 elseif any(strcmp(options,'square36'))
   a = 21.15; b = 2.6e0; order = 10;
   % parameters for the boundary
