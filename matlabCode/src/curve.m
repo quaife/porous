@@ -330,7 +330,7 @@ function indOut = collision(o,Xtar,geom,Near,fmm)
 
 f = [ones(geom.N,geom.nv);zeros(geom.N,geom.nv)];
 % Density function is constant.  Pad second half of it with zero
-op = poten(geom,fmm);
+op = poten(geom,fmm,false);
 % load object for doing near-singular integration and evaluating
 % laplace double-layer potential
 

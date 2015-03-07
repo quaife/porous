@@ -29,7 +29,7 @@ end % properties
 methods 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function o = poten(geom,fmm)
+function o = poten(geom,fmm,bieSolve)
 % o = poten(N,fmm): constructor; N is the number of points per curve.
 % initialize class.
 
@@ -42,11 +42,13 @@ o.qw = o.quadratureS(accuracyOrder,geom.N);
 o.qp = o.qw(:,2:end);
 o.qw = o.qw(:,1);
 o.G = o.stokesSLmatrix(geom);
-o.invG = zeros(size(o.G));
-% TODO: FIX THIS.  ONLY COMPUTE IF bieSolve = true;
-%for k = 1:geom.nv
-%  o.invG(:,:,k) = pinv(o.G(:,:,k));
-%end
+if bieSolve
+  for k = 1:geom.nv
+    o.invG(:,:,k) = pinv(o.G(:,:,k));
+  end
+else
+  o.invG = zeros(size(o.G));
+end
 
 o.fmm = fmm;
 end % poten: constructor
