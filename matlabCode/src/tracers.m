@@ -20,7 +20,7 @@ outerGeom = capsules(Xouter,'outer');
 % build objects for the inner and outer boundaries
 
 fmm = options.fmm;
-op = poten(innerGeom,fmm);
+op = poten(innerGeom,fmm,false);
 
 xmin = options.xmin; xmax = options.xmax; nx = options.nx;
 ymin = options.ymin; ymax = options.ymax; ny = options.ny;

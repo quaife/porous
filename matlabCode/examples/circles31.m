@@ -1,4 +1,4 @@
-%clear all
+clear all
 addpath ../src
 
 load radii31.dat;
@@ -32,9 +32,9 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = true; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.bieSolve = false; 
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-6.4 36.7 -0.2 5.4];
 options.dataFile = 'output/circles31Data.bin';
