@@ -383,7 +383,6 @@ v = zeros(nx,ny);
 istart = 1;
 % start of a pointer to where everything is stored in val
 
-
 for k = 1:ny
   iend = istart + nx - 1;
   eulerX(1:nx,k) = val(istart:iend);
