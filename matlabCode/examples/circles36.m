@@ -6,8 +6,8 @@ load centers36.dat;
 radii = radii36;
 centers = centers36;
 
-%radii = radii(1:300);
-%centers = centers(1:300,:);
+%radii = radii(1:30);
+%centers = centers(1:30,:);
 
 prams.Nouter = 2048;
 % number of points on outer solid wall
