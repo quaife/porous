@@ -46,7 +46,7 @@ if options.computeEuler
 % can be used to restart a simulation part way through
 
   tic
-  for k = 1:nparts
+  for k = 1:50
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
