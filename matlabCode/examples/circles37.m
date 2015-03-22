@@ -1,10 +1,10 @@
 clear all
 addpath ../src
 
-load radii36.dat;
-load centers36.dat;
-radii = radii36;
-centers = centers36;
+load radii37.dat;
+load centers37.dat;
+radii = radii37;
+centers = centers37;
 
 %radii = radii(1:30);
 %centers = centers(1:30,:);
@@ -32,22 +32,22 @@ prams.T = 1e0;
 prams.ntime = 220;
 
 % Different options
-options.bieSolve = false; 
-options.computeEuler = true;
-options.tracersSimulation = true;
+options.bieSolve = true; 
+options.computeEuler = false;
+options.tracersSimulation = false;
 options.defGradient = false;
 options.axis = [-7 37 -0.2 5.4];
-options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles36Data.bin';
+options.dataFile = 'output/circles37Data.bin';
 options.farField = 'circles';
 options.fmm = true;
-options.logFile = 'output/circles36.log';
+options.logFile = 'output/circles37.log';
 options.profile = false;
 options.saveData = true;
 options.usePlot = true;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square36');
+Xouter = oc.initConfig(prams.Nouter,'square37');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
@@ -88,7 +88,7 @@ if options.tracersSimulation
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
   options.xmin = -2;
-  options.xmax = 34;
+  options.xmax = 33;
   options.nx = 10000;
   % min, max, and number of Euler locations in x direction
   options.ymin = 0.001;
