@@ -703,6 +703,7 @@ function vel = layerEval(o,t,Xtar,xmThresh,xpThresh,...
 %theta = (0:innerGeom.N-1)'*2*pi/innerGeom.N;
 %sigmaInner(:,1) = [cos(1*theta);sin(1*theta)];
 %
+%Xtar = [-1.1683;1.6610e-2];
 targetPnts = capsules(Xtar,'targets');
 % Build an object for the target points
 
@@ -752,10 +753,10 @@ end
 if 1
   % can use this for circular geometries, but it isn't set up for the
   % beans yet
-  load ../examples/radii36.dat
-  load ../examples/centers36.dat
-  radii = radii36;
-  centers = centers36;
+  load ../examples/radii37.dat
+  load ../examples/centers37.dat
+  radii = radii37;
+  centers = centers37;
   nv = size(sigmaInner,2);
   for k = 1:targetPnts.N
     if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
@@ -777,6 +778,7 @@ if 1
     % zero velocity at points that are above or below the thresholds 
   end
 end
+
 
 end % layerEval
 

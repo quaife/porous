@@ -40,13 +40,13 @@ if options.computeEuler
   eX = eulerX(:); eY = eulerY(:);
 
   vel = zeros(2*numel(eX),1);
-%  [nx,ny,eulerX,eulerY,u,v] = om.loadEulerVelocities('output/circles12EulerVelocities.bin');
-%  eX = eulerX(:); eY = eulerY(:);
-%  vel = [u(:);v(:)];
+  [nx,ny,eulerX,eulerY,u,v] = om.loadEulerVelocities('/scratch/quaife/porousSimulations/results/newGeoms/circles37EulerVelocities.bin');
+  eX = eulerX(:); eY = eulerY(:);
+  vel = [u(:);v(:)];
 % can be used to restart a simulation part way through
 
   tic
-  for k = 1:50
+  for k = 26:50
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
@@ -60,7 +60,7 @@ if options.computeEuler
 
     u = reshape(vel(1:end/2),size(eulerX));
     v = reshape(vel(end/2+1:end),size(eulerY));
-    % put velocity field in format that works well for interp2
+   % put velocity field in format that works well for interp2
     om.writeEulerVelocities(eulerX,eulerY,u,v);
     % save the velocity field so we don't have to keep recomputing it
   end
