@@ -700,10 +700,6 @@ function vel = layerEval(o,t,Xtar,xmThresh,xpThresh,...
 % componenet.  Target points whose y component lies outside the window
 % [xmThresh,xpThresh] is automatically assigned a velocity of 0
 
-%theta = (0:innerGeom.N-1)'*2*pi/innerGeom.N;
-%sigmaInner(:,1) = [cos(1*theta);sin(1*theta)];
-%
-%Xtar = [-1.1683;1.6610e-2];
 targetPnts = capsules(Xtar,'targets');
 % Build an object for the target points
 
