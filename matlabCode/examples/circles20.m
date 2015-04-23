@@ -19,17 +19,15 @@ prams.gmresTol = 1e-6;
 % gmres tolerance
 prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),5000);
 % maximum number of gmres iterations
-%prams.atol = 1e-6;
-%prams.rtol = 1e-3;
 prams.atol = 1e-9;
 prams.rtol = 1e-6;
+%prams.atol = 1e-6;
+%prams.rtol = 1e-3;
 % absolute and relative tolerances for ode45
-%prams.T = 30*3;
-%% time horizon for ode45
-%prams.ntime = 1500*3 + 1;
-%% number of time steps that ode45 will output
-prams.T = 1e0;
-prams.ntime = 220;
+prams.T = 3.5045e1;
+% time horizon for ode45
+prams.ntime = 200;
+% number of time steps that ode45 will output
 
 % Different options
 options.bieSolve = false; 
@@ -37,13 +35,13 @@ options.computeEuler = false;
 options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-7.8 43 -0.2 5.4];
-options.dataFile = 'output/circles20Data.bin';
+options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles20Data.bin';
 options.farField = 'circles';
 options.fmm = true;
 options.logFile = 'output/circles20.log';
 options.profile = false;
 options.saveData = true;
-options.usePlot = true;
+options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
@@ -78,11 +76,15 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1;
-  [xtar,ytar] = initialTracers(radii,centers,ntra);
+  options.xmThresh = 1;
+  options.xpThresh = 36;
+  options.ymThresh = 0.5;
+  options.ypThresh = 4.7;
+  % thresholds where velocity will be set to zero
+
+  ntra = 50;
+  [xtar,ytar] = initialTracers(radii,centers,ntra,options);
   X0 = [xtar(:);ytar(:)];
-%  X0 = [];
-% X0 = [30;4.5];
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
@@ -94,22 +96,9 @@ if options.tracersSimulation
   options.ymax = 5.199;
   options.ny = 1000;
   options.nparts = 100;
-%  options.xmin = 7;
-%  options.xmax = 8;
-%  options.nx = 11;
-%  % min, max, and number of Euler locations in x direction
-%  options.ymin = 1;
-%  options.ymax = 2;
-%  options.ny = 11;
-%  % min, max, and number of Euler locations in y direction
-%  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
-  options.xmThresh = options.xmin + 0;
-  options.xpThresh = options.xmax - 0;
-  % thresholds where velocity will be set to zero
 
-  [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
-      X0,options,prams,fileName);
+  tracers(X0,options,prams,fileName);
   % simulate tracers. Each column represents a tracer and each row
   % represents the time variable
 end

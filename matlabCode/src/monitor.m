@@ -233,12 +233,17 @@ fclose(fid);
 
 end % writeEulerDerivs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function writeTracerPositions(o,time,xtra,ytra)
+function writeTracerPositions(o,time,xtra,ytra,igrid)
 
 [ntime,ntra] = size(xtra);
 % number of time steps and number of tracers
 
-fileName = [o.dataFile(1:end-8) 'TracerPositions.bin'];
+if strcmp(igrid,'linear')
+  fileName = [o.dataFile(1:end-8) 'TracerPositionsLinear.bin'];
+elseif strcmp(igrid,'log')
+  fileName = [o.dataFile(1:end-8) 'TracerPositionsLog.bin'];
+end
+
 % take the name of the Data file, strip the word Data, and add on the
 % word TracerPositions
 

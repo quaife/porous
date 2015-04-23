@@ -1,17 +1,24 @@
-function [xtar,ytar] = initialTracers(radii,centers,ntra,geom,...
-    radiiBeans,centersBeans)
+function [xtar,ytar] = initialTracers(radii,centers,ntra,options,geom)
+%geom,...
+%    radiiBeans,centersBeans)
 % find a set of intial tracer locations that are in the middle of the
 % porous region
 % keep xtar between 0.5 and 4.3
 % keep ytar between 5 and 30
 
-if nargin == 3
+if nargin == 4
   geom = 'circles';
 end
 
+xmin = options.xmThresh;
+xmax = options.xpThresh;
+ymin = options.ymThresh;
+ymax = options.ypThresh;
+dx = xmax - xmin;
+dy = ymax - ymin;
 
-xmin = 2; xmax = 25; dx = xmax - xmin;
-ymin = 0.1; ymax = 4.9; dy = ymax - ymin;
+%xmin = 1; xmax = 7.15; dx = xmax - xmin;
+%ymin = 0.5; ymax = 4.7; dy = ymax - ymin;
 %xmin = 8.0; xmax = 8.30; dx = xmax - xmin;
 %ymin = 2.1; ymax = 2.5; dy = ymax - ymin;
 xtar = [];

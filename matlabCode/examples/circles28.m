@@ -28,22 +28,22 @@ prams.rtol = 1e-6;
 %% time horizon for ode45
 %prams.ntime = 1500*3 + 1;
 %% number of time steps that ode45 will output
-prams.T = 1e0;
-prams.ntime = 220;
+prams.T = 10;
+prams.ntime = 150;
 
 % Different options
-options.bieSolve = true; 
+options.bieSolve = false; 
 options.computeEuler = false;
-options.tracersSimulation = false;
+options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-6.3 36.7 -0.2 5.4];
-options.dataFile = 'output/circles28Data.bin';
+options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles28Data.bin';
 options.farField = 'circles';
 options.fmm = true;
 options.logFile = 'output/circles28.log';
 options.profile = false;
 options.saveData = true;
-options.usePlot = true;
+options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
@@ -58,13 +58,13 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
 
-figure(1); clf; hold on
-plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
-axis equal;
-fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
-axis(options.axis)
-disp('here')
-pause
+%figure(1); clf; hold on
+%plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
+%axis equal;
+%fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
+%axis(options.axis)
+%disp('here')
+%pause
 
 if options.profile
   profile off; profile on;
@@ -79,7 +79,7 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1;
+  ntra = 10000;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [];
@@ -101,8 +101,9 @@ if options.tracersSimulation
   options.xpThresh = options.xmax - 0;
   % thresholds where velocity will be set to zero
 
-  [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
-      X0,options,prams,fileName);
+  tracers(X0,options,prams,fileName)
+%  [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
+%      X0,options,prams,fileName);
   % simulate tracers. Each column represents a tracer and each row
   % represents the time variable
 end
