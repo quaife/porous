@@ -37,7 +37,7 @@ options.computeEuler = true;
 options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-6.8 33 -0.2 5.4];
-options.dataFile = 'output/circles45Data.bin';
+options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles45Data.bin';
 options.farField = 'circles';
 options.fmm = true;
 options.logFile = 'output/circles45.log';
@@ -78,11 +78,15 @@ end
 
 
 if options.tracersSimulation
-  ntra = 1;
+  options.xmThresh = 1;
+  options.xpThresh = 20;
+  options.ymThresh = 0.5;
+  options.ypThresh = 4.7;
+  % thresholds where velocity will be set to zero
+
+  ntra = 50;
   [xtar,ytar] = initialTracers(radii,centers,ntra);
   X0 = [xtar(:);ytar(:)];
-%  X0 = [];
-% X0 = [30;4.5];
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
@@ -96,9 +100,6 @@ if options.tracersSimulation
   % min, max, and number of Euler locations in y direction
   options.nparts = 100;
   % need to compute in sections otherwise seem to run out of memory
-  options.xmThresh = options.xmin + 0;
-  options.xpThresh = options.xmax - 0;
-  % thresholds where velocity will be set to zero
 
   [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
       X0,options,prams,fileName);

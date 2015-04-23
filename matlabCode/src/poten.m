@@ -29,7 +29,7 @@ end % properties
 methods 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function o = poten(geom,fmm,bieSolve)
+function o = poten(geom,fmm,bieSolve,computeEuler)
 % o = poten(N,fmm): constructor; N is the number of points per curve.
 % initialize class.
 
@@ -41,7 +41,12 @@ accuracyOrder = 8;
 o.qw = o.quadratureS(accuracyOrder,geom.N);
 o.qp = o.qw(:,2:end);
 o.qw = o.qw(:,1);
-o.G = o.stokesSLmatrix(geom);
+if bieSolve || computeEuler
+  o.G = o.stokesSLmatrix(geom);
+else
+  o.G = [];
+end
+
 if bieSolve
   for k = 1:geom.nv
     o.invG(:,:,k) = pinv(o.G(:,:,k));
@@ -589,7 +594,8 @@ end % exactStokesN0diag
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function velAndDef = interpolateLayerPot(o,t,zIn,...
-    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,xmthresh,xpthresh,defGradient)
+    eulerX,eulerY,u,v,u_x,u_y,v_x,v_y,T,...
+    xmthresh,xpthresh,ymthresh,ypthresh,defGradient)
 % vel = interpolateLayerPot(t,zIn,eulerX,eulerY,u,v,T) interpolates a
 % given velocity field (u,v) defined at the points (eulerX,eulerY)
 % at the set of points defined in zIn.  t is the current time and T
@@ -614,12 +620,12 @@ elseif x >= xpthresh
   velx = 0;
   vely = 0;
   F11 = 0; F12 = 0; F21 = 0; F22 = 0;
-elseif y <= 0.001
+elseif y <= ymthresh
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
   F11 = 0; F12 = 0; F21 = 0; F22 = 0;
-elseif y >= 5.199
+elseif y >= ypthresh
   % tracer location is outside of the solid wall
   velx = 0;
   vely = 0;
@@ -749,10 +755,10 @@ end
 if 1
   % can use this for circular geometries, but it isn't set up for the
   % beans yet
-  load ../examples/radii37.dat
-  load ../examples/centers37.dat
-  radii = radii37;
-  centers = centers37;
+  load ../examples/radii28.dat
+  load ../examples/centers28.dat
+  radii = radii28;
+  centers = centers28;
   nv = size(sigmaInner,2);
   for k = 1:targetPnts.N
     if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...

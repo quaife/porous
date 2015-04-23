@@ -1,5 +1,6 @@
-function [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
-    X0,options,prams,fileName)
+function [] = tracers(X0,options,prams,fileName)
+%function [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
+%    X0,options,prams,fileName)
 
 om = monitor(options,prams);
 
@@ -20,7 +21,7 @@ outerGeom = capsules(Xouter,'outer');
 % build objects for the inner and outer boundaries
 
 fmm = options.fmm;
-op = poten(innerGeom,fmm,false);
+op = poten(innerGeom,fmm,false,options.computeEuler);
 
 xmin = options.xmin; xmax = options.xmax; nx = options.nx;
 ymin = options.ymin; ymax = options.ymax; ny = options.ny;
@@ -40,13 +41,13 @@ if options.computeEuler
   eX = eulerX(:); eY = eulerY(:);
 
   vel = zeros(2*numel(eX),1);
-  [nx,ny,eulerX,eulerY,u,v] = om.loadEulerVelocities('/scratch/quaife/porousSimulations/results/newGeoms/circles37EulerVelocities.bin');
-  eX = eulerX(:); eY = eulerY(:);
-  vel = [u(:);v(:)];
+%  [nx,ny,eulerX,eulerY,u,v] = om.loadEulerVelocities('/scratch/quaife/porousSimulations/results/newGeoms/circles37EulerVelocities.bin');
+%  eX = eulerX(:); eY = eulerY(:);
+%  vel = [u(:);v(:)];
 % can be used to restart a simulation part way through
 
   tic
-  for k = 26:50
+  for k = 1:50
     disp([k nparts])
     istart = (k-1)*cutoff + 1;
     iend = min(istart + cutoff - 1,numel(eX));
@@ -115,10 +116,29 @@ else
 end
 
 odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
-    u,v,u_x,u_y,v_x,v_y,prams.T,options.xmThresh,options.xpThresh,...
+    u,v,u_x,u_y,v_x,v_y,prams.T,...
+    options.xmThresh,options.xpThresh,...
+    options.ymThresh,options.ypThresh,...
     options.defGradient);
 % function handle that evalutes the right-hand side.  Handles the
 % position and deformation gradient all at once.
+xWin = eulerX(eulerX > options.xmThresh + 0.1 & ...
+    eulerX < options.xmThresh + 2 & ...
+    eulerY > options.ymThresh + 0.1 & ...
+    eulerY < options.ypThresh - 0.1);
+yWin = eulerY(eulerX > options.xmThresh + 0.1 & ...
+    eulerX < options.xmThresh + 2 & ...
+    eulerY > options.ymThresh + 0.1 & ...
+    eulerY < options.ypThresh - 0.1);
+uWin = u(eulerX > options.xmThresh + 0.1 & ...
+    eulerX < options.xmThresh + 2 & ...
+    eulerY > options.ymThresh + 0.1 & ...
+    eulerY < options.ypThresh - 0.1);
+vWin = v(eulerX > options.xmThresh + 0.1 & ...
+    eulerX < options.xmThresh + 2 & ...
+    eulerY > options.ymThresh + 0.1 & ...
+    eulerY < options.ypThresh - 0.1);
+xWin = xWin(:); yWin = yWin(:); uWin = uWin(:); vWin = vWin(:);
 
 tic
 opts.RelTol = prams.rtol;
@@ -126,16 +146,34 @@ opts.AbsTol = prams.atol;
 % load options for ode45
 
 ntra = numel(X0)/2;
-xtra = zeros(prams.ntime,ntra);
-ytra = zeros(prams.ntime,ntra);
-F11 = zeros(prams.ntime,ntra);
-F12 = zeros(prams.ntime,ntra);
-F21 = zeros(prams.ntime,ntra);
-F22 = zeros(prams.ntime,ntra);
-time = [];
+xtraLinear = zeros(prams.ntime,ntra);
+ytraLinear = zeros(prams.ntime,ntra);
+F11Linear = zeros(prams.ntime,ntra);
+F12Linear = zeros(prams.ntime,ntra);
+F21Linear = zeros(prams.ntime,ntra);
+F22Linear = zeros(prams.ntime,ntra);
+xtraLog = zeros(prams.ntime,ntra);
+ytraLog = zeros(prams.ntime,ntra);
+F11Log = zeros(prams.ntime,ntra);
+F12Log = zeros(prams.ntime,ntra);
+F21Log = zeros(prams.ntime,ntra);
+F22Log = zeros(prams.ntime,ntra);
 % allocate memory for positions and deformation gradient
 
-if 1
+ttLinear = linspace(0,prams.T,prams.ntime);
+ttLog = exp(linspace(log(1e-4),log(prams.T),prams.ntime));
+%tt = [ttLinear ttLog];
+%tt = unique(sort(tt));
+%
+%sLinear = zeros(prams.ntime,1);
+%sLog = zeros(prams.ntime,1);
+%
+%for k = 1:prams.ntime
+%  [~,sLinear(k)] = min(abs(tt - ttLinear(k)));
+%  [~,sLog(k)] = min(abs(tt - ttLog(k)));
+%end
+
+
 for k = 1:numel(X0)/2
   message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
   fprintf(message);
@@ -143,26 +181,104 @@ for k = 1:numel(X0)/2
   y0 = X0(k+numel(X0)/2);
   % initial condition of the kth tracer
 
-  [time,z] = ode45(odeFun,linspace(0,prams.T,prams.ntime),...
-      [x0 y0 1 0 0 1],opts);
-  % Solve for position and deformation gradient with ode45
 
-  xtra(:,k) = z(:,1);
-  ytra(:,k) = z(:,2);
-  F11(:,k) = z(:,3);
-  F12(:,k) = z(:,4);
-  F21(:,k) = z(:,5);
-  F22(:,k) = z(:,6);
+  [ttLinear,z] = ode45(odeFun,ttLinear,[x0 y0 1 0 0 1],opts);
+  % Solve for position and deformation gradient with ode45 on a linear
+  % time scale
 
-  if mod(k,100) == 1
-    om.writeTracerPositions(time,xtra(:,1:k),ytra(:,1:k));
-    om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
-        F21(:,1:k),F22(:,1:k));
+  xtraLinear(:,k) = z(:,1);
+  ytraLinear(:,k) = z(:,2);
+  F11Linear(:,k) = z(:,3);
+  F12Linear(:,k) = z(:,4);
+  F21Linear(:,k) = z(:,5);
+  F22Linear(:,k) = z(:,6);
+
+  [ttLog,z] = ode45(odeFun,ttLog,[x0 y0 1 0 0 1],opts);
+  % Solve for position and deformation gradient with ode45 on a
+  % logarithmic time scale
+  xtraLog(:,k) = z(:,1);
+  ytraLog(:,k) = z(:,2);
+  F11Log(:,k) = z(:,3);
+  F12Log(:,k) = z(:,4);
+  F21Log(:,k) = z(:,5);
+  F22Log(:,k) = z(:,6);
+
+  iLeft = true;
+  xshifts = [];
+  yshifts = [];
+  indshifts = [];
+  while (iLeft || iRight || iTop || iBottom)
+    iLeft = false; iRight = false; iTop = false; iBottom = false;
+    if xtraLinear(end,k) > options.xpThresh
+      iRight = true;
+    elseif xtraLinear(end,k) < options.xmThresh
+      iLeft = true;
+    elseif ytraLinear(end,k) > options.ypThresh
+      iTop = true;
+    elseif ytraLinear(end,k) < options.ymThresh
+      iBottom = true;
+    end
+
+    if (iLeft || iRight || iTop || iBottom)
+      if iRight
+        indOut = find(xtraLinear(:,k) > options.xpThresh);
+      end
+      if iLeft
+        indOut = find(xtraLinear(:,k) < options.xmThresh);
+      end
+      if iBottom
+        indOut = find(ytraLinear(:,k) < options.ymThresh);
+      end
+      if iTop
+        indOut = find(ytraLinear(:,k) > options.ypThresh);
+      end
+
+      indOut = max(max(indOut(1)) - 1,1);
+      indOut
+      vel = odeFun(0,[xtraLinear(indOut,k) ytraLinear(indOut,k) ...
+          0 0 0 0]);
+      [~,smin] = min(abs(vel(1) - uWin) + abs(vel(2) - vWin));
+      
+      z0 = [xWin(smin) yWin(smin) ...
+          F11Linear(indOut,k) F12Linear(indOut,k) ...
+          F21Linear(indOut,k) F22Linear(indOut,k)];
+
+      indshifts = [indshifts indOut];
+      xshifts = [xshifts xtraLinear(indOut+1,k) - xWin(smin)];
+      yshifts = [yshifts ytraLinear(indOut+1,k) - yWin(smin)];
+
+      [~,z] = ode45(odeFun,ttLinear(indOut:end),...
+          z0,opts); 
+
+      xtraLinear(indOut:end,k) = z(:,1);
+      ytraLinear(indOut:end,k) = z(:,2);
+      F11Linear(indOut:end,k) = z(:,3);
+      F12Linear(indOut:end,k) = z(:,4);
+      F21Linear(indOut:end,k) = z(:,5);
+      F22Linear(indOut:end,k) = z(:,6);
+    else
+      iLeft = false; iRight = false; iTop = false; iBottom = false;
+    end
+
   end
-  % save every 1000th iteration
+  for j = 1:numel(indshifts)
+    xtraLinear(indshifts(j):end,k) = ...
+        xtraLinear(indshifts(j):end,k) + xshifts(j);
+    ytraLinear(indshifts(j):end,k) = ...
+        ytraLinear(indshifts(j):end,k) + yshifts(j);
+  end
+
+  if mod(k,2) == 1
+    om.writeTracerPositions(ttLinear,xtraLinear(:,1:k),ytraLinear(:,1:k),'linear');
+    om.writeTracerPositions(ttLog,xtraLog(:,1:k),ytraLog(:,1:k),'log');
+    if options.defGradient
+      om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
+          F21(:,1:k),F22(:,1:k));
+    end
+  end
+  % save every 100th iteration
 end
 om.writeMessage(' ');
-end
 
 om.writeStars
 message = '****       Tracer locations found        ****';
@@ -178,8 +294,8 @@ if options.usePlot
   om.runMovie;
 end
 
-om.writeTracerPositions(time,xtra,ytra);
-om.writeDeformationGradient(time,F11,F12,F21,F22);
+om.writeTracerPositions(ttLinear,xtraLinear,ytraLinear,'linear');
+om.writeTracerPositions(ttLog,xtraLog,ytraLog,'log');
 % one final save at the very end
 
 
