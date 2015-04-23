@@ -1,4 +1,4 @@
-clear all
+%clear all
 addpath ../src
 
 load radii12.dat;
@@ -63,6 +63,7 @@ plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
 axis equal;
 fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 axis(options.axis)
+pause
 
 if options.profile
   profile off; profile on;
