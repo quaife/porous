@@ -30,6 +30,8 @@ prams.rtol = 1e-6;
 %% number of time steps that ode45 will output
 prams.T = 3.2306e1;
 prams.ntime = 200;
+%prams.T = 40;
+%prams.ntime = 4000;
 
 % Different options
 options.bieSolve = false; 
@@ -38,8 +40,9 @@ options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-8.0 44 -0.2 5.4];
 options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles12Data.bin';
+options.dataFile = 'output/circles12Data.bin';
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.logFile = 'output/circles12.log';
 options.profile = false;
 options.saveData = true;
@@ -58,12 +61,12 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
 
-figure(1); clf; hold on
-plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
-axis equal;
-fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
-axis(options.axis)
-pause
+%figure(1); clf; hold on
+%plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
+%axis equal;
+%fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
+%axis(options.axis)
+%pause
 
 if options.profile
   profile off; profile on;
@@ -82,13 +85,14 @@ if options.tracersSimulation
   options.xpThresh = 37;
   options.ymThresh = 0.5;
   options.ypThresh = 4.7;
+%  options.ymThresh = 2.0;
+%  options.ypThresh = 3.0;
   % thresholds where velocity will be set to zero
 
-  ntra = 1000;
+  ntra = 5000;
   [xtar,ytar] = initialTracers(radii,centers,ntra,options);
   X0 = [xtar(:);ytar(:)];
-%  X0 = [];
-% X0 = [30;4.5];
+%  X0 = [3.461225119059567e1;2.713024928665051e+00];
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored

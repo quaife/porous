@@ -633,28 +633,50 @@ elseif y >= ypthresh
 else
   % tracer location is fine, so we do an interpolation
   [ny,nx] = size(eulerX);
-  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.1)));
-  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.1)));
-  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.1)));
-  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.1)));
+
+%  [~,imaxX] = min(abs(eulerX(1,:) - (x + 0.1)));
+%  [~,iminX] = min(abs(eulerX(1,:) - (x - 0.1)));
+%  [~,imaxY] = min(abs(eulerY(:,1) - (y + 0.1)));
+%  [~,iminY] = min(abs(eulerY(:,1) - (y - 0.1)));
+% This is too slow
+
+  xmin = eulerX(1,1);
+  dx = eulerX(1,2) - xmin;
+  ymin = eulerY(1,1);
+  dy = eulerY(2,1) - ymin;
+  a = ceil(((x + 0.1)-xmin)/dx);
+  b = ceil(((x - 0.1)-xmin)/dx);
+  c = ceil(((y + 0.1)-ymin)/dy);
+  d = ceil(((y - 0.1)-ymin)/dy);
+  imaxX = ceil((a + b)/2) + 5;
+  iminX = ceil((a + b)/2) - 5;
+  imaxY = ceil((c + d)/2) + 5;
+  iminY = ceil((c + d)/2) - 5;
+  % Take a very minimal window to help with interpolation that is done
+  % next
+
   imaxX = max(10,imaxX);
   iminX = min(nx-10,iminX);
   imaxY = max(10,imaxY);
   iminY = min(ny-10,iminY);
   % find a small window that contains the interpolation points
 
-%  velx = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
-%                     eulerY(iminY:imaxY,iminX:imaxX),...
-%                     u(iminY:imaxY,iminX:imaxX),x,y);
-%  vely = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
-%                     eulerY(iminY:imaxY,iminX:imaxX),...
-%                     v(iminY:imaxY,iminX:imaxX),x,y);
-  velx = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+%  tic
+  velx = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      u(iminY:imaxY,iminX:imaxX),x,y);
-  vely = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+  vely = interp2FAST(eulerX(iminY:imaxY,iminX:imaxX),...
                      eulerY(iminY:imaxY,iminX:imaxX),...
                      v(iminY:imaxY,iminX:imaxX),x,y);
+%  toc
+%  tic
+%  velx = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+%                     eulerY(iminY:imaxY,iminX:imaxX),...
+%                     u(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+%  vely = interp2(eulerX(iminY:imaxY,iminX:imaxX),...
+%                     eulerY(iminY:imaxY,iminX:imaxX),...
+%                     v(iminY:imaxY,iminX:imaxX),x,y,'cubic');
+%  toc
   % interpolate the velocity field
 
   if defGradient

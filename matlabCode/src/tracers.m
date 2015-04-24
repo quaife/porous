@@ -122,6 +122,7 @@ odeFun = @(t,z) op.interpolateLayerPot(t,z,eulerX,eulerY,...
     options.defGradient);
 % function handle that evalutes the right-hand side.  Handles the
 % position and deformation gradient all at once.
+
 xWin = eulerX(eulerX > options.xmThresh + 0.1 & ...
     eulerX < options.xmThresh + 2 & ...
     eulerY > options.ymThresh + 0.1 & ...
@@ -181,7 +182,6 @@ for k = 1:numel(X0)/2
   y0 = X0(k+numel(X0)/2);
   % initial condition of the kth tracer
 
-
   [ttLinear,z] = ode45(odeFun,ttLinear,[x0 y0 1 0 0 1],opts);
   % Solve for position and deformation gradient with ode45 on a linear
   % time scale
@@ -193,7 +193,7 @@ for k = 1:numel(X0)/2
   F21Linear(:,k) = z(:,5);
   F22Linear(:,k) = z(:,6);
 
-  [ttLog,z] = ode45(odeFun,ttLog,[x0 y0 1 0 0 1],opts);
+%  [ttLog,z] = ode45(odeFun,ttLog,[x0 y0 1 0 0 1],opts);
   % Solve for position and deformation gradient with ode45 on a
   % logarithmic time scale
   xtraLog(:,k) = z(:,1);
@@ -222,33 +222,47 @@ for k = 1:numel(X0)/2
     if (iLeft || iRight || iTop || iBottom)
       if iRight
         indOut = find(xtraLinear(:,k) > options.xpThresh);
+%        disp(options.xpThresh)
       end
       if iLeft
         indOut = find(xtraLinear(:,k) < options.xmThresh);
+%        disp(options.xmThresh)
       end
       if iBottom
         indOut = find(ytraLinear(:,k) < options.ymThresh);
+%        disp(options.ymThresh)
       end
       if iTop
         indOut = find(ytraLinear(:,k) > options.ypThresh);
+%        disp(options.ypThresh)
       end
 
       indOut = max(max(indOut(1)) - 1,1);
-      indOut
       vel = odeFun(0,[xtraLinear(indOut,k) ytraLinear(indOut,k) ...
           0 0 0 0]);
-      [~,smin] = min(abs(vel(1) - uWin) + abs(vel(2) - vWin));
+
+      l2Dist = (vel(1) - uWin).^2 + (vel(2) - vWin).^2;
+      [~,smin] = min(l2Dist(l2Dist>1e-3));
+%      [~,smin] = min(abs(vel(1) - uWin) + abs(vel(2) - vWin));
       
       z0 = [xWin(smin) yWin(smin) ...
           F11Linear(indOut,k) F12Linear(indOut,k) ...
           F21Linear(indOut,k) F22Linear(indOut,k)];
 
       indshifts = [indshifts indOut];
-      xshifts = [xshifts xtraLinear(indOut+1,k) - xWin(smin)];
-      yshifts = [yshifts ytraLinear(indOut+1,k) - yWin(smin)];
+      xshifts = [xshifts xtraLinear(indOut,k) - xWin(smin)];
+      yshifts = [yshifts ytraLinear(indOut,k) - yWin(smin)];
 
       [~,z] = ode45(odeFun,ttLinear(indOut:end),...
           z0,opts); 
+      if numel(ttLinear) == indOut + 1
+        z = [z(1,:) z(end,:)];
+      end
+      % this happens when indOut is the second to last point of the time
+      % points of interest.  If only a 2x1 vector is passed into ode45,
+      % it returns the solution at a set of points intermediate to these
+      % two points.  We only care about the solution at the first and
+      % last point
 
       xtraLinear(indOut:end,k) = z(:,1);
       ytraLinear(indOut:end,k) = z(:,2);
@@ -268,14 +282,14 @@ for k = 1:numel(X0)/2
         ytraLinear(indshifts(j):end,k) + yshifts(j);
   end
 
-  if mod(k,2) == 1
+%  if mod(k,2) == 1
     om.writeTracerPositions(ttLinear,xtraLinear(:,1:k),ytraLinear(:,1:k),'linear');
     om.writeTracerPositions(ttLog,xtraLog(:,1:k),ytraLog(:,1:k),'log');
     if options.defGradient
       om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
           F21(:,1:k),F22(:,1:k));
     end
-  end
+%  end
   % save every 100th iteration
 end
 om.writeMessage(' ');
