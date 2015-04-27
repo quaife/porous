@@ -1,4 +1,4 @@
-function [] = tracers(X0,options,prams,fileName)
+function [] = tracers(X0,options,prams,radii,centers,fileName)
 %function [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
 %    X0,options,prams,fileName)
 
@@ -222,19 +222,15 @@ for k = 1:numel(X0)/2
     if (iLeft || iRight || iTop || iBottom)
       if iRight
         indOut = find(xtraLinear(:,k) > options.xpThresh);
-%        disp(options.xpThresh)
       end
       if iLeft
         indOut = find(xtraLinear(:,k) < options.xmThresh);
-%        disp(options.xmThresh)
       end
       if iBottom
         indOut = find(ytraLinear(:,k) < options.ymThresh);
-%        disp(options.ymThresh)
       end
       if iTop
         indOut = find(ytraLinear(:,k) > options.ypThresh);
-%        disp(options.ypThresh)
       end
 
       indOut = max(max(indOut(1)) - 1,1);
@@ -242,8 +238,10 @@ for k = 1:numel(X0)/2
           0 0 0 0]);
 
       l2Dist = (vel(1) - uWin).^2 + (vel(2) - vWin).^2;
-      [~,smin] = min(l2Dist(l2Dist>1e-3));
-%      [~,smin] = min(abs(vel(1) - uWin) + abs(vel(2) - vWin));
+      [~,smin] = min(l2Dist(l2Dist>1e-5));
+      % don't want to get the same point twice.  This can happen if a
+      % tracer goes out the top or bottom of the geometry in the first
+      % small section where the tracer is shited in the periodic 'hack' 
       
       z0 = [xWin(smin) yWin(smin) ...
           F11Linear(indOut,k) F12Linear(indOut,k) ...
@@ -275,6 +273,15 @@ for k = 1:numel(X0)/2
     end
 
   end
+
+
+  if any((xtraLinear(end,k) - centers(:,1)).^2 + ...
+      (ytraLinear(end,k) - centers(:,2)).^2 < radii.^2)
+    disp('save this index so that I can remove it from the statistics')
+    pause
+  end
+
+
   for j = 1:numel(indshifts)
     xtraLinear(indshifts(j):end,k) = ...
         xtraLinear(indshifts(j):end,k) + xshifts(j);
@@ -282,14 +289,14 @@ for k = 1:numel(X0)/2
         ytraLinear(indshifts(j):end,k) + yshifts(j);
   end
 
-%  if mod(k,2) == 1
+  if mod(k,1) == 1
     om.writeTracerPositions(ttLinear,xtraLinear(:,1:k),ytraLinear(:,1:k),'linear');
-    om.writeTracerPositions(ttLog,xtraLog(:,1:k),ytraLog(:,1:k),'log');
+%    om.writeTracerPositions(ttLog,xtraLog(:,1:k),ytraLog(:,1:k),'log');
     if options.defGradient
       om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
           F21(:,1:k),F22(:,1:k));
     end
-%  end
+  end
   % save every 100th iteration
 end
 om.writeMessage(' ');
@@ -309,7 +316,7 @@ if options.usePlot
 end
 
 om.writeTracerPositions(ttLinear,xtraLinear,ytraLinear,'linear');
-om.writeTracerPositions(ttLog,xtraLog,ytraLog,'log');
+%om.writeTracerPositions(ttLog,xtraLog,ytraLog,'log');
 % one final save at the very end
 
 

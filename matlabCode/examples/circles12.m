@@ -40,7 +40,7 @@ options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-8.0 44 -0.2 5.4];
 options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles12Data.bin';
-options.dataFile = 'output/circles12Data.bin';
+%options.dataFile = 'output/circles12Data.bin';
 options.farField = 'circles';
 options.fmm = false;
 options.logFile = 'output/circles12.log';
@@ -89,9 +89,11 @@ if options.tracersSimulation
 %  options.ypThresh = 3.0;
   % thresholds where velocity will be set to zero
 
-  ntra = 5000;
-  [xtar,ytar] = initialTracers(radii,centers,ntra,options);
-  X0 = [xtar(:);ytar(:)];
+  ntra = 1;
+%  [xtar,ytar] = initialTracers(radii,centers,ntra,options);
+%  X0 = [xtar(:);ytar(:)];
+  X0 = [6.610844675680466e0;4.665988941855113e0];
+%  X0 = [6.331921348743297e0;4.398071171843299e0];
 %  X0 = [3.461225119059567e1;2.713024928665051e+00];
   % initial tracer locations
   fileName = options.dataFile;
@@ -107,7 +109,7 @@ if options.tracersSimulation
   options.nparts = 100;
   % need to compute in sections otherwise seem to run out of memory
 
-  tracers(X0,options,prams,fileName);
+  tracers(X0,options,prams,radii,centers,fileName);
   % simulate tracers. Each column represents a tracer and each row
   % represents the time variable
 end
