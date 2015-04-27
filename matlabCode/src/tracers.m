@@ -174,7 +174,8 @@ ttLog = exp(linspace(log(1e-4),log(prams.T),prams.ntime));
 %  [~,sLog(k)] = min(abs(tt - ttLog(k)));
 %end
 
-
+kSave = [];
+% indicies that do not end up inside a grain
 for k = 1:numel(X0)/2
   message = ['\ntracers ' num2str(2*k/numel(X0)*100,'%04.1f\n') ' %% completed\n'];
   fprintf(message);
@@ -275,10 +276,9 @@ for k = 1:numel(X0)/2
   end
 
 
-  if any((xtraLinear(end,k) - centers(:,1)).^2 + ...
+  if ~any((xtraLinear(end,k) - centers(:,1)).^2 + ...
       (ytraLinear(end,k) - centers(:,2)).^2 < radii.^2)
-    disp('save this index so that I can remove it from the statistics')
-    pause
+    kSave = [kSave;k];
   end
 
 
@@ -289,13 +289,16 @@ for k = 1:numel(X0)/2
         ytraLinear(indshifts(j):end,k) + yshifts(j);
   end
 
-  if mod(k,1) == 1
+  if mod(k,2) == 1
     om.writeTracerPositions(ttLinear,xtraLinear(:,1:k),ytraLinear(:,1:k),'linear');
 %    om.writeTracerPositions(ttLog,xtraLog(:,1:k),ytraLog(:,1:k),'log');
     if options.defGradient
       om.writeDeformationGradient(time,F11(:,1:k),F12(:,1:k),...
           F21(:,1:k),F22(:,1:k));
     end
+    fid = fopen([options.dataFile(1:end-8) 'TracerIndicies.dat'],'w');
+    fprintf(fid,'%d\n',kSave);
+    fclose(fid);
   end
   % save every 100th iteration
 end
