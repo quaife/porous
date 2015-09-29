@@ -28,15 +28,17 @@ prams.rtol = 1e-6;
 %% time horizon for ode45
 %prams.ntime = 1500*3 + 1;
 %% number of time steps that ode45 will output
-prams.T = 3.2306e1;
-prams.ntime = 200;
+%prams.T = 3.2306e1;
+%prams.ntime = 200;
 %prams.T = 40;
 %prams.ntime = 4000;
+prams.T = 10;
+prams.ntime = 1000;
 
 % Different options
 options.bieSolve = false; 
 options.computeEuler = false;
-options.tracersSimulation = true;
+options.tracersSimulation = false;
 options.defGradient = false;
 options.axis = [-8.0 44 -0.2 5.4];
 %options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles12Data.bin';
