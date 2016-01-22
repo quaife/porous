@@ -37,8 +37,8 @@ prams.ntime = 1000;
 
 % Different options
 options.bieSolve = false; 
-options.computeEuler = false;
-options.tracersSimulation = false;
+options.computeEuler = true;
+options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-8.0 44 -0.2 5.4];
 %options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles12Data.bin';
@@ -63,13 +63,6 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
 
-%figure(1); clf; hold on
-%plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
-%axis equal;
-%fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
-%axis(options.axis)
-%pause
-
 if options.profile
   profile off; profile on;
 end
@@ -91,7 +84,7 @@ if options.tracersSimulation
 %  options.ypThresh = 3.0;
   % thresholds where velocity will be set to zero
 
-  ntra = 100;
+  ntra = 0;
   [xtar,ytar] = initialTracers(radii,centers,ntra,options);
   X0 = [xtar(:);ytar(:)];
 %  X0 = [6.610844675680466e0;4.665988941855113e0];
@@ -100,15 +93,22 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = -1;
-  options.xmax = 39;
-  options.nx = 10000;
+%  options.xmin = -1;
+%  options.xmax = 39;
+%  options.nx = 10000;
+  options.xmin = 4.8; 
+  options.xmax = 7.4;
+  options.nx = 3;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 0.001;
-  options.ymax = 5.199;
-  options.ny = 1000;
+%  options.ymin = 0.001;
+%  options.ymax = 5.199;
+%  options.ny = 1000;
+  options.ymin = 1.3;
+  options.ymax = 3.9;
+  options.ny = 3;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 100;
+%  options.nparts = 100;
+  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
 
   tracers(X0,options,prams,radii,centers,fileName);

@@ -777,10 +777,10 @@ end
 if 1
   % can use this for circular geometries, but it isn't set up for the
   % beans yet
-  load ../examples/radii28.dat
-  load ../examples/centers28.dat
-  radii = radii28;
-  centers = centers28;
+  load ../examples/radii12.dat
+  load ../examples/centers12.dat
+  radii = radii12;
+  centers = centers12;
   nv = size(sigmaInner,2);
   for k = 1:targetPnts.N
     if(any((targetPnts.X(k,1) - centers(1:nv,1)).^2 + ...
