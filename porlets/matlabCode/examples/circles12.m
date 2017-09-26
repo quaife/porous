@@ -1,18 +1,13 @@
-clear all
+%clear all
 addpath ../src
 
-ind = [10 21 29 70 96 105 221 228 231 255 258 261 264 ...
-    265 330 332 339 348 389 413 415 419 428 431 443 453];
+load radii12.dat;
+load centers12.dat;
+radii = radii12;
+centers = centers12;
 
-load radii.dat;
-load centers.dat;
-
-%radii = radii(ind);
-%centers = centers(ind,:);
-%radii = [radii(1:4); radii(410:413)];
-%centers = [centers(1:4,:); centers(410:413,:)];
-%radii = radii(1:3);
-%centers = centers(1:3,:);
+%radii = radii(1:300);
+%centers = centers(1:300,:);
 
 prams.Nouter = 2048;
 % number of points on outer solid wall
@@ -24,36 +19,40 @@ prams.gmresTol = 1e-6;
 % gmres tolerance
 prams.maxIter = min(2*(prams.Nouter + prams.nv*prams.Ninner),5000);
 % maximum number of gmres iterations
-%prams.atol = 1e-6;
-%prams.rtol = 1e-3;
 prams.atol = 1e-9;
 prams.rtol = 1e-6;
+%prams.atol = 1e-6;
+%prams.rtol = 1e-3;
 % absolute and relative tolerances for ode45
 %prams.T = 30*3;
 %% time horizon for ode45
 %prams.ntime = 1500*3 + 1;
 %% number of time steps that ode45 will output
-prams.T = 50;
-% time horizon for ode45
-prams.ntime = 5001;
+%prams.T = 3.2306e1;
+%prams.ntime = 200;
+%prams.T = 40;
+%prams.ntime = 4000;
+prams.T = 10;
+prams.ntime = 10000;
 
 % Different options
 options.bieSolve = false; 
 options.computeEuler = false;
 options.tracersSimulation = true;
 options.defGradient = false;
-options.axis = [-8 38 -0.1 5.3];
-options.dataFile = 'output/circlesData.bin';
+options.axis = [-8.0 44 -0.2 5.4];
+%options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles12Data.bin';
+options.dataFile = 'output/circles12Data.bin';
 options.farField = 'circles';
-options.fmm = true;
-options.logFile = 'output/circles.log';
+options.fmm = false;
+options.logFile = 'output/circles12.log';
 options.profile = false;
 options.saveData = true;
 options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square');
+Xouter = oc.initConfig(prams.Nouter,'square12');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
@@ -63,11 +62,6 @@ Xinner = oc.initConfig(prams.Ninner,'circles', ...
 % centers rather than the geometry.  Then, can do quick checks for
 % determing interior and exterior points when computing Eulerian grid
 % circular exclusions
-
-figure(1); clf; hold on
-plot(Xouter(1:end/2),Xouter(end/2+1:end),'k')
-axis equal;
-fill(Xinner(1:end/2,:),Xinner(end/2+1:end,:),'k');
 
 if options.profile
   profile off; profile on;
@@ -82,39 +76,49 @@ end
 
 
 if options.tracersSimulation
-  ntra = 10000;
-%  [xtar,ytar] = initialTracers(radii,centers,ntra);
-  xtar = 0.5*ones(ntra,1);
-  ytar = linspace(0.1,5.1,ntra)';
-  X0 = [xtar(:);ytar(:)];
-%  X0 = [];
-% X0 = [30;4.5];
+  options.xmThresh = 1;
+  options.xpThresh = 37;
+  options.ymThresh = 0.5;
+  options.ypThresh = 4.7;
+%  options.ymThresh = 2.0;
+%  options.ypThresh = 3.0;
+  % thresholds where velocity will be set to zero
+
+  ntra = 0;
+  [xtar,ytar] = initialTracers(radii,centers,ntra,options);
+%  X0 = [xtar(:);ytar(:)];
+%  X0 = [6.610844675680466e0;4.665988941855113e0];
+%  X0 = [6.331921348743297e0;4.398071171843299e0];
+  X0 = [3.461225119059567e1;2.713024928665051e+00];
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = 0;
-  options.xmax = 35;
-  options.nx = 9000;
+%  options.xmin = -1;
+%  options.xmax = 39;
+%  options.nx = 10000;
+  options.xmin = 4.8; 
+  options.xmax = 7.4;
+  options.nx = 3;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 0.001;
-  options.ymax = 5.199;
-  options.ny = 1000;
+%  options.ymin = 0.001;
+%  options.ymax = 5.199;
+%  options.ny = 1000;
+  options.ymin = 1.3;
+  options.ymax = 3.9;
+  options.ny = 3;
   % min, max, and number of Euler locations in y direction
-  options.nparts = 10;
+%  options.nparts = 100;
+  options.nparts = 1;
   % need to compute in sections otherwise seem to run out of memory
-  options.xmThresh = options.xmin + 0;
-  options.xpThresh = options.xmax - 2;
-  % thresholds where velocity will be set to zero
 
-  [time,xtra,ytra,F11,F12,F21,F22] = tracers(...
-      X0,options,prams,fileName);
+  tracers(X0,options,prams,radii,centers,fileName);
   % simulate tracers. Each column represents a tracer and each row
   % represents the time variable
 end
 
 
 if options.profile
-  profile viewer;
+%  profile viewer;
   profile off;
   filename = [options.logFile(1:end-4) 'Profile'];
   profsave(profile('info'),filename);

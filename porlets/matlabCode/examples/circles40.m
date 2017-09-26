@@ -32,7 +32,7 @@ prams.ntime = 200;
 % Different options
 options.bieSolve = false; 
 options.computeEuler = false;
-options.tracersSimulation = true;
+options.tracersSimulation = false;
 options.defGradient = false;
 options.axis = [-6.8 33 -0.2 5.4];
 options.dataFile = '/scratch/quaife/porousSimulations/results/newGeoms/circles40Data.bin';
