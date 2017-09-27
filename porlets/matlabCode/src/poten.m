@@ -1500,7 +1500,7 @@ else
   % need to multiply by arclength term.  Seperate it into
   % x and y coordinate
 
-  [u,v] = stokesSLPfmm(f1(:),f2(:),x(:),y(:));
+  [u,v] = stokesSLPfmm(f1(:),f2(:),x(:),y(:),x(:),y(:),1,4);
   stokesSLP = zeros(2*N,nv); % initialize
   for k = 1:nv
     is = (k-1)*N+1;
@@ -1515,7 +1515,8 @@ else
     stokesSLP = stokesSLP - o.exactStokesSLDirect(geom,den);
   else
     for k = 1:nv
-      [u,v] = stokesSLPfmm(f1(:,k),f2(:,k),x(:,k),y(:,k));
+      [u,v] = stokesSLPfmm(f1(:,k),f2(:,k),x(:,k),y(:,k),...
+          x(:,k),y(:,k),1,4);
       stokesSLP(:,k) = stokesSLP(:,k) - [u;v];
     end
   end
@@ -1543,7 +1544,7 @@ else
   % affect the single-layer potential
 
 
-  [u,v] = stokesSLPfmm(f1,f2,x,y);
+  [u,v] = stokesSLPfmm(f1,f2,x,y,x,y,1,4);
   stokesSLPtar = zeros(2*Ntar,ncol); % initialize
   for k = 1:ncol
     is = N*numel(K) + (k-1)*Ntar+1;
@@ -1559,10 +1560,115 @@ end % exactStokesSLfmm
 
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [stokesDLP,stokesDLPtar] = ...
     exactStokesDLfmm(o,geom,f,Xtar,K)
+% [stokesDLP,stokeDLPtar] = exactStokesDLfmm(geom,f,Xtar,K) uses 
+% the FMM to compute the double-layer potential due to all geoms
+% except itself geom is a class of object capsules and f is the 
+% density function NOT scaled by arclength term.  Xtar is a set of 
+% points where the single-layer potential due to all geoms in index 
+% set K needs to be evaulated
+global fmms
+
+fmms = fmms + 1;
+% count the total number of calls to fmm
+
+N = geom.N; % number of points per geom
+nv = geom.nv; % number of geoms
+X = geom.X; % geom positions
+oc = curve;
+[x,y] = oc.getXY(X); % seperate x and y coordinates
+[nx,ny] = oc.getXY(geom.normal);
+% seperate the x and y coordinates of the normal vector
+
+den = f.*[geom.sa;geom.sa]*2*pi/N;
+
+if (nargin == 5)
+  stokesDLP = [];
+else
+  [f1,f2] = oc.getXY(den);
+  % need to multiply by arclength term.  Seperate it into
+  % x and y coordinate
+
+  dip1 = 0.25/pi*(f2 - 1i*f1).*(nx + 1i*ny);
+  dip2 = -1i*0.5/pi*(f1.*nx + f2.*ny);
+
+  vel = stokesDLPfmm(dip1(:),dip2(:),x(:),y(:));
+  u = -imag(vel);
+  v = real(vel);
+
+  stokesDLP = zeros(2*N,nv); % initialize
+  for k = 1:nv
+    is = (k-1)*N+1;
+    ie = k*N;
+    stokesDLP(1:N,k) = u(is:ie);
+    stokesDLP(N+1:2*N,k) = v(is:ie);
+  end
+  % Wrap the output of the FMM into the usual 
+  % [[x1;y1] [x2;y2] ...] format
+
+
+  for k = 1:nv
+    vel = stokesDLPfmm(dip1(:,k),dip2(:,k),x(:,k),y(:,k));
+
+    u = -imag(vel);
+    v = real(vel);
+
+    stokesDLP(:,k) = stokesDLP(:,k) - [u;v];
+  end
+  % Subtract potential due to each geom on its own.  Nothing
+  % to change here for potential at Xtar
+end
+
+if nargin == 3
+  stokesDLPtar = [];
+else
+  [x,y] = oc.getXY(X(:,K)); 
+  % seperate x and y coordinates at geoms indexed by K
+  [nx,ny] = oc.getXY(geom.normal(:,K));
+  [Ntar,ncol] = size(Xtar);
+  Ntar = Ntar/2;
+  x2 = Xtar(1:Ntar,:);
+  x = [x(:);x2(:)];
+  y2 = Xtar(Ntar+1:2*Ntar,:);
+  y = [y(:);y2(:)];
+  % Stack the x and y coordinates of the target points
+  [f1,f2] = oc.getXY(den(:,K));
+  % seperate x and y coordinates at geoms indexed by K
+  f1 = [f1(:);zeros(Ntar*ncol,1)];
+  f2 = [f2(:);zeros(Ntar*ncol,1)];
+  % pad density function with zeros so that Xtar doesn't
+  % affect the double-layer potential
+  nx = [nx(:);zeros(Ntar*ncol,1)];
+  ny = [ny(:);zeros(Ntar*ncol,1)];
+  % pad the normal vector with zeros so that Xtar doesn't
+  % affect the double-layer potential
+
+  dip1 = 0.25/pi*(f2 - 1i*f1).*(nx + 1i*ny);
+  dip2 = -1i*0.5/pi*(f1.*nx + f2.*ny);
+
+  vel = stokesDLPfmm(dip1(:),dip2(:),x(:),y(:));
+  u = -imag(vel);
+  v = real(vel);
+
+  stokesDLPtar = zeros(2*Ntar,ncol); % initialize
+  for k = 1:ncol
+    is = N*numel(K) + (k-1)*Ntar+1;
+    ie = is + Ntar - 1;
+    stokesDLPtar(1:Ntar,k) = u(is:ie);
+    stokesDLPtar(Ntar+1:2*Ntar,k) = v(is:ie);
+  end
+  % Wrap the output of the FMM in the usual format
+  % for the target points
+end
+
+
+end % exactStokesDLfmm
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [stokesDLP,stokesDLPtar] = ...
+    exactStokesDLfmmOld(o,geom,f,Xtar,K)
 % [stokesDLP,stokeDLPtar] = exactStokesDLfmm(geom,f,Xtar,K) uses 
 % the FMM to compute the double-layer potential due to all geoms
 % except itself geom is a class of object capsules and f is the 
