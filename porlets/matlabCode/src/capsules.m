@@ -77,7 +77,8 @@ elseif strcmp(side,'outer')
 %  vy = sign(vy).*abs(vy).^(1/order);
 %  % smooth out boundary
 
-  vx = exp(1./(((y-2.6)/max(y-2.6)).^2-1))/exp(-1);
+  vx= exp(1./(((y)/max(y)).^2 - 1))/exp(-1);
+%  vx = exp(1./(((y-2.6)/max(y-2.6)).^2-1))/exp(-1);
   vx(abs(vx)==Inf) = 0;
   vx = sign(vx).*abs(vx).^(1/order);
   vy = zeros(N,1);

@@ -37,7 +37,7 @@ options.defGradient = false;
 options.axis = [-6.3 36.7 -0.2 5.4];
 options.dataFile = 'output/circles4Data.bin';
 options.farField = 'circles';
-options.fmm = true;
+options.fmm = false;
 options.logFile = 'output/circles4.log';
 options.profile = false;
 options.saveData = true;
@@ -84,13 +84,13 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = 19;
-  options.xmax = 20;
-  options.nx = 200;
+  options.xmin = -2;
+  options.xmax = 2;
+  options.nx = 100;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 2.1;
-  options.ymax = 3.1;
-  options.ny = 200;
+  options.ymin = -0.9;
+  options.ymax = 0.9;
+  options.ny = 100;
   % min, max, and number of Euler locations in y direction
   options.nparts = 5;
   % need to compute in sections otherwise seem to run out of memory

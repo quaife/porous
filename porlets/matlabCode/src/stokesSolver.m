@@ -40,7 +40,6 @@ op = poten(innerGeom,options.fmm,true,true);
 [~,NearO2I] = outerGeom.getZone(innerGeom,2);
 [NearI2I,NearI2O] = innerGeom.getZone(outerGeom,3);
 
-
 D = op.stokesDLmatrix(outerGeom);
 N0 = op.stokesN0matrix(outerGeom);
 DLPpreco = inv(-1/2*eye(2*outerGeom.N) + D + N0);

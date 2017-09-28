@@ -1,21 +1,11 @@
 %clear all
 addpath ../src
 
-%radii = [0.5 0.2 0.5 0.4];
-%centers = [[2 2];[4 3];[3 1];[5 2]];
-%radii = [0.1];
-%centers = [15 2.5];
-load radii28.dat;
-s = find(centers28(:,1) > 19 & centers28(:,1) < 20);
-radii = radii28(s);
-centers = centers28(s,:);
-load centers28.dat;
+load radii8.dat;
+load centers8.dat;
 
-radii = radii28(s);
-centers = centers28(s,:);
-scaling = 10;
-radii = radii/scaling;
-
+radii = radii8;
+centers = centers8;
 
 prams.Nouter = 2048;
 % number of points on outer solid wall
@@ -45,17 +35,17 @@ options.computeEuler = true;
 options.tracersSimulation = true;
 options.defGradient = false;
 options.axis = [-6.3 36.7 -0.2 5.4];
-options.dataFile = 'output/circlesSmallData.bin';
+options.dataFile = 'output/circles8Data.bin';
 options.farField = 'circles';
-options.fmm = true;
-options.logFile = 'output/circlesSmall.log';
+options.fmm = false;
+options.logFile = 'output/circles8.log';
 options.profile = false;
 options.saveData = true;
 options.usePlot = false;
 options.verbose = true;
 
 oc = curve;
-Xouter = oc.initConfig(prams.Nouter,'square28');
+Xouter = oc.initConfig(prams.Nouter,'square3to1');
 % outer most boundary
 Xinner = oc.initConfig(prams.Ninner,'circles', ...
           'nv',prams.nv, ...
@@ -94,13 +84,13 @@ if options.tracersSimulation
   % initial tracer locations
   fileName = options.dataFile;
   % file that has all the necessary density function and geometry stored
-  options.xmin = 19;
-  options.xmax = 20;
-  options.nx = 200;
+  options.xmin = -2;
+  options.xmax = 2;
+  options.nx = 100;
   % min, max, and number of Euler locations in x direction
-  options.ymin = 2.1;
-  options.ymax = 3.1;
-  options.ny = 200;
+  options.ymin = -0.99;
+  options.ymax = 0.99;
+  options.ny = 100;
   % min, max, and number of Euler locations in y direction
   options.nparts = 5;
   % need to compute in sections otherwise seem to run out of memory
